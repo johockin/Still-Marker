@@ -6,85 +6,27 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 exports.handler = async (event, context) => {
-    // Only allow POST requests
-    if (event.httpMethod !== 'POST') {
-        return {
-            statusCode: 405,
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'POST',
-                'Access-Control-Allow-Headers': 'Content-Type'
-            },
-            body: JSON.stringify({ error: 'Method not allowed' })
-        };
-    }
-
-    // Handle CORS preflight
-    if (event.httpMethod === 'OPTIONS') {
-        return {
-            statusCode: 200,
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'POST',
-                'Access-Control-Allow-Headers': 'Content-Type'
-            },
-            body: ''
-        };
-    }
-
-    try {
-        console.log('Processing video upload...');
-        
-        // Parse multipart form data from Netlify event
-        const { fields, files } = await parseMultipartData(event);
-        
-        const videoFile = files.video;
-        const offset = parseInt(fields.offset || '0', 10);
-        
-        console.log('Video file:', videoFile ? 'received' : 'missing');
-        console.log('Offset:', offset);
-        
-        // Validate video file
-        if (!videoFile || !videoFile.path) {
-            return {
-                statusCode: 400,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({ error: 'No video file provided' })
-            };
-        }
-
-        // Process video with FFmpeg
-        const frames = await extractFrames(videoFile.path, offset);
-        
-        // Clean up temporary files
-        cleanupTempFiles(videoFile.path);
-        
-        return {
-            statusCode: 200,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            body: JSON.stringify({ frames })
-        };
-        
-    } catch (error) {
-        console.error('Error processing video:', error);
-        return {
-            statusCode: 500,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            body: JSON.stringify({ 
-                error: 'Internal server error',
-                details: error.message 
-            })
-        };
-    }
+    console.log('Function triggered!', new Date().toISOString());
+    console.log('Event method:', event.httpMethod);
+    console.log('Event body exists:', !!event.body);
+    console.log('Event body length:', event.body ? event.body.length : 0);
+    console.log('Content-Type:', event.headers['content-type']);
+    
+    // For now, just return success to test the connection
+    return {
+        statusCode: 200,
+        headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({ 
+            message: 'Function reached!', 
+            timestamp: new Date().toISOString(),
+            test: true,
+            bodyLength: event.body ? event.body.length : 0,
+            method: event.httpMethod
+        })
+    };
 };
 
 function parseMultipartData(event) {

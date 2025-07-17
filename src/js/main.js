@@ -70,6 +70,9 @@ class FrameShift {
             return;
         }
 
+        console.log('Starting upload:', file.name, (file.size / 1024 / 1024).toFixed(2) + 'MB');
+        console.log('Upload URL:', '/.netlify/functions/process-video');
+
         this.currentVideoFile = file;
         this.showProcessingSection();
         
@@ -81,6 +84,7 @@ class FrameShift {
             formData.append('video', file);
             formData.append('offset', this.currentOffset);
 
+            console.log('FormData created, starting upload...');
             this.updateProgress(20, 'Uploading video...');
 
             // Call Netlify Function
@@ -89,14 +93,25 @@ class FrameShift {
                 body: formData
             });
 
+            console.log('Response received:', response.status, response.statusText);
             this.updateProgress(40, 'Processing video...');
 
             if (!response.ok) {
+                console.error('Response not ok:', response.status, response.statusText);
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.error || `Processing failed: ${response.statusText}`);
             }
 
             const result = await response.json();
+            console.log('Response data:', result);
+            
+            // For debugging - check if we got the test response
+            if (result.test) {
+                console.log('Test response received:', result.message);
+                this.updateProgress(100, 'Debug: Function connection successful!');
+                this.showError(`Debug Success: ${result.message} at ${result.timestamp}`);
+                return;
+            }
             
             if (!result.frames || result.frames.length === 0) {
                 throw new Error('No frames were extracted from the video');
@@ -109,7 +124,8 @@ class FrameShift {
             setTimeout(() => this.displayResults(), 500);
             
         } catch (error) {
-            console.error('Error processing video:', error);
+            console.error('Upload error:', error);
+            this.updateProgress(0, 'Upload failed: ' + error.message);
             this.showError(`Failed to process video: ${error.message}`);
         }
     }
