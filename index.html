@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRAMESHIFT | Extract High-Quality Stills from Video</title>
+    <link rel="stylesheet" href="src/css/styles.css">
+</head>
+<body>
+    <main class="container">
+        <header class="header">
+            <h1 class="title">FRAMESHIFT</h1>
+            <p class="subtitle">Extract high-quality still images from your video files</p>
+        </header>
+
+        <section class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="fileInput" accept="video/*" hidden>
+                <div class="upload-prompt">
+                    <p>Drop your video file here or click to select</p>
+                    <small>Maximum file size: 2GB</small>
+                </div>
+            </div>
+        </section>
+
+        <section class="processing-section" id="processingSection" style="display: none;">
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <p class="progress-text" id="progressText">Processing...</p>
+            </div>
+        </section>
+
+        <section class="results-section" id="resultsSection" style="display: none;">
+            <div class="controls">
+                <button class="btn btn-offset" id="offsetBtn">Shift +1s</button>
+                <button class="btn btn-download" id="downloadBtn">Download All</button>
+            </div>
+            <div class="frames-grid" id="framesGrid">
+                <!-- Frames will be populated here -->
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p class="privacy-notice">
+                🔒 Your footage is processed and immediately deleted. We never store your files.
+            </p>
+        </footer>
+    </main>
+
+    <script src="src/js/main.js"></script>
+</body>
+</html>

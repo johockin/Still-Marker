@@ -1,0 +1,249 @@
+/* FRAMESHIFT - Cinematic Minimal Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #fafafa;
+    color: #1a1a1a;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+    color: #1a1a1a;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    color: #666;
+    font-weight: 400;
+}
+
+/* Upload Section */
+.upload-section {
+    margin-bottom: 3rem;
+}
+
+.upload-area {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 3rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #fff;
+}
+
+.upload-area:hover {
+    border-color: #999;
+    background-color: #f8f8f8;
+}
+
+.upload-area.drag-over {
+    border-color: #666;
+    background-color: #f0f0f0;
+}
+
+.upload-prompt p {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.upload-prompt small {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Processing Section */
+.processing-section {
+    margin-bottom: 3rem;
+}
+
+.progress-container {
+    text-align: center;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background-color: #e0e0e0;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #333;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    color: #666;
+    font-size: 1rem;
+}
+
+/* Results Section */
+.results-section {
+    flex: 1;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.btn {
+    padding: 0.8rem 1.5rem;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    color: #333;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    background-color: #f0f0f0;
+    border-color: #999;
+}
+
+.btn-offset {
+    background-color: #f8f8f8;
+}
+
+.btn-download {
+    background-color: #333;
+    color: #fff;
+    border-color: #333;
+}
+
+.btn-download:hover {
+    background-color: #555;
+}
+
+/* Frames Grid */
+.frames-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.frame-item {
+    background-color: #fff;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.frame-item:hover {
+    transform: translateY(-2px);
+}
+
+.frame-item img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    display: block;
+}
+
+.frame-info {
+    padding: 0.8rem;
+    text-align: center;
+}
+
+.frame-timestamp {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.frame-download {
+    font-size: 0.8rem;
+    color: #999;
+    text-decoration: none;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 3px;
+    display: inline-block;
+    transition: all 0.2s ease;
+}
+
+.frame-download:hover {
+    color: #333;
+    border-color: #ccc;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    margin-top: auto;
+    padding-top: 2rem;
+}
+
+.privacy-notice {
+    color: #666;
+    font-size: 0.9rem;
+    background-color: #f0f0f0;
+    padding: 1rem;
+    border-radius: 4px;
+    border-left: 4px solid #333;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+    
+    .title {
+        font-size: 2rem;
+    }
+    
+    .upload-area {
+        padding: 2rem 1rem;
+    }
+    
+    .frames-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 0.8rem;
+    }
+    
+    .controls {
+        flex-direction: column;
+        align-items: center;
+    }
+}
