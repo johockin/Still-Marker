@@ -66,45 +66,79 @@
 
 ---
 
-## 🏗️ INITIAL TECH ARCHITECTURE
+## 🏗️ TECH ARCHITECTURE (NATIVE MAC APP)
 
-*Architecture recommendations based on requirements analysis:*
+*Architecture after pivot to native Mac app:*
 
-- **Framework / language**: Vanilla JavaScript + HTML5 + CSS3
-  - *Rationale: Maximum performance, minimal bloat, full control over optimization*
-- **Frontend architecture**: Single-page application with module-based organization
-  - *Rationale: Simple, fast, no framework overhead*
-- **Backend processing**: Netlify Functions with FFmpeg
-  - *Rationale: Reliable server-side processing for large files, handles memory constraints*
-- **File handling**: Temporary storage during processing, immediate cleanup
-  - *Rationale: Privacy-first approach while maintaining performance*
-- **Styling approach**: Custom CSS with CSS Grid/Flexbox
-  - *Rationale: Full control over cinematic minimal aesthetic, no framework bloat*
-- **State management**: Vanilla JS with custom event system
-  - *Rationale: Simple, predictable, no external dependencies*
+- **Framework / language**: Swift + SwiftUI
+  - *Rationale: Native performance, modern UI framework, excellent for Mac development*
+- **UI Framework**: SwiftUI with macOS 12+ (Monterey) target
+  - *Rationale: Modern, declarative UI, excellent for cinematic minimal aesthetic*
+- **Video processing**: Bundled FFmpeg binary
+  - *Rationale: Out-of-box experience, no user setup required, consistent performance*
+- **File handling**: Direct file system access via NSOpenPanel
+  - *Rationale: True privacy, instant processing, no size limits*
+- **State management**: SwiftUI @StateObject and @ObservableObject
+  - *Rationale: Built-in reactive state management*
+- **Distribution**: Local development → Direct download + Mac App Store exploration
+  - *Rationale: Flexible distribution strategy, test both channels*
 - **Directory structure plan**:
   ```
-  /
-  ├── index.html
-  ├── src/
-  │   ├── js/
-  │   │   ├── main.js
-  │   │   ├── upload.js
-  │   │   └── processing.js
-  │   ├── css/
-  │   │   └── styles.css
-  │   └── assets/
-  └── netlify/
-      └── functions/
-          └── process-video.js
+  FRAMESHIFT.xcodeproj/
+  ├── FRAMESHIFT/
+  │   ├── ContentView.swift
+  │   ├── VideoProcessor.swift
+  │   ├── FrameExtractor.swift
+  │   ├── Models/
+  │   │   └── Frame.swift
+  │   └── Views/
+  │       ├── UploadView.swift
+  │       ├── ProcessingView.swift
+  │       └── ResultsView.swift
+  └── Assets.xcassets/
   ```
-- **Key dependencies**: FFmpeg (server-side), minimal frontend dependencies
-- **Planned dev workflow**: Simple file watching, no build tools initially
+- **Key dependencies**: 
+  - AVFoundation (built-in video analysis)
+  - FFmpeg binary (bundled for frame extraction)
+  - AppKit (file dialogs, native Mac integration)
+- **Planned dev workflow**: Xcode with SwiftUI previews and live development
 - **Testing approach**: Manual QA with user, focus on real-world filmmaker workflows
+
+## 🗂️ LEGACY WEB ARCHITECTURE (COMPLETED BUT PIVOTED)
+
+*Original web-based architecture (M1/M2 completed successfully):*
+- Vanilla JavaScript frontend (✅ completed)
+- Netlify Functions backend (✅ completed)
+- FFmpeg server-side processing (✅ completed)
+- **LIMITATION**: 6MB request limit made real-world use impossible
 
 ---
 
 ## 📒 CHANGELOG (REVERSE CHRONOLOGICAL)
+
+### 2025-01-17 - 🎉 M1: Mac App Skeleton Completed ✅
+- **CREATED**: Complete Xcode project structure with SwiftUI
+- **BUILT**: Beautiful drag & drop interface with macOS materials (.ultraThinMaterial)
+- **IMPLEMENTED**: Combined UploadProcessingView with cinematic design
+- **ADDED**: Frame model struct with timestamp formatting
+- **CREATED**: ResultsView with grid foundation and hover effects
+- **FEATURES**: File validation, progress tracking, sample frame generation
+- **DESIGN**: CleanMyMac X inspired drop zone with premium frosted glass feel
+- **READY**: For M2 FFmpeg integration
+
+### 2025-01-17 - Mac App Requirements Finalized ✅
+- **TARGET**: macOS 12+ (Monterey) for modern SwiftUI features
+- **DISTRIBUTION**: Local development first, later explore direct download + Mac App Store
+- **APP NAME**: FRAMESHIFT (placeholder, will change later)
+- **FFMPEG**: Bundle with app for out-of-box experience (no user setup required)
+- **READY**: All requirements clarified, ready to start M1 Mac app skeleton
+
+### 2025-01-17 - 🚀 MAJOR ARCHITECTURE PIVOT: Web to Native Mac App
+- **DISCOVERY**: Netlify Functions have 6MB request limit (our 87MB video = impossible)
+- **DECISION**: Pivot to native Mac app for superior filmmaker experience
+- **BENEFITS**: No file size limits, instant processing, true privacy, native performance
+- **TARGET**: Filmmakers predominantly on Macs, professional tool expectations
+- **WEB WORK**: M1/M2 completed successfully but architecture fundamentally limited
 
 ### 2025-01-17 - Deployment Fix 🔧
 - **FIXED**: Moved multiparty dependency from netlify/functions/package.json to root package.json
@@ -174,16 +208,31 @@
 
 ## 📌 MILESTONE COMMITS
 
+### 🕸️ WEB-BASED MILESTONES (COMPLETED BUT PIVOTED)
 - **M1**: Project skeleton scaffolded *(✅ COMPLETED)*
 - **M2**: Basic upload + processing pipeline working *(✅ COMPLETED)*
-- **M3**: Full MVP with UI polish *(pending)*
-- **M4**: Production-ready with error handling *(pending)*
+- **PIVOT**: Discovered 6MB limit, architecture fundamentally limited
+
+### 🖥️ NATIVE MAC APP MILESTONES (NEW ROADMAP)
+- **M1**: Mac app skeleton with SwiftUI *(✅ COMPLETED)*
+- **M2**: File selection and basic FFmpeg integration *(pending)*
+- **M3**: Frame extraction and grid display *(pending)*
+- **M4**: Offset feature and export functionality *(pending)*
+- **M5**: UI polish and App Store preparation *(pending)*
 
 ---
 
 ## 📌 OPEN QUESTIONS
 
-*(No open questions - all clarifications received)*
+### 🖥️ MAC APP REQUIREMENTS *(ANSWERED)*
+- **Minimum macOS version**: macOS 12+ *(✅ CONFIRMED)*
+- **Distribution method**: Local development initially, later explore both direct download and Mac App Store *(✅ CONFIRMED)*
+- **App name**: FRAMESHIFT for now, will change later *(✅ CONFIRMED)*
+- **FFmpeg approach**: Bundle with app for out-of-box experience *(✅ CONFIRMED)*
+
+### 🎯 FUTURE DECISIONS
+- **Final app name**: To be decided later
+- **Distribution strategy**: Direct download vs Mac App Store (evaluate both)
 
 ---
 
