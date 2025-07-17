@@ -14,6 +14,8 @@
 		2A3B6F8A2B5A1B5000F2E7A3 /* Frame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3B6F892B5A1B5000F2E7A3 /* Frame.swift */; };
 		2A3B6F8C2B5A1B6000F2E7A3 /* UploadProcessingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3B6F8B2B5A1B6000F2E7A3 /* UploadProcessingView.swift */; };
 		2A3B6F8E2B5A1B7000F2E7A3 /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3B6F8D2B5A1B7000F2E7A3 /* ResultsView.swift */; };
+		2A3B6F922B5A1BA000F2E7A3 /* ffmpeg in Resources */ = {isa = PBXBuildFile; fileRef = 2A3B6F912B5A1BA000F2E7A3 /* ffmpeg */; };
+		2A3B6F942B5A1BB000F2E7A3 /* FFmpegProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3B6F932B5A1BB000F2E7A3 /* FFmpegProcessor.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +29,8 @@
 		2A3B6F8B2B5A1B6000F2E7A3 /* UploadProcessingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadProcessingView.swift; sourceTree = "<group>"; };
 		2A3B6F8D2B5A1B7000F2E7A3 /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
 		2A3B6F8F2B5A1B8000F2E7A3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2A3B6F912B5A1BA000F2E7A3 /* ffmpeg */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = ffmpeg; sourceTree = "<group>"; };
+		2A3B6F932B5A1BB000F2E7A3 /* FFmpegProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFmpegProcessor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,8 +65,10 @@
 			children = (
 				2A3B6F7A2B5A1B2C00F2E7A3 /* FRAMESHIFTApp.swift */,
 				2A3B6F7C2B5A1B2C00F2E7A3 /* ContentView.swift */,
+				2A3B6F932B5A1BB000F2E7A3 /* FFmpegProcessor.swift */,
 				2A3B6F902B5A1B9000F2E7A3 /* Views */,
 				2A3B6F912B5A1B9700F2E7A3 /* Models */,
+				2A3B6F952B5A1BC000F2E7A3 /* Resources */,
 				2A3B6F7E2B5A1B2E00F2E7A3 /* Assets.xcassets */,
 				2A3B6F8F2B5A1B8000F2E7A3 /* Info.plist */,
 				2A3B6F802B5A1B2E00F2E7A3 /* FRAMESHIFT.entitlements */,
@@ -94,6 +100,14 @@
 				2A3B6F892B5A1B5000F2E7A3 /* Frame.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		2A3B6F952B5A1BC000F2E7A3 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				2A3B6F912B5A1BA000F2E7A3 /* ffmpeg */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -156,6 +170,7 @@
 			files = (
 				2A3B6F832B5A1B2E00F2E7A3 /* Preview Assets.xcassets in Resources */,
 				2A3B6F7F2B5A1B2E00F2E7A3 /* Assets.xcassets in Resources */,
+				2A3B6F922B5A1BA000F2E7A3 /* ffmpeg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -171,6 +186,7 @@
 				2A3B6F7D2B5A1B2C00F2E7A3 /* ContentView.swift in Sources */,
 				2A3B6F8E2B5A1B7000F2E7A3 /* ResultsView.swift in Sources */,
 				2A3B6F7B2B5A1B2C00F2E7A3 /* FRAMESHIFTApp.swift in Sources */,
+				2A3B6F942B5A1BB000F2E7A3 /* FFmpegProcessor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

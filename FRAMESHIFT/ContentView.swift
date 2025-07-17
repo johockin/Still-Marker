@@ -21,6 +21,8 @@ class AppViewModel: ObservableObject {
     @Published var processingProgress: Double = 0.0
     @Published var processingMessage: String = ""
     
+    private let ffmpegProcessor = FFmpegProcessor()
+    
     func resetToUpload() {
         state = .upload
         selectedVideoURL = nil
@@ -36,47 +38,57 @@ class AppViewModel: ObservableObject {
         processingProgress = 0.0
         processingMessage = "Starting extraction..."
         
-        // TODO: M2 - Integrate FFmpeg processing
-        // For now, simulate processing
-        simulateProcessing()
+        // Process video with FFmpeg
+        Task {
+            await processVideoWithFFmpeg(videoURL: videoURL)
+        }
     }
     
-    private func simulateProcessing() {
-        // Simulate processing for M1 - replace with real FFmpeg in M2
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.processingProgress = 0.5
-            self.processingMessage = "Extracting frames..."
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                self.processingProgress = 1.0
-                self.processingMessage = "Complete!"
-                
-                // Create sample frames for M1
-                self.createSampleFrames()
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    self.state = .results
+    @MainActor
+    private func processVideoWithFFmpeg(videoURL: URL) async {
+        do {
+            let frames = try await ffmpegProcessor.extractFrames(
+                from: videoURL,
+                offset: Double(currentOffset),
+                interval: 3.0
+            ) { progress, message in
+                DispatchQueue.main.async {
+                    self.processingProgress = progress
+                    self.processingMessage = message
                 }
+            }
+            
+            // Update UI with extracted frames
+            self.extractedFrames = frames
+            
+            // Brief pause to show completion
+            try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            
+            self.state = .results
+            
+        } catch {
+            self.processingMessage = "Error: \(error.localizedDescription)"
+            self.processingProgress = 0.0
+            
+            // Show error for 3 seconds, then return to upload
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                self.resetToUpload()
             }
         }
     }
     
-    private func createSampleFrames() {
-        // Create sample frames for M1 skeleton
-        let sampleImage = NSImage(size: NSSize(width: 320, height: 180))
-        sampleImage.lockFocus()
-        NSColor.systemBlue.set()
-        NSBezierPath(rect: NSRect(x: 0, y: 0, width: 320, height: 180)).fill()
-        sampleImage.unlockFocus()
+    /// Re-extract frames with offset
+    func shiftOffset() {
+        guard let videoURL = selectedVideoURL else { return }
         
-        extractedFrames = [
-            Frame(timestamp: 0.0, image: sampleImage),
-            Frame(timestamp: 3.0, image: sampleImage),
-            Frame(timestamp: 6.0, image: sampleImage),
-            Frame(timestamp: 9.0, image: sampleImage),
-            Frame(timestamp: 12.0, image: sampleImage),
-            Frame(timestamp: 15.0, image: sampleImage)
-        ]
+        currentOffset += 1
+        state = .processing
+        processingProgress = 0.0
+        processingMessage = "Re-extracting with +\(currentOffset)s offset..."
+        
+        Task {
+            await processVideoWithFFmpeg(videoURL: videoURL)
+        }
     }
 }
 

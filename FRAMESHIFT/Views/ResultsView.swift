@@ -79,13 +79,12 @@ struct ResultsView: View {
             HStack(spacing: 12) {
                 // Offset control
                 Button(action: {
-                    // TODO: M2 - Implement offset functionality
-                    print("Shift +1s clicked")
+                    viewModel.shiftOffset()
                 }) {
                     HStack(spacing: 6) {
                         Image(systemName: "clock.arrow.circlepath")
                             .font(.system(size: 14))
-                        Text("Shift +1s")
+                        Text("Shift +\(viewModel.currentOffset + 1)s")
                             .font(.system(size: 14, weight: .medium))
                     }
                     .foregroundColor(.primary)
@@ -158,25 +157,13 @@ struct FrameCard: View {
                             )
                     )
                 
-                // Placeholder for frame image (M2 will have real images)
+                // Real frame image from video
                 Image(nsImage: frame.image)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipped()
                     .cornerRadius(8)
-                    .overlay(
-                        // Placeholder gradient for M1
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color.blue.opacity(0.6),
-                                Color.purple.opacity(0.4)
-                            ]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                        .cornerRadius(8)
-                    )
                 
                 // Hover overlay
                 if isHovered {

@@ -116,6 +116,17 @@
 
 ## 📒 CHANGELOG (REVERSE CHRONOLOGICAL)
 
+### 2025-01-17 - 🎉 M2: FFmpeg Integration Completed ✅
+- **BUNDLED**: FFmpeg binary (Intel, works on Apple Silicon via Rosetta)
+- **IMPLEMENTED**: FFmpegProcessor class with async frame extraction
+- **ADDED**: Real video processing at 3-second intervals with JPEG 95% quality
+- **INTEGRATED**: Progress tracking with detailed status messages
+- **WORKING**: Offset feature - "Shift +1s" button re-extracts with timestamp offset
+- **REPLACED**: Sample frames with real video frames from FFmpeg
+- **ADDED**: Comprehensive error handling for video processing failures
+- **ENTITLEMENTS**: Updated for sandbox compatibility with temporary file access
+- **READY**: For M3 export functionality and advanced features
+
 ### 2025-01-17 - 🎉 M1: Mac App Skeleton Completed ✅
 - **CREATED**: Complete Xcode project structure with SwiftUI
 - **BUILT**: Beautiful drag & drop interface with macOS materials (.ultraThinMaterial)
@@ -215,10 +226,10 @@
 
 ### 🖥️ NATIVE MAC APP MILESTONES (NEW ROADMAP)
 - **M1**: Mac app skeleton with SwiftUI *(✅ COMPLETED)*
-- **M2**: File selection and basic FFmpeg integration *(pending)*
-- **M3**: Frame extraction and grid display *(pending)*
-- **M4**: Offset feature and export functionality *(pending)*
-- **M5**: UI polish and App Store preparation *(pending)*
+- **M2**: FFmpeg integration and real frame extraction *(✅ COMPLETED)*
+- **M3**: Export functionality and advanced features *(pending)*
+- **M4**: UI polish and performance optimization *(pending)*
+- **M5**: App Store preparation and distribution *(pending)*
 
 ---
 
