@@ -74,10 +74,14 @@ class FrameShift {
         this.showProcessingSection();
         
         try {
+            this.updateProgress(10, 'Preparing video for upload...');
+            
             // Create FormData for upload
             const formData = new FormData();
             formData.append('video', file);
             formData.append('offset', this.currentOffset);
+
+            this.updateProgress(20, 'Uploading video...');
 
             // Call Netlify Function
             const response = await fetch('/.netlify/functions/process-video', {
@@ -85,17 +89,28 @@ class FrameShift {
                 body: formData
             });
 
+            this.updateProgress(40, 'Processing video...');
+
             if (!response.ok) {
-                throw new Error(`Processing failed: ${response.statusText}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `Processing failed: ${response.statusText}`);
             }
 
             const result = await response.json();
+            
+            if (!result.frames || result.frames.length === 0) {
+                throw new Error('No frames were extracted from the video');
+            }
+
+            this.updateProgress(90, 'Finalizing...');
             this.extractedFrames = result.frames;
-            this.displayResults();
+            
+            this.updateProgress(100, 'Complete!');
+            setTimeout(() => this.displayResults(), 500);
             
         } catch (error) {
             console.error('Error processing video:', error);
-            this.showError('Failed to process video. Please try again.');
+            this.showError(`Failed to process video: ${error.message}`);
         }
     }
 

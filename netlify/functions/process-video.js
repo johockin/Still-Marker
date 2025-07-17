@@ -1,6 +1,5 @@
 // FRAMESHIFT - Netlify Function for Video Processing
 
-// Dependencies managed by Netlify's build process
 const multiparty = require('multiparty');
 const fs = require('fs');
 const path = require('path');
@@ -11,22 +10,48 @@ exports.handler = async (event, context) => {
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            },
             body: JSON.stringify({ error: 'Method not allowed' })
         };
     }
 
+    // Handle CORS preflight
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            },
+            body: ''
+        };
+    }
+
     try {
-        // Parse multipart form data
-        const form = new multiparty.Form();
-        const { fields, files } = await parseForm(form, event);
+        console.log('Processing video upload...');
         
-        const videoFile = files.video[0];
-        const offset = parseInt(fields.offset?.[0] || '0', 10);
+        // Parse multipart form data from Netlify event
+        const { fields, files } = await parseMultipartData(event);
+        
+        const videoFile = files.video;
+        const offset = parseInt(fields.offset || '0', 10);
+        
+        console.log('Video file:', videoFile ? 'received' : 'missing');
+        console.log('Offset:', offset);
         
         // Validate video file
         if (!videoFile || !videoFile.path) {
             return {
                 statusCode: 400,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
                 body: JSON.stringify({ error: 'No video file provided' })
             };
         }
@@ -50,17 +75,72 @@ exports.handler = async (event, context) => {
         console.error('Error processing video:', error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: 'Internal server error' })
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            body: JSON.stringify({ 
+                error: 'Internal server error',
+                details: error.message 
+            })
         };
     }
 };
 
-function parseForm(form, event) {
+function parseMultipartData(event) {
     return new Promise((resolve, reject) => {
-        form.parse(event, (err, fields, files) => {
-            if (err) reject(err);
-            else resolve({ fields, files });
-        });
+        const form = new multiparty.Form();
+        
+        // Convert Netlify event to a format multiparty can handle
+        const req = {
+            method: event.httpMethod,
+            headers: event.headers,
+            body: event.body,
+            isBase64Encoded: event.isBase64Encoded
+        };
+        
+        // Create a temporary file for the request body
+        const tempFile = path.join('/tmp', `request-${Date.now()}.tmp`);
+        
+        try {
+            // Write the request body to a temporary file
+            const bodyBuffer = event.isBase64Encoded 
+                ? Buffer.from(event.body, 'base64')
+                : Buffer.from(event.body);
+            
+            fs.writeFileSync(tempFile, bodyBuffer);
+            
+            // Create a readable stream from the temp file
+            const stream = fs.createReadStream(tempFile);
+            stream.headers = event.headers;
+            
+            form.parse(stream, (err, fields, files) => {
+                // Clean up temp file
+                if (fs.existsSync(tempFile)) {
+                    fs.unlinkSync(tempFile);
+                }
+                
+                if (err) {
+                    reject(err);
+                } else {
+                    // Convert arrays to single values for easier access
+                    const processedFields = {};
+                    for (const [key, value] of Object.entries(fields)) {
+                        processedFields[key] = Array.isArray(value) ? value[0] : value;
+                    }
+                    
+                    const processedFiles = {};
+                    for (const [key, value] of Object.entries(files)) {
+                        processedFiles[key] = Array.isArray(value) ? value[0] : value;
+                    }
+                    
+                    resolve({ fields: processedFields, files: processedFiles });
+                }
+            });
+            
+        } catch (error) {
+            reject(error);
+        }
     });
 }
 

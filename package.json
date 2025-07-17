@@ -1,0 +1,9 @@
+{
+  "name": "frameshift",
+  "version": "1.0.0",
+  "description": "Extract high-quality still images from video files",
+  "dependencies": {
+    "multiparty": "^4.2.3"
+  },
+  "private": true
+}

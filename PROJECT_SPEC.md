@@ -106,6 +106,21 @@
 
 ## 📒 CHANGELOG (REVERSE CHRONOLOGICAL)
 
+### 2025-01-17 - Deployment Fix 🔧
+- **FIXED**: Moved multiparty dependency from netlify/functions/package.json to root package.json
+- **REASON**: Netlify requires dependencies in site's top-level package.json for function bundling
+- **UPDATED**: Architecture maintains frontend as pure vanilla (package.json only for functions)
+
+### 2025-01-17 - M2: Basic Upload + Processing Pipeline ✅
+- **IMPLEMENTED**: Fixed file upload to Netlify Function with proper multipart parsing
+- **IMPLEMENTED**: FFmpeg frame extraction at 3-second intervals
+- **IMPLEMENTED**: JPEG 95% quality output with base64 encoding
+- **IMPLEMENTED**: Progress tracking with detailed status messages
+- **IMPLEMENTED**: Comprehensive error handling for upload/processing failures
+- **IMPLEMENTED**: CORS headers for cross-origin requests
+- **ENHANCED**: Frontend validation and error display
+- **READY**: For deployment and testing on Netlify
+
 ### 2025-01-17 - Architecture Correction ⚠️
 - **FIXED**: Removed unnecessary package.json (violated vanilla JS requirement)
 - **FIXED**: Frontend now works by opening index.html directly in browser
@@ -136,33 +151,31 @@
 ## 🧱 ROADMAP & PIPELINE
 
 ### NOW
-- [ ] Get architecture approval from user + advisor
-- [ ] Set up basic project structure
-- [ ] Create minimal HTML interface
-- [ ] Set up Netlify Functions for FFmpeg processing
+- [ ] Deploy to Netlify and test M2 functionality
+- [ ] Test with various video formats/sizes
+- [ ] Verify frame extraction quality
 
 ### NEXT
-- [ ] Implement file upload with progress
-- [ ] Build frame extraction backend
-- [ ] Create download functionality
-- [ ] Add basic error handling
+- [ ] Polish UI styling (cinematic minimal aesthetic)
+- [ ] Add accessibility features
+- [ ] Performance optimization
+- [ ] Enhanced error messaging
 
 ### LATER
-- [ ] Polish UI with cinematic minimal design
-- [ ] Add accessibility features
-- [ ] Performance optimization pass
 - [ ] Browser compatibility testing
+- [ ] Multiple output formats (PNG option)
+- [ ] Scene detection for smart frame selection
 
 ### SOMEDAY
-- [ ] Multiple output formats (if requested)
 - [ ] Batch processing (if workflows demand it)
+- [ ] Advanced compression options
 
 ---
 
 ## 📌 MILESTONE COMMITS
 
 - **M1**: Project skeleton scaffolded *(✅ COMPLETED)*
-- **M2**: Basic upload + processing pipeline working *(pending)*
+- **M2**: Basic upload + processing pipeline working *(✅ COMPLETED)*
 - **M3**: Full MVP with UI polish *(pending)*
 - **M4**: Production-ready with error handling *(pending)*
 
