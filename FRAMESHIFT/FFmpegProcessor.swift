@@ -1,6 +1,6 @@
 //
 //  FFmpegProcessor.swift
-//  FRAMESHIFT
+//  Still Marker
 //
 //  Created by Claude Code on 2025-01-17.
 //
@@ -34,7 +34,7 @@ class FFmpegProcessor: ObservableObject {
         
         // Create temporary directory for frames
         let tempDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("frameshift-\(UUID().uuidString)")
+            .appendingPathComponent("stillmarker-\(UUID().uuidString)")
         
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
         

@@ -1,12 +1,12 @@
 # PROJECT_SPEC.md
 
-⚠️ This is the **living god file** for FRAMESHIFT. Every architectural decision, design tradeoff, and project evolution must be documented here. This file is the source of truth for all collaborators.
+⚠️ This is the **living god file** for Still Marker. Every architectural decision, design tradeoff, and project evolution must be documented here. This file is the source of truth for all collaborators.
 
 ---
 
 ## 🔰 PURPOSE OF THIS FILE
 
-- Serves as the **canonical source of truth** for the FRAMESHIFT project
+- Serves as the **canonical source of truth** for the Still Marker project
 - Evolves over time, **growing with every decision**, mistake, fix, or insight
 - **Future collaborators (human or AI)** must be able to read this file and understand how the project works, why it's built the way it is, and what to do next
 
@@ -33,7 +33,7 @@
 
 ## 🔍 LEVEL SET SUMMARY
 
-- **Project name**: FRAMESHIFT
+- **Project name**: Still Marker
 - **Purpose**: Lightweight web tool for filmmakers to extract high-quality still images from video files
 - **Audience / users**: Filmmakers who need to extract stills for marketing, thumbnails, archival, etc.
 - **Most important outcome**: **High quality image extraction** - getting video to render out images PROPERLY
@@ -84,8 +84,8 @@
   - *Rationale: Flexible distribution strategy, test both channels*
 - **Directory structure plan**:
   ```
-  FRAMESHIFT.xcodeproj/
-  ├── FRAMESHIFT/
+  Still Marker.xcodeproj/
+  ├── Still Marker/
   │   ├── ContentView.swift
   │   ├── VideoProcessor.swift
   │   ├── FrameExtractor.swift
@@ -140,7 +140,7 @@
 ### 2025-01-17 - Mac App Requirements Finalized ✅
 - **TARGET**: macOS 12+ (Monterey) for modern SwiftUI features
 - **DISTRIBUTION**: Local development first, later explore direct download + Mac App Store
-- **APP NAME**: FRAMESHIFT (placeholder, will change later)
+- **APP NAME**: Still Marker (placeholder, will change later)
 - **FFMPEG**: Bundle with app for out-of-box experience (no user setup required)
 - **READY**: All requirements clarified, ready to start M1 Mac app skeleton
 
@@ -238,11 +238,10 @@
 ### 🖥️ MAC APP REQUIREMENTS *(ANSWERED)*
 - **Minimum macOS version**: macOS 12+ *(✅ CONFIRMED)*
 - **Distribution method**: Local development initially, later explore both direct download and Mac App Store *(✅ CONFIRMED)*
-- **App name**: FRAMESHIFT for now, will change later *(✅ CONFIRMED)*
+- **App name**: Still Marker *(✅ CONFIRMED - Final name chosen for Chris Marker connection)*
 - **FFmpeg approach**: Bundle with app for out-of-box experience *(✅ CONFIRMED)*
 
 ### 🎯 FUTURE DECISIONS
-- **Final app name**: To be decided later
 - **Distribution strategy**: Direct download vs Mac App Store (evaluate both)
 
 ---

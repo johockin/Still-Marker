@@ -1,61 +1,32 @@
-# FRAMESHIFT
+# Still Marker
 
-A lightweight web tool for filmmakers to extract high-quality still images from video files.
+A native Mac app for filmmakers to extract high-quality still images from video files.
 
 ## Quick Start
 
-1. **Local Development:**
-   ```bash
-   # Simply open index.html in your browser
-   open index.html
-   ```
+1. **Build and Run in Xcode:**
+   - Open FRAMESHIFT.xcodeproj in Xcode
+   - Build and run (⌘R)
+   - Drag and drop a video file or click to browse
 
-2. **For Netlify Functions (deployment only):**
-   ```bash
-   # Netlify handles dependencies automatically
-   netlify dev  # if you have Netlify CLI installed
-   ```
-
-3. **Usage:**
-   - Upload a video file (up to 2GB)
+2. **Features:**
    - Extract frames at 3-second intervals
-   - Download individual frames or use offset feature
-
-## Features
-
-- **High-quality extraction**: JPEG at 95% quality
-- **Privacy-first**: Files processed and immediately deleted
-- **Simple interface**: Drag & drop or click to upload
-- **Offset feature**: Shift extraction timestamps by 1-second increments
-- **Fast processing**: Server-side FFmpeg for reliability
+   - High-quality JPEG output (95% quality)
+   - "Shift +1s" feature to re-extract with offset
+   - Export individual frames or all at once
+   - Beautiful cinematic minimal interface
 
 ## Tech Stack
 
-- **Frontend**: Pure vanilla JavaScript, HTML5, CSS3 (no build process)
-- **Backend**: Netlify Functions with FFmpeg
-- **Deployment**: Netlify
-- **Dependencies**: Zero for frontend, Netlify handles function dependencies
+- **Language**: Swift + SwiftUI
+- **Target**: macOS 12+ (Monterey)
+- **Video Processing**: Bundled FFmpeg binary
+- **Architecture**: Native Mac app with local processing
 
-## Project Structure
+## Privacy
 
-```
-/
-├── index.html              # Main application
-├── src/
-│   ├── js/main.js         # Application logic
-│   ├── css/styles.css     # Cinematic minimal styles
-│   └── assets/            # Static assets
-├── netlify/
-│   └── functions/
-│       └── process-video.js # Video processing function
-├── netlify.toml             # Deployment config only
-└── PROJECT_SPEC.md        # Complete project documentation
-```
+All processing happens locally on your Mac. Your videos never leave your computer.
 
 ## Development
 
 For complete project context, architecture decisions, and development workflow, see [PROJECT_SPEC.md](./PROJECT_SPEC.md).
-
-## Privacy
-
-Your footage is processed server-side and immediately deleted. No data is stored or tracked.

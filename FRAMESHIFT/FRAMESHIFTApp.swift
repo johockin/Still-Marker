@@ -1,6 +1,6 @@
 //
-//  FRAMESHIFTApp.swift
-//  FRAMESHIFT
+//  StillMarkerApp.swift
+//  Still Marker
 //
 //  Created by Claude Code on 2025-01-17.
 //
@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct FRAMESHIFTApp: App {
+struct StillMarkerApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

@@ -1,6 +1,6 @@
 //
 //  UploadProcessingView.swift
-//  FRAMESHIFT
+//  Still Marker
 //
 //  Created by Claude Code on 2025-01-17.
 //
@@ -44,10 +44,10 @@ struct UploadProcessingView: View {
         VStack(spacing: 40) {
             // App Title
             VStack(spacing: 16) {
-                Text("FRAMESHIFT")
+                Text("STILL MARKER")
                     .font(.system(size: 48, weight: .ultraLight, design: .default))
                     .foregroundColor(.primary)
-                    .letterSpacing(4)
+                    .kerning(4)
                 
                 Text("Extract high-quality stills from video")
                     .font(.system(size: 18, weight: .light))

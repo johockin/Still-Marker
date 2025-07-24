@@ -1,6 +1,6 @@
 //
 //  ResultsView.swift
-//  FRAMESHIFT
+//  Still Marker
 //
 //  Created by Claude Code on 2025-01-17.
 //
