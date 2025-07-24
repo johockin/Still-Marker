@@ -116,6 +116,14 @@
 
 ## 📒 CHANGELOG (REVERSE CHRONOLOGICAL)
 
+### 2025-01-24 - ✨ App Renamed to Still Marker ✅
+- **RENAMED**: App from FRAMESHIFT to Still Marker (Chris Marker reference)
+- **UPDATED**: Bundle identifier to com.johnnyhockin.stillmarker
+- **UPDATED**: All code references, comments, and UI text
+- **CLEANED**: Removed all obsolete web version files (index.html, netlify/, src/, etc.)
+- **PRESERVED**: Project history and architecture pivot documentation
+- **COMMITS**: Two clean commits pushed with full rename and cleanup
+
 ### 2025-01-17 - 🎉 M2: FFmpeg Integration Completed ✅
 - **BUNDLED**: FFmpeg binary (Intel, works on Apple Silicon via Rosetta)
 - **IMPLEMENTED**: FFmpegProcessor class with async frame extraction
