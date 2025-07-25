@@ -341,14 +341,17 @@ struct ResultsView: View {
         }
         formatSelector.selectItem(at: ExportFormat.allCases.firstIndex(of: selectedExportFormat) ?? 0)
         
-        let accessoryView = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 30))
+        let accessoryView = NSView(frame: NSRect(x: 0, y: 0, width: 300, height: 40))
         let label = NSTextField(labelWithString: "Export Format:")
-        label.frame = NSRect(x: 0, y: 5, width: 100, height: 20)
-        formatSelector.frame = NSRect(x: 110, y: 0, width: 90, height: 30)
+        label.frame = NSRect(x: 0, y: 10, width: 100, height: 20)
+        formatSelector.frame = NSRect(x: 110, y: 5, width: 180, height: 30)
         
         accessoryView.addSubview(label)
         accessoryView.addSubview(formatSelector)
         openPanel.accessoryView = accessoryView
+        
+        // Ensure options are always visible
+        openPanel.isAccessoryViewDisclosed = true
         
         openPanel.begin { response in
             if response == .OK, let folderURL = openPanel.url {
@@ -359,6 +362,9 @@ struct ResultsView: View {
     }
     
     private func performBatchExport(to folderURL: URL, format: ExportFormat) {
+        // Show immediate feedback that export started
+        showToast(message: "Exporting \(viewModel.extractedFrames.count) frames...", type: .success)
+        
         DispatchQueue.global(qos: .userInitiated).async {
             var successCount = 0
             var errorCount = 0
@@ -387,9 +393,9 @@ struct ResultsView: View {
             
             DispatchQueue.main.async {
                 if errorCount == 0 {
-                    self.showToast(message: "Successfully exported \(successCount) frames", type: .success)
+                    self.showToastLong(message: "✅ Successfully exported \(successCount) frames to \(folderURL.lastPathComponent)", type: .success)
                 } else {
-                    self.showToast(message: "Export completed with \(successCount) successes, \(errorCount) errors", type: .error)
+                    self.showToastLong(message: "Export completed: \(successCount) successes, \(errorCount) errors", type: .error)
                 }
             }
         }
@@ -519,6 +525,22 @@ struct ResultsView: View {
         
         // Auto-hide after 3 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                showToast = false
+            }
+        }
+    }
+    
+    private func showToastLong(message: String, type: ToastType) {
+        toastMessage = message
+        toastType = type
+        
+        withAnimation(.easeInOut(duration: 0.3)) {
+            showToast = true
+        }
+        
+        // Auto-hide after 5 seconds for batch operations
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
             withAnimation(.easeInOut(duration: 0.3)) {
                 showToast = false
             }
