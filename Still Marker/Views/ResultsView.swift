@@ -656,21 +656,20 @@ struct ResultsView: View {
             }
             .padding()
         }
-        // TEMP: Commented out KeyEventHandlingView to isolate hover issue
-        // .background(
-        //     // Keyboard event capture overlay
-        //     KeyEventHandlingView(
-        //         onLeftArrow: navigateToPreviousFrame,
-        //         onRightArrow: navigateToNextFrame,
-        //         onEscape: {
-        //             withAnimation(.easeInOut(duration: 0.3)) {
-        //                 resetRefinement()
-        //                 viewMode = .grid
-        //             }
-        //         }
-        //     )
-        //     .frame(maxWidth: .infinity, maxHeight: .infinity)
-        // )
+        .background(
+            // Keyboard event capture overlay
+            KeyEventHandlingView(
+                onLeftArrow: navigateToPreviousFrame,
+                onRightArrow: navigateToNextFrame,
+                onEscape: {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        resetRefinement()
+                        viewMode = .grid
+                    }
+                }
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        )
     }
     
     // MARK: - Navigation Functions
