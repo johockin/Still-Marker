@@ -71,6 +71,11 @@ struct ResultsView: View {
     @State private var selectedExportFormat: ExportFormat = .png
     @State private var currentFrameIndex: Int = 0
     
+    // Frame refinement state
+    @State private var refinedTimestamp: Double? = nil
+    @State private var refinedFrame: Frame? = nil
+    @State private var isRefining: Bool = false
+    
     // Toast notification state
     @State private var toastMessage: String = ""
     @State private var toastType: ToastType = .success
@@ -402,11 +407,15 @@ struct ResultsView: View {
     }
     
     private func framePreviewView(frame: Frame) -> some View {
-        VStack {
+        let displayFrame = refinedFrame ?? frame
+        let displayTimestamp = refinedTimestamp ?? frame.timestamp
+        
+        return VStack {
             // Back button
             HStack {
                 Button("← Back to Grid") {
                     withAnimation(.easeInOut(duration: 0.3)) {
+                        resetRefinement()
                         viewMode = .grid
                     }
                 }
@@ -420,12 +429,6 @@ struct ResultsView: View {
                     .foregroundColor(.white)
                 
                 Spacer()
-                
-                Button("Export") {
-                    exportFrame(frame)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .foregroundColor(.blue)
             }
             .padding()
             
@@ -448,10 +451,24 @@ struct ResultsView: View {
                 
                 Spacer()
                 
-                Image(nsImage: frame.image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // Frame image with refinement overlay
+                ZStack {
+                    Image(nsImage: displayFrame.image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    
+                    // Loading overlay for refinement
+                    if isRefining {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.black.opacity(0.6))
+                            .overlay(
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(1.5)
+                            )
+                    }
+                }
                 
                 Spacer()
                 
@@ -469,13 +486,104 @@ struct ResultsView: View {
                 .opacity(currentFrameIndex >= viewModel.extractedFrames.count - 1 ? 0.3 : 1.0)
             }
             
+            // Frame refinement and export controls
+            VStack(spacing: 16) {
+                // Refinement controls: << < timecode > >>
+                HStack(spacing: 12) {
+                    // << Coarse backward (0.5s)
+                    Button(action: refineBackwardCoarse) {
+                        Image(systemName: "chevron.left.2")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(Color.blue.opacity(0.7))
+                            )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .disabled(isRefining || displayTimestamp <= 0)
+                    .opacity(isRefining || displayTimestamp <= 0 ? 0.5 : 1.0)
+                    
+                    // < Fine backward (1 frame)
+                    Button(action: refineBackwardFine) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(Color.blue.opacity(0.5))
+                            )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .disabled(isRefining || displayTimestamp <= 0)
+                    .opacity(isRefining || displayTimestamp <= 0 ? 0.5 : 1.0)
+                    
+                    // Current timestamp display
+                    VStack(spacing: 4) {
+                        Text(refinedTimestamp != nil ? "Refined" : "Original")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.6))
+                        
+                        Text(Frame.formatTimestamp(displayTimestamp))
+                            .font(.system(size: 16, weight: .semibold, design: .monospaced))
+                            .foregroundColor(refinedTimestamp != nil ? .blue : .white)
+                            .padding(.horizontal, 12)
+                    }
+                    
+                    // > Fine forward (1 frame)
+                    Button(action: refineForwardFine) {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(Color.blue.opacity(0.5))
+                            )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .disabled(isRefining)
+                    .opacity(isRefining ? 0.5 : 1.0)
+                    
+                    // >> Coarse forward (0.5s)
+                    Button(action: refineForwardCoarse) {
+                        Image(systemName: "chevron.right.2")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(Color.blue.opacity(0.7))
+                            )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .disabled(isRefining)
+                    .opacity(isRefining ? 0.5 : 1.0)
+                }
+                
+                // Export button
+                Button("Export This Frame") {
+                    exportFrame(displayFrame)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .foregroundColor(.white)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 20)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.green.opacity(0.8))
+                )
+                .disabled(isRefining)
+                .opacity(isRefining ? 0.5 : 1.0)
+            }
+            .padding(.vertical, 16)
+            
             Spacer()
             
             // Frame info with navigation
             VStack(spacing: 8) {
-                Text("Frame at \(frame.formattedTimestamp)")
-                    .foregroundColor(.white.opacity(0.7))
-                
                 Text("\(currentFrameIndex + 1) of \(viewModel.extractedFrames.count)")
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.5))
@@ -489,6 +597,7 @@ struct ResultsView: View {
                 onRightArrow: navigateToNextFrame,
                 onEscape: {
                     withAnimation(.easeInOut(duration: 0.3)) {
+                        resetRefinement()
                         viewMode = .grid
                     }
                 }
@@ -504,6 +613,7 @@ struct ResultsView: View {
         currentFrameIndex -= 1
         previewFrame = viewModel.extractedFrames[currentFrameIndex]
         selectedFrame = previewFrame
+        resetRefinement()
     }
     
     private func navigateToNextFrame() {
@@ -511,6 +621,89 @@ struct ResultsView: View {
         currentFrameIndex += 1
         previewFrame = viewModel.extractedFrames[currentFrameIndex]
         selectedFrame = previewFrame
+        resetRefinement()
+    }
+    
+    // MARK: - Frame Refinement Functions
+    
+    private func refineBackwardCoarse() {
+        refineByAmount(-0.5) // Back 0.5 seconds
+    }
+    
+    private func refineBackwardFine() {
+        refineByAmount(-0.033) // Back 1 frame (assuming ~30fps)
+    }
+    
+    private func refineForwardFine() {
+        refineByAmount(0.033) // Forward 1 frame (assuming ~30fps)
+    }
+    
+    private func refineForwardCoarse() {
+        refineByAmount(0.5) // Forward 0.5 seconds
+    }
+    
+    private func refineByAmount(_ seconds: Double) {
+        guard let frame = previewFrame,
+              let videoURL = viewModel.selectedVideoURL else { return }
+        
+        let currentTimestamp = refinedTimestamp ?? frame.timestamp
+        let newTimestamp = max(0, currentTimestamp + seconds)
+        
+        if newTimestamp != currentTimestamp {
+            refineToTimestamp(newTimestamp, videoURL: videoURL)
+        }
+    }
+    
+    private func refineToTimestamp(_ timestamp: Double, videoURL: URL) {
+        isRefining = true
+        
+        Task {
+            do {
+                let refinedImage = try await extractFrameAtTimestamp(timestamp, from: videoURL)
+                
+                await MainActor.run {
+                    refinedTimestamp = timestamp
+                    refinedFrame = Frame(
+                        id: UUID(),
+                        timestamp: timestamp,
+                        image: refinedImage
+                    )
+                    isRefining = false
+                }
+            } catch {
+                await MainActor.run {
+                    showToast(message: "Failed to refine frame: \(error.localizedDescription)", type: .error)
+                    isRefining = false
+                }
+            }
+        }
+    }
+    
+    private func resetRefinement() {
+        refinedTimestamp = nil
+        refinedFrame = nil
+        isRefining = false
+    }
+    
+    private func extractFrameAtTimestamp(_ timestamp: Double, from videoURL: URL) async throws -> NSImage {
+        // Create temporary file for the extracted frame
+        let tempDir = FileManager.default.temporaryDirectory
+        let tempFile = tempDir.appendingPathComponent("refined_frame_\(UUID().uuidString).jpg")
+        
+        defer {
+            try? FileManager.default.removeItem(at: tempFile)
+        }
+        
+        // Use FFmpeg to extract single frame
+        let ffmpegProcessor = FFmpegProcessor()
+        try await ffmpegProcessor.extractSingleFrame(from: videoURL, at: timestamp, outputURL: tempFile)
+        
+        // Load the image
+        guard let image = NSImage(contentsOf: tempFile) else {
+            throw NSError(domain: "FrameRefinement", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to load refined frame"])
+        }
+        
+        return image
     }
     
     // MARK: - Toast Notification Helpers
