@@ -13,6 +13,7 @@ A native Mac app for filmmakers to extract high-quality still images from video 
    - Extract frames at 3-second intervals
    - High-quality JPEG output (95% quality)
    - "Shift +1s" feature to re-extract with offset
+   - Frame refinement with `<< < > >>` controls (±0.5s and ±1 frame)
    - Export individual frames or all at once with format selection
    - Keyboard navigation (arrow keys, ESC) and click-to-zoom
    - Toast notifications for export feedback

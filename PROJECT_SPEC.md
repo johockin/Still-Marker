@@ -160,6 +160,16 @@ Think of the interface as a digital light table where a film essayist might exam
 
 ## 📒 CHANGELOG (REVERSE CHRONOLOGICAL)
 
+### 2025-01-25 - ✨ M4.9: Simplified Frame Refinement Complete ✅
+- **IMPLEMENTED**: 4-button refinement controls: `<< < timecode > >>`
+- **ADDED**: Coarse navigation (±0.5s) with double chevrons (`<<` `>>`)
+- **ADDED**: Fine navigation (±1 frame ~0.033s) with single chevrons (`<` `>`)
+- **ENHANCED**: Visual distinction - darker blue for coarse, lighter for fine
+- **IMPROVED**: Moved Export button to control panel for better prominence
+- **ENHANCED**: Timestamp display with "Original" vs "Refined" labels
+- **SIMPLIFIED**: Preview-only refinement (no persistence complexity)
+- **POLISHED**: Clean reset when navigating or returning to grid
+
 ### 2025-01-25 - 🔧 M4.8: Export All UX Improvements Complete ✅
 - **ENHANCED**: Export All feedback with immediate "Exporting..." notification
 - **IMPROVED**: Completion feedback with ✅ checkmark and destination folder name
@@ -369,16 +379,23 @@ Think of the interface as a digital light table where a film essayist might exam
 - [x] **Improved toast notifications** (longer duration for batch operations)
 - [x] **Professional export workflow** (clear feedback at every step)
 
-### M4.9: Simplified Frame Refinement *(CURRENT)*
-**Target**: Add basic frame refinement with 4-button navigation in preview
+### M4.9: Simplified Frame Refinement *(✅ COMPLETED)*
+- [x] **4-button refinement controls** (`<< < timecode > >>` layout)
+- [x] **Coarse navigation** (±0.5s with double chevrons)
+- [x] **Fine navigation** (±1 frame with single chevrons)
+- [x] **Visual distinction** (darker/lighter blue for coarse/fine)
+- [x] **Enhanced control panel** (moved Export button for prominence)
+- [x] **Preview-only refinement** (no persistence complexity)
 
-- [ ] **Add refinement buttons below frame preview** (←1s, ◀, ▶, →1s)
-- [ ] **Implement time-based navigation** (±1 second jumps)
-- [ ] **Implement frame-based navigation** (previous/next extracted frames)
-- [ ] **Frame refinement persistence** (changes stick when returning to grid)
-- [ ] **Simple UX with clear button labeling** for filmmaker workflow
+### M5.0: Enhanced File Naming *(CURRENT)*
+**Target**: Improve export file naming with source video context
 
-### M5: Visual Identity & Dark Mode *(AESTHETIC TRANSFORMATION)*
+- [ ] **Add source video filename prefix** to exported frames
+- [ ] **Format**: `[video_name]_frame_[timestamp].[ext]`
+- [ ] **Example**: `interview_final_v2_frame_00-03-2.png`
+- [ ] **Benefits**: Better organization, context preservation, multi-video workflows
+
+### M5.1: Visual Identity & Dark Mode *(AESTHETIC TRANSFORMATION)*
 **Target**: Chris Marker aesthetic - contemplative, precise, beautiful
 
 #### **Complete Visual Overhaul**
