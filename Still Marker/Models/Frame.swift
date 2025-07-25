@@ -21,16 +21,12 @@ struct Frame: Identifiable, Hashable {
         self.formattedTimestamp = Frame.formatTimestamp(timestamp)
     }
     
-    /// Format timestamp for display (e.g., "1:23.5")
+    /// Format timestamp for display (e.g., "00:03.2")
     private static func formatTimestamp(_ timestamp: Double) -> String {
         let minutes = Int(timestamp / 60)
         let seconds = timestamp.truncatingRemainder(dividingBy: 60)
         
-        if minutes > 0 {
-            return String(format: "%d:%04.1f", minutes, seconds)
-        } else {
-            return String(format: "%.1fs", seconds)
-        }
+        return String(format: "%02d:%04.1f", minutes, seconds)
     }
     
     /// Hash for Hashable conformance
