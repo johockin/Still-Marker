@@ -49,8 +49,7 @@ class AppViewModel: ObservableObject {
         do {
             let frames = try await ffmpegProcessor.extractFrames(
                 from: videoURL,
-                offset: Double(currentOffset),
-                interval: 3.0
+                offset: Double(currentOffset)
             ) { progress, message in
                 DispatchQueue.main.async {
                     self.processingProgress = progress
@@ -96,16 +95,12 @@ struct ContentView: View {
     @StateObject private var viewModel = AppViewModel()
     
     var body: some View {
-        NavigationView {
-            switch viewModel.state {
-            case .upload, .processing:
-                UploadProcessingView(viewModel: viewModel)
-            case .results:
-                ResultsView(viewModel: viewModel)
-            }
+        switch viewModel.state {
+        case .upload, .processing:
+            UploadProcessingView(viewModel: viewModel)
+        case .results:
+            ResultsView(viewModel: viewModel)
         }
-        .frame(minWidth: 800, minHeight: 600)
-        .background(Color.clear)
     }
 }
 

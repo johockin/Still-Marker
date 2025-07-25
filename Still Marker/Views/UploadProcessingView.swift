@@ -15,11 +15,11 @@ struct UploadProcessingView: View {
     
     var body: some View {
         ZStack {
-            // Background with subtle gradient
+            // Background with cinematic lighting - lifted blacks
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color.black.opacity(0.02),
-                    Color.black.opacity(0.05)
+                    Color(red: 0.1, green: 0.1, blue: 0.11).opacity(0.02), // #1a1a1d lifted black
+                    Color(red: 0.1, green: 0.1, blue: 0.11).opacity(0.05)
                 ]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -42,131 +42,94 @@ struct UploadProcessingView: View {
     
     private var uploadView: some View {
         VStack(spacing: 40) {
-            // App Title
-            VStack(spacing: 16) {
-                Text("STILL MARKER")
-                    .font(.system(size: 48, weight: .ultraLight, design: .default))
-                    .foregroundColor(.primary)
-                    .kerning(4)
+            // App Title - Architectural Element (Chris Marker inspired)
+            VStack(spacing: 24) {
+                // S T I L L   M A R K E R - extreme letter spacing for architectural feel
+                Text("S T I L L   M A R K E R")
+                    .font(.system(size: 36, weight: .ultraLight, design: .monospaced))
+                    .foregroundColor(.primary.opacity(0.9)) // Hierarchy through opacity
+                    .kerning(8)
+                    .tracking(4)
                 
                 Text("Extract high-quality stills from video")
-                    .font(.system(size: 18, weight: .light))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 16, weight: .light, design: .default))
+                    .foregroundColor(.secondary.opacity(0.7)) // Documentary typewriter aesthetic
                     .multilineTextAlignment(.center)
             }
-            .padding(.top, 60)
+            .padding(.top, 80)
             
             // Drop Zone - The Star of the Show
-            VStack(spacing: 24) {
-                dropZone
-                
-                // Or divider
-                HStack {
-                    Rectangle()
-                        .fill(Color.primary.opacity(0.1))
-                        .frame(height: 1)
-                    
-                    Text("or")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 16)
-                    
-                    Rectangle()
-                        .fill(Color.primary.opacity(0.1))
-                        .frame(height: 1)
-                }
-                .padding(.horizontal, 60)
-                
-                // Browse Button
-                Button(action: { showingFilePicker = true }) {
-                    Text("Browse for video file")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.primary)
-                        .padding(.vertical, 12)
-                        .padding(.horizontal, 24)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.primary.opacity(0.05))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.primary.opacity(0.1), lineWidth: 1)
-                                )
-                        )
-                }
-                .buttonStyle(PlainButtonStyle())
-                .onHover { hovering in
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        // Hover effect handled by SwiftUI
-                    }
-                }
-            }
+            dropZone
             
             Spacer()
             
-            // Privacy Notice
-            HStack(spacing: 8) {
-                Image(systemName: "lock.shield")
-                    .foregroundColor(.secondary)
-                    .font(.system(size: 14))
+            // Privacy Notice - Clean and minimal
+            HStack(spacing: 10) {
+                Image(systemName: "lock.shield.fill")
+                    .foregroundColor(.secondary.opacity(0.7))
+                    .font(.system(size: 16, weight: .medium))
                 
                 Text("Your videos are processed locally and never leave your Mac")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 14, weight: .medium, design: .default))
+                    .foregroundColor(.secondary.opacity(0.7))
             }
-            .padding(.bottom, 40)
+            .padding(.bottom, 60)
         }
         .padding(.horizontal, 80)
     }
     
     private var dropZone: some View {
-        ZStack {
-            // Frosted glass background using macOS materials
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(
-                            isDragOver ? Color.accentColor : Color.primary.opacity(0.1),
-                            lineWidth: isDragOver ? 2 : 1
-                        )
-                )
-                .shadow(
-                    color: Color.black.opacity(0.1),
-                    radius: isDragOver ? 20 : 10,
-                    x: 0,
-                    y: isDragOver ? 10 : 5
-                )
-            
-            // Content
-            VStack(spacing: 24) {
-                // Icon
-                ZStack {
-                    Circle()
-                        .fill(Color.accentColor.opacity(0.1))
-                        .frame(width: 80, height: 80)
-                    
-                    Image(systemName: "film")
-                        .font(.system(size: 32, weight: .light))
-                        .foregroundColor(.accentColor)
-                }
-                .scaleEffect(isDragOver ? 1.1 : 1.0)
-                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isDragOver)
+        Button(action: { showingFilePicker = true }) {
+            ZStack {
+                // Frosted glass background using macOS materials
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(
+                                isDragOver ? Color.accentColor : Color.primary.opacity(0.1),
+                                lineWidth: isDragOver ? 2 : 1
+                            )
+                    )
+                    .shadow(
+                        color: Color.black.opacity(0.1),
+                        radius: isDragOver ? 20 : 10,
+                        x: 0,
+                        y: isDragOver ? 10 : 5
+                    )
                 
-                // Text
-                VStack(spacing: 8) {
-                    Text(isDragOver ? "Drop your video here" : "Drag video file here")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(.primary)
+                // Content
+                VStack(spacing: 24) {
+                    // Icon
+                    ZStack {
+                        Circle()
+                            .fill(Color.accentColor.opacity(0.1))
+                            .frame(width: 80, height: 80)
+                        
+                        Image(systemName: "film")
+                            .font(.system(size: 32, weight: .light))
+                            .foregroundColor(.accentColor)
+                    }
+                    .scaleEffect(isDragOver ? 1.1 : 1.0)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isDragOver)
                     
-                    Text("Up to 10GB+ supported • All formats")
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(.secondary)
+                    // Text
+                    VStack(spacing: 8) {
+                        Text(isDragOver ? "Drop your video here" : "Drag or click to select video")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(.primary)
+                        
+                        Text("Up to 10GB+ supported • All formats")
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(.secondary)
+                    }
                 }
+                .padding(.vertical, 60)
+                .scaleEffect(isDragOver ? 1.02 : 1.0)
+                .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isDragOver)
             }
-            .padding(.vertical, 60)
-            .scaleEffect(isDragOver ? 1.02 : 1.0)
-            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isDragOver)
         }
+        .buttonStyle(PlainButtonStyle())
         .frame(maxWidth: 480, maxHeight: 280)
         .onDrop(of: [.fileURL], isTargeted: $isDragOver) { providers in
             handleDrop(providers: providers)
@@ -211,7 +174,7 @@ struct UploadProcessingView: View {
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.secondary)
                     
-                    Text("Extracting frames at 3-second intervals")
+                    Text("Intelligently selecting optimal frames")
                         .font(.system(size: 12, weight: .regular))
                         .foregroundColor(.secondary)
                 }

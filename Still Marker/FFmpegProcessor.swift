@@ -7,19 +7,25 @@
 
 import Foundation
 import AppKit
+import AVFoundation
 
 class FFmpegProcessor: ObservableObject {
-    private var ffmpegPath: String {
+    private lazy var ffmpegPath: String = {
         guard let path = Bundle.main.path(forResource: "ffmpeg", ofType: nil) else {
             fatalError("FFmpeg binary not found in app bundle")
         }
         return path
+    }()
+    
+    /// Pre-warm FFmpeg path during initialization
+    init() {
+        // Access ffmpegPath to trigger lazy initialization
+        _ = ffmpegPath
     }
     
-    /// Extract frames from video at specified intervals
+    /// Extract frames from video using adaptive interval selection
     func extractFrames(from videoURL: URL, 
-                      offset: Double = 0.0, 
-                      interval: Double = 3.0,
+                      offset: Double = 0.0,
                       progressCallback: @escaping (Double, String) -> Void) async throws -> [Frame] {
         
         progressCallback(0.1, "Analyzing video...")
@@ -28,8 +34,13 @@ class FFmpegProcessor: ObservableObject {
         let duration = try await getVideoDuration(videoURL: videoURL)
         progressCallback(0.2, "Video duration: \(Int(duration))s")
         
-        // Calculate timestamps for frame extraction
-        let timestamps = calculateTimestamps(duration: duration, offset: offset, interval: interval)
+        // Calculate intelligent interval based on video duration
+        let adaptiveInterval = calculateAdaptiveInterval(duration: duration)
+        let estimatedFrames = Int(duration / adaptiveInterval)
+        progressCallback(0.25, "Optimized for \(estimatedFrames) frames every \(String(format: "%.1f", adaptiveInterval))s")
+        
+        // Calculate timestamps for frame extraction using adaptive interval
+        let timestamps = calculateTimestamps(duration: duration, offset: offset, interval: adaptiveInterval)
         progressCallback(0.3, "Extracting \(timestamps.count) frames...")
         
         // Create temporary directory for frames
@@ -75,72 +86,96 @@ class FFmpegProcessor: ObservableObject {
         return frames
     }
     
-    /// Get video duration using FFmpeg
+    /// Get video duration using AVFoundation (fast!)
     private func getVideoDuration(videoURL: URL) async throws -> Double {
-        let process = Process()
-        let pipe = Pipe()
+        let asset = AVAsset(url: videoURL)
         
-        process.executableURL = URL(fileURLWithPath: ffmpegPath)
-        process.arguments = [
-            "-v", "error",
-            "-show_entries", "format=duration",
-            "-of", "default=noprint_wrappers=1:nokey=1",
-            videoURL.path
-        ]
-        process.standardOutput = pipe
-        process.standardError = Pipe() // Suppress error output
-        
-        return try await withCheckedThrowingContinuation { continuation in
-            do {
-                try process.run()
-                
-                process.terminationHandler = { process in
-                    let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                    let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                    
-                    if process.terminationStatus == 0, let duration = Double(output) {
-                        continuation.resume(returning: duration)
-                    } else {
-                        continuation.resume(throwing: FFmpegError.invalidDuration)
-                    }
-                }
-            } catch {
-                continuation.resume(throwing: error)
-            }
+        do {
+            let duration = try await asset.load(.duration)
+            let durationSeconds = CMTimeGetSeconds(duration)
+            return durationSeconds
+        } catch {
+            print("❌ Failed to get duration via AVFoundation: \(error)")
+            throw FFmpegError.invalidDuration
         }
     }
     
+    /// Parse duration string in format HH:MM:SS.ss to seconds
+    private func parseDurationString(_ durationString: String) -> Double? {
+        let components = durationString.split(separator: ":")
+        guard components.count >= 3 else { return nil }
+        
+        guard let hours = Double(components[0]),
+              let minutes = Double(components[1]),
+              let seconds = Double(components[2]) else {
+            return nil
+        }
+        
+        return hours * 3600 + minutes * 60 + seconds
+    }
+    
     /// Extract a single frame at specified timestamp
-    private func extractSingleFrame(from videoURL: URL, at timestamp: Double, outputURL: URL) async throws {
+    func extractSingleFrame(from videoURL: URL, at timestamp: Double, outputURL: URL) async throws {
         let process = Process()
+        let errorPipe = Pipe()
         
         process.executableURL = URL(fileURLWithPath: ffmpegPath)
         process.arguments = [
+            "-ss", String(timestamp),  // FAST SEEK: Move -ss BEFORE -i for direct seeking
             "-i", videoURL.path,
-            "-ss", String(timestamp),
             "-vframes", "1",
             "-q:v", "2", // High quality JPEG (scale 2-31, lower is better)
             "-y", // Overwrite output file
             outputURL.path
         ]
         process.standardOutput = Pipe() // Suppress output
-        process.standardError = Pipe() // Suppress error output
+        process.standardError = errorPipe // Capture error output for debugging
         
         return try await withCheckedThrowingContinuation { continuation in
             do {
+                print("🚀 FFmpeg FAST-SEEK Command: \(ffmpegPath) -ss \(timestamp) -i \"\(videoURL.path)\" -vframes 1 -q:v 2 -y \"\(outputURL.path)\"")
                 try process.run()
                 
                 process.terminationHandler = { process in
                     if process.terminationStatus == 0 {
+                        print("✅ Frame extracted successfully at \(timestamp)s")
                         continuation.resume()
                     } else {
+                        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+                        let errorOutput = String(data: errorData, encoding: .utf8) ?? ""
+                        print("❌ Frame extraction failed at \(timestamp)s: \(errorOutput)")
                         continuation.resume(throwing: FFmpegError.frameExtractionFailed)
                     }
                 }
             } catch {
+                print("❌ Failed to run FFmpeg frame extraction: \(error)")
                 continuation.resume(throwing: error)
             }
         }
+    }
+    
+    /// Calculate adaptive interval based on video duration
+    /// Philosophy: ~30 frames per video for optimal coverage without overwhelming the user
+    private func calculateAdaptiveInterval(duration: Double) -> Double {
+        let targetFrames = 30.0
+        let maxFrames = 40.0
+        let minInterval = 0.33  // Don't extract more than 3 frames per second
+        
+        // Very short videos (<30s): every 1 second for granular coverage
+        if duration < 30 {
+            return 1.0
+        }
+        
+        // Medium videos (30s - 5min): aim for ~30 frames with dynamic interval
+        if duration <= 300 {  // 5 minutes
+            let calculatedInterval = duration / targetFrames
+            // Round to 1 decimal place for clean timestamps
+            return max(round(calculatedInterval * 10) / 10, minInterval)
+        }
+        
+        // Long videos (>5min): cap at 40 frames for performance
+        let calculatedInterval = duration / maxFrames
+        return max(round(calculatedInterval * 10) / 10, minInterval)
     }
     
     /// Calculate timestamps for frame extraction

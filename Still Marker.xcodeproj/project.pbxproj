@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2A3B6F7B2B5A1B2C00F2E7A3 /* FRAMESHIFTApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3B6F7A2B5A1B2C00F2E7A3 /* FRAMESHIFTApp.swift */; };
+		2A3B6F7B2B5A1B2C00F2E7A3 /* StillMarkerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3B6F7A2B5A1B2C00F2E7A3 /* StillMarkerApp.swift */; };
 		2A3B6F7D2B5A1B2C00F2E7A3 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3B6F7C2B5A1B2C00F2E7A3 /* ContentView.swift */; };
 		2A3B6F7F2B5A1B2E00F2E7A3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2A3B6F7E2B5A1B2E00F2E7A3 /* Assets.xcassets */; };
 		2A3B6F832B5A1B2E00F2E7A3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2A3B6F822B5A1B2E00F2E7A3 /* Preview Assets.xcassets */; };
@@ -19,11 +19,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2A3B6F772B5A1B2C00F2E7A3 /* FRAMESHIFT.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FRAMESHIFT.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		2A3B6F7A2B5A1B2C00F2E7A3 /* FRAMESHIFTApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FRAMESHIFTApp.swift; sourceTree = "<group>"; };
+		2A3B6F772B5A1B2C00F2E7A3 /* Still Marker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Still Marker.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2A3B6F7A2B5A1B2C00F2E7A3 /* StillMarkerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StillMarkerApp.swift; sourceTree = "<group>"; };
 		2A3B6F7C2B5A1B2C00F2E7A3 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		2A3B6F7E2B5A1B2E00F2E7A3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		2A3B6F802B5A1B2E00F2E7A3 /* FRAMESHIFT.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FRAMESHIFT.entitlements; sourceTree = "<group>"; };
+		2A3B6F802B5A1B2E00F2E7A3 /* Still Marker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Still Marker.entitlements"; sourceTree = "<group>"; };
 		2A3B6F822B5A1B2E00F2E7A3 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		2A3B6F892B5A1B5000F2E7A3 /* Frame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Frame.swift; sourceTree = "<group>"; };
 		2A3B6F8B2B5A1B6000F2E7A3 /* UploadProcessingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadProcessingView.swift; sourceTree = "<group>"; };
@@ -47,7 +47,7 @@
 		2A3B6F6E2B5A1B2C00F2E7A3 = {
 			isa = PBXGroup;
 			children = (
-				2A3B6F792B5A1B2C00F2E7A3 /* FRAMESHIFT */,
+				2A3B6F792B5A1B2C00F2E7A3 /* Still Marker */,
 				2A3B6F782B5A1B2C00F2E7A3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -55,15 +55,15 @@
 		2A3B6F782B5A1B2C00F2E7A3 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				2A3B6F772B5A1B2C00F2E7A3 /* FRAMESHIFT.app */,
+				2A3B6F772B5A1B2C00F2E7A3 /* Still Marker.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		2A3B6F792B5A1B2C00F2E7A3 /* FRAMESHIFT */ = {
+		2A3B6F792B5A1B2C00F2E7A3 /* Still Marker */ = {
 			isa = PBXGroup;
 			children = (
-				2A3B6F7A2B5A1B2C00F2E7A3 /* FRAMESHIFTApp.swift */,
+				2A3B6F7A2B5A1B2C00F2E7A3 /* StillMarkerApp.swift */,
 				2A3B6F7C2B5A1B2C00F2E7A3 /* ContentView.swift */,
 				2A3B6F932B5A1BB000F2E7A3 /* FFmpegProcessor.swift */,
 				2A3B6F902B5A1B9000F2E7A3 /* Views */,
@@ -71,10 +71,10 @@
 				2A3B6F952B5A1BC000F2E7A3 /* Resources */,
 				2A3B6F7E2B5A1B2E00F2E7A3 /* Assets.xcassets */,
 				2A3B6F8F2B5A1B8000F2E7A3 /* Info.plist */,
-				2A3B6F802B5A1B2E00F2E7A3 /* FRAMESHIFT.entitlements */,
+				2A3B6F802B5A1B2E00F2E7A3 /* Still Marker.entitlements */,
 				2A3B6F812B5A1B2E00F2E7A3 /* Preview Content */,
 			);
-			path = FRAMESHIFT;
+			path = "Still Marker";
 			sourceTree = "<group>";
 		};
 		2A3B6F812B5A1B2E00F2E7A3 /* Preview Content */ = {
@@ -113,9 +113,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		2A3B6F762B5A1B2C00F2E7A3 /* FRAMESHIFT */ = {
+		2A3B6F762B5A1B2C00F2E7A3 /* Still Marker */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 2A3B6F862B5A1B2E00F2E7A3 /* Build configuration list for PBXNativeTarget "FRAMESHIFT" */;
+			buildConfigurationList = 2A3B6F862B5A1B2E00F2E7A3 /* Build configuration list for PBXNativeTarget "Still Marker" */;
 			buildPhases = (
 				2A3B6F732B5A1B2C00F2E7A3 /* Sources */,
 				2A3B6F742B5A1B2C00F2E7A3 /* Frameworks */,
@@ -125,9 +125,9 @@
 			);
 			dependencies = (
 			);
-			name = FRAMESHIFT;
-			productName = FRAMESHIFT;
-			productReference = 2A3B6F772B5A1B2C00F2E7A3 /* FRAMESHIFT.app */;
+			name = "Still Marker";
+			productName = "Still Marker";
+			productReference = 2A3B6F772B5A1B2C00F2E7A3 /* Still Marker.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -145,7 +145,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 2A3B6F722B5A1B2C00F2E7A3 /* Build configuration list for PBXProject "FRAMESHIFT" */;
+			buildConfigurationList = 2A3B6F722B5A1B2C00F2E7A3 /* Build configuration list for PBXProject "Still Marker" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -158,7 +158,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				2A3B6F762B5A1B2C00F2E7A3 /* FRAMESHIFT */,
+				2A3B6F762B5A1B2C00F2E7A3 /* Still Marker */,
 			);
 		};
 /* End PBXProject section */
@@ -185,7 +185,7 @@
 				2A3B6F8C2B5A1B6000F2E7A3 /* UploadProcessingView.swift in Sources */,
 				2A3B6F7D2B5A1B2C00F2E7A3 /* ContentView.swift in Sources */,
 				2A3B6F8E2B5A1B7000F2E7A3 /* ResultsView.swift in Sources */,
-				2A3B6F7B2B5A1B2C00F2E7A3 /* FRAMESHIFTApp.swift in Sources */,
+				2A3B6F7B2B5A1B2C00F2E7A3 /* StillMarkerApp.swift in Sources */,
 				2A3B6F942B5A1BB000F2E7A3 /* FFmpegProcessor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -316,16 +316,16 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = FRAMESHIFT/FRAMESHIFT.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "Still Marker/Still Marker.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"FRAMESHIFT/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Still Marker/Preview Content\"";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = FRAMESHIFT/Info.plist;
+				INFOPLIST_FILE = "Still Marker/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Still Marker";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Johnny Hockin. All rights reserved.";
@@ -346,16 +346,16 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = FRAMESHIFT/FRAMESHIFT.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "Still Marker/Still Marker.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"FRAMESHIFT/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Still Marker/Preview Content\"";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = FRAMESHIFT/Info.plist;
+				INFOPLIST_FILE = "Still Marker/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Still Marker";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Johnny Hockin. All rights reserved.";
@@ -374,7 +374,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		2A3B6F722B5A1B2C00F2E7A3 /* Build configuration list for PBXProject "FRAMESHIFT" */ = {
+		2A3B6F722B5A1B2C00F2E7A3 /* Build configuration list for PBXProject "Still Marker" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				2A3B6F842B5A1B2E00F2E7A3 /* Debug */,
@@ -383,7 +383,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		2A3B6F862B5A1B2E00F2E7A3 /* Build configuration list for PBXNativeTarget "FRAMESHIFT" */ = {
+		2A3B6F862B5A1B2E00F2E7A3 /* Build configuration list for PBXNativeTarget "Still Marker" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				2A3B6F872B5A1B2E00F2E7A3 /* Debug */,
