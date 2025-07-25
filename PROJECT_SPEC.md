@@ -161,6 +161,19 @@ Think of the interface as a digital light table where a film essayist might exam
 
 ## 📒 CHANGELOG (REVERSE CHRONOLOGICAL)
 
+### 2025-01-25 - 🎨 M5.1: Visual Identity & Dark Mode Implementation - PENDING QA
+- **IMPLEMENTED**: Complete Chris Marker aesthetic transformation 
+- **DARK THEME**: Permanent lifted blacks (#1a1a1d) throughout interface
+- **TYPOGRAPHY**: "STILL MARKER" redesigned as vertical architectural element
+- **SPACING**: S T I L L / M A R K E R with extreme letter spacing (kerning 16, tracking 8)
+- **MONOSPACE**: Documentary typewriter aesthetic applied to all text
+- **GLASS MORPHISM**: High-end camera filter aesthetic with .thinMaterial
+- **HIERARCHY**: Professional opacity levels (0.9, 0.7, 0.5, 0.3) for clean contrast
+- **GALLERY FRAMES**: Museum-like presentation with contemplative spacing
+- **CONTROLS**: Enhanced refinement buttons and professional export styling
+- **PHILOSOPHY**: "Would a tired cinematographer appreciate this at 3am?" - Beautiful but clear
+- **COMPLETE**: La Jetée documentary influence, digital light table for film essayists
+
 ### 2025-01-25 - ✨ M5.0: Enhanced File Naming Complete ✅
 - **IMPLEMENTED**: Source video filename prefix for exported frames
 - **FORMAT**: `[video_name]_frame_[timestamp].[ext]` naming convention

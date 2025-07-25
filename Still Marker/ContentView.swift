@@ -58,12 +58,15 @@ class AppViewModel: ObservableObject {
             }
             
             // Update UI with extracted frames
+            print("🔄 Setting extractedFrames with \(frames.count) frames")
             self.extractedFrames = frames
             
             // Brief pause to show completion
             try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
             
+            print("📱 Transitioning to .results state")
             self.state = .results
+            print("✅ State transition complete")
             
         } catch {
             self.processingMessage = "Error: \(error.localizedDescription)"

@@ -16,15 +16,15 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "900"
             endingLineNumber = "900"
-            landmarkName = "unknown"
-            landmarkType = "0">
+            landmarkName = "mouseDown(with:)"
+            landmarkType = "7">
             <Locations>
                <Location
-                  uuid = "6D42A1F2-416B-4ACE-970E-EDC36DF7BB2E - cc1b91ee319fadbc"
+                  uuid = "6D42A1F2-416B-4ACE-970E-EDC36DF7BB2E - 1e898b3eb0c14a95"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "Still_Marker.KeyCaptureView.keyDown(with: __C.NSEvent) -&gt; ()"
+                  symbolName = "closure #1 () -&gt; SwiftUI.TupleView&lt;(&lt;&lt;opaque return type of SwiftUI.View.overlay&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.View&gt;(_: &#x3c4;_1_0, alignment: SwiftUI.Alignment) -&gt; some&gt;&gt;.0, SwiftUI.Group&lt;SwiftUI._ConditionalContent&lt;&lt;&lt;opaque return type of SwiftUI.View.cornerRadius(_: CoreGraphics.CGFloat, antialiased: Swift.Bool) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.frame(minWidth: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, idealWidth: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, maxWidth: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, minHeight: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, idealHeight: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, maxHeight: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, alignment: SwiftUI.Alignment) -&gt; some&gt;&gt;.0&gt;&gt;, Swift.Optional&lt;&lt;&lt;opaque return type of SwiftUI.View.overlay&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.View&gt;(_: &#x3c4;_1_0, alignment: SwiftUI.Alignment) -&gt; some&gt;&gt;.0&gt;)&gt; in closure #1 () -&gt; SwiftUI.TupleView&lt;(SwiftUI.ZStack&lt;SwiftUI.TupleView&lt;(&lt;&lt;opaque return type of SwiftUI.View.overlay&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.View&gt;(_: &#x3c4;_1_0, alignment: SwiftUI.Alignment) -&gt; some&gt;&gt;.0, SwiftUI.Group&lt;SwiftUI._ConditionalContent&lt;&lt;&lt;opaque return type of SwiftUI.View.cornerRadius(_: CoreGraphics.CGFloat, antialiased: Swift.Bool) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.frame(minWidth: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, idealWidth: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, maxWidth: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, minHeight: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, idealHeight: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, maxHeight: Swift.Optional&lt;CoreGraphics.CGFloat&gt;, alignment: SwiftUI.Alignment) -&gt; some&gt;&gt;.0&gt;&gt;, Swift.Optional&lt;&lt;&lt;opaque return type of SwiftUI.View.overlay&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.View&gt;(_: &#x3c4;_1_0, alignment: SwiftUI.Alignment) -&gt; some&gt;&gt;.0&gt;)&gt;&gt;, &lt;&lt;opaque return type of SwiftUI.View.padding(SwiftUI.Edge.Set, Swift.Optional&lt;CoreGraphics.CGFloat&gt;) -&gt; some&gt;&gt;.0)&gt; in Still_Marker.FrameCard.body.getter : some"
                   moduleName = "Still Marker.debug.dylib"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/johnnyhockin/AI%20Playground/Still%20Marker/Still%20Marker/Views/ResultsView.swift"
@@ -34,11 +34,11 @@
                   endingLineNumber = "900">
                </Location>
                <Location
-                  uuid = "6D42A1F2-416B-4ACE-970E-EDC36DF7BB2E - cc1b91ee319faddd"
+                  uuid = "6D42A1F2-416B-4ACE-970E-EDC36DF7BB2E - 15987d5bd8e1b223"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "Still_Marker.KeyCaptureView.keyDown(with: __C.NSEvent) -&gt; ()"
+                  symbolName = "Still_Marker.KeyCaptureView.mouseDown(with: __C.NSEvent) -&gt; ()"
                   moduleName = "Still Marker.debug.dylib"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/johnnyhockin/AI%20Playground/Still%20Marker/Still%20Marker/Views/ResultsView.swift"

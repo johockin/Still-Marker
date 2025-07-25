@@ -56,7 +56,7 @@ class FFmpegProcessor: ObservableObject {
             let progress = 0.3 + (Double(index) / Double(timestamps.count)) * 0.6
             progressCallback(progress, "Extracting frame at \(String(format: "%.1f", timestamp))s...")
             
-            let frameURL = tempDir.appendingPathComponent("frame_\(timestamp).jpg")
+            let frameURL = tempDir.appendingPathComponent("frame_\(Frame.formatTimestampForFilename(timestamp)).jpg")
             
             do {
                 try await extractSingleFrame(
@@ -66,8 +66,10 @@ class FFmpegProcessor: ObservableObject {
                 )
                 
                 // Load the extracted frame
-                if let image = NSImage(contentsOf: frameURL) {
-                    let frame = Frame(timestamp: timestamp, image: image)
+                if let fullImage = NSImage(contentsOf: frameURL) {
+                    // Generate thumbnail for memory efficiency
+                    let thumbnail = fullImage.resizedToFit(maxSize: CGSize(width: 200, height: 112))
+                    let frame = Frame(timestamp: timestamp, thumbnail: thumbnail, fullImage: fullImage)
                     frames.append(frame)
                 }
                 

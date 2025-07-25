@@ -16,6 +16,7 @@
 		2A3B6F8E2B5A1B7000F2E7A3 /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3B6F8D2B5A1B7000F2E7A3 /* ResultsView.swift */; };
 		2A3B6F922B5A1BA000F2E7A3 /* ffmpeg in Resources */ = {isa = PBXBuildFile; fileRef = 2A3B6F912B5A1BA000F2E7A3 /* ffmpeg */; };
 		2A3B6F942B5A1BB000F2E7A3 /* FFmpegProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3B6F932B5A1BB000F2E7A3 /* FFmpegProcessor.swift */; };
+		2A3B6F962B5A1BD000F2E7A3 /* DotPatternView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3B6F952B5A1BD000F2E7A3 /* DotPatternView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +32,7 @@
 		2A3B6F8F2B5A1B8000F2E7A3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2A3B6F912B5A1BA000F2E7A3 /* ffmpeg */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = ffmpeg; sourceTree = "<group>"; };
 		2A3B6F932B5A1BB000F2E7A3 /* FFmpegProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFmpegProcessor.swift; sourceTree = "<group>"; };
+		2A3B6F952B5A1BD000F2E7A3 /* DotPatternView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DotPatternView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,6 +92,7 @@
 			children = (
 				2A3B6F8B2B5A1B6000F2E7A3 /* UploadProcessingView.swift */,
 				2A3B6F8D2B5A1B7000F2E7A3 /* ResultsView.swift */,
+				2A3B6F952B5A1BD000F2E7A3 /* DotPatternView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -138,7 +141,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1500;
-				LastUpgradeCheck = 1500;
+				LastUpgradeCheck = 1640;
 				TargetAttributes = {
 					2A3B6F762B5A1B2C00F2E7A3 = {
 						CreatedOnToolsVersion = 15.0;
@@ -187,6 +190,7 @@
 				2A3B6F8E2B5A1B7000F2E7A3 /* ResultsView.swift in Sources */,
 				2A3B6F7B2B5A1B2C00F2E7A3 /* StillMarkerApp.swift in Sources */,
 				2A3B6F942B5A1BB000F2E7A3 /* FFmpegProcessor.swift in Sources */,
+				2A3B6F962B5A1BD000F2E7A3 /* DotPatternView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

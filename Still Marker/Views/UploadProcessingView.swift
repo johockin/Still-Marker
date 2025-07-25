@@ -15,16 +15,30 @@ struct UploadProcessingView: View {
     
     var body: some View {
         ZStack {
-            // Background with cinematic dark mode - permanent lifted blacks
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.1, green: 0.1, blue: 0.11), // #1a1a1d lifted black
-                    Color(red: 0.08, green: 0.08, blue: 0.09) // Deeper black for depth
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // Background with spotlight gradient and texture
+            ZStack {
+                // Base dark background - lifted blacks
+                Color(red: 0.1, green: 0.1, blue: 0.11)
+                    .ignoresSafeArea()
+                
+                // Spotlight gradient towards top - more visible
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        Color(red: 0.25, green: 0.22, blue: 0.20).opacity(1.0), // Much warmer spotlight
+                        Color(red: 0.18, green: 0.16, blue: 0.15).opacity(0.7), // Mid tone
+                        Color(red: 0.12, green: 0.12, blue: 0.13).opacity(0.3)  // Fade to background
+                    ]),
+                    center: UnitPoint(x: 0.5, y: 0.1),
+                    startRadius: 100,
+                    endRadius: 500
+                )
+                .ignoresSafeArea()
+                
+                // Dot pattern temporarily disabled due to crash
+                // DotPatternView()
+                //     .opacity(0.2)
+                //     .ignoresSafeArea()
+            }
             
             if viewModel.state == .upload {
                 uploadView
@@ -59,9 +73,9 @@ struct UploadProcessingView: View {
                         .tracking(8)
                 }
                 
-                Text("A tool for filmmakers")
+                Text("Extract moments from time")
                     .font(.system(size: 16, weight: .light, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.5)) // Documentary typewriter aesthetic
+                    .foregroundColor(.white.opacity(0.6)) // More prominent but still subtle
                     .multilineTextAlignment(.center)
                     .padding(.top, 8)
             }
@@ -90,34 +104,102 @@ struct UploadProcessingView: View {
     private var dropZone: some View {
         Button(action: { showingFilePicker = true }) {
             ZStack {
-                // Glass morphism done right - high-end camera filter aesthetic
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(.thinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(
-                                isDragOver ? Color.white.opacity(0.4) : Color.white.opacity(0.1),
-                                lineWidth: isDragOver ? 2 : 1
+                // Enhanced glass morphism with multiple layers
+                ZStack {
+                    // Base glass panel - more visible
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(.thinMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 24)
+                                .fill(Color.white.opacity(0.1))
+                        )
+                    
+                    // Inner glass highlight - more prominent
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    Color.white.opacity(0.25),
+                                    Color.white.opacity(0.1),
+                                    Color.clear
+                                ]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
                             )
-                    )
-                    .shadow(
-                        color: Color.black.opacity(0.4),
-                        radius: isDragOver ? 25 : 15,
-                        x: 0,
-                        y: isDragOver ? 12 : 8
-                    )
+                        )
+                    
+                    // Border with enhanced glow - more visible
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    isDragOver ? Color.white.opacity(0.8) : Color.white.opacity(0.4),
+                                    isDragOver ? Color.white.opacity(0.5) : Color.white.opacity(0.2)
+                                ]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: isDragOver ? 3 : 2
+                        )
+                }
+                .shadow(
+                    color: Color.black.opacity(0.3),
+                    radius: isDragOver ? 30 : 20,
+                    x: 0,
+                    y: isDragOver ? 15 : 10
+                )
+                .shadow(
+                    color: Color.white.opacity(isDragOver ? 0.1 : 0.05),
+                    radius: isDragOver ? 5 : 3,
+                    x: 0,
+                    y: isDragOver ? -2 : -1
+                )
                 
                 // Content
                 VStack(spacing: 24) {
-                    // Icon
+                    // Enhanced icon with glass effect
                     ZStack {
+                        // Outer glow
                         Circle()
-                            .fill(Color.accentColor.opacity(0.1))
+                            .fill(
+                                RadialGradient(
+                                    gradient: Gradient(colors: [
+                                        Color.white.opacity(0.1),
+                                        Color.clear
+                                    ]),
+                                    center: .center,
+                                    startRadius: 0,
+                                    endRadius: 50
+                                )
+                            )
+                            .frame(width: 100, height: 100)
+                        
+                        // Glass circle - more visible
+                        Circle()
+                            .fill(.thinMaterial)
+                            .overlay(
+                                Circle()
+                                    .fill(Color.white.opacity(0.1))
+                            )
+                            .overlay(
+                                Circle()
+                                    .stroke(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [
+                                                Color.white.opacity(0.3),
+                                                Color.white.opacity(0.1)
+                                            ]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
+                                        lineWidth: 1
+                                    )
+                            )
                             .frame(width: 80, height: 80)
                         
                         Image(systemName: "film")
-                            .font(.system(size: 32, weight: .light))
-                            .foregroundColor(.white.opacity(0.7))
+                            .font(.system(size: 32, weight: .ultraLight))
+                            .foregroundColor(.white.opacity(0.8))
                     }
                     .scaleEffect(isDragOver ? 1.1 : 1.0)
                     .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isDragOver)
@@ -149,13 +231,46 @@ struct UploadProcessingView: View {
         VStack(spacing: 40) {
             // Processing Icon
             ZStack {
-                Circle()
-                    .fill(.ultraThinMaterial)
-                    .frame(width: 120, height: 120)
-                    .overlay(
-                        Circle()
-                            .stroke(Color.primary.opacity(0.1), lineWidth: 1)
-                    )
+                // Enhanced processing icon with glass morphism
+                ZStack {
+                    // Outer glow
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                gradient: Gradient(colors: [
+                                    Color.white.opacity(0.08),
+                                    Color.clear
+                                ]),
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 80
+                            )
+                        )
+                        .frame(width: 160, height: 160)
+                    
+                    // Glass circle - more visible
+                    Circle()
+                        .fill(.thinMaterial)
+                        .overlay(
+                            Circle()
+                                .fill(Color.white.opacity(0.08))
+                        )
+                        .overlay(
+                            Circle()
+                                .stroke(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            Color.white.opacity(0.2),
+                                            Color.white.opacity(0.05)
+                                        ]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        )
+                        .frame(width: 120, height: 120)
+                }
                 
                 Image(systemName: "gearshape.2")
                     .font(.system(size: 40, weight: .light))

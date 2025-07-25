@@ -87,17 +87,32 @@ struct ResultsView: View {
     ]
     
     var body: some View {
-        ZStack {
-            // Permanent dark mode - cinematic edit suite aesthetic
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.1, green: 0.1, blue: 0.11), // #1a1a1d lifted black
-                    Color(red: 0.08, green: 0.08, blue: 0.09) // Deeper for atmospheric depth
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+        let _ = print("🏁 ResultsView.body called with \(viewModel.extractedFrames.count) frames")
+        return ZStack {
+            // More visible dark mode with lifted blacks
+            ZStack {
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(red: 0.12, green: 0.12, blue: 0.13), // Lifted black
+                        Color(red: 0.1, green: 0.1, blue: 0.11) // Slightly deeper
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                
+                // Warm spotlight overlay for visibility
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        Color(red: 0.22, green: 0.20, blue: 0.18).opacity(0.5),
+                        Color.clear
+                    ]),
+                    center: UnitPoint(x: 0.5, y: 0.1),
+                    startRadius: 100,
+                    endRadius: 600
+                )
+                .ignoresSafeArea()
+            }
             
             switch viewMode {
             case .grid:
@@ -121,7 +136,6 @@ struct ResultsView: View {
             }
         }
         .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button("New Video") {
@@ -154,16 +168,35 @@ struct ResultsView: View {
                 .frame(height: 1)
                 .padding(.vertical, 8)
             
-            // Frames grid
+            // Frames grid with error handling
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 16) {
                     ForEach(Array(viewModel.extractedFrames.enumerated()), id: \.element.id) { index, frame in
-                        FrameCard(
-                            frame: frame,
-                            isSelected: selectedFrame?.id == frame.id,
-                            isHovered: hoveredFrame?.id == frame.id,
-                            onExport: { exportFrame(frame) }
-                        )
+                        Group {
+                            if frame.thumbnail.isValid && !frame.formattedTimestamp.isEmpty {
+                                FrameCard(
+                                    frame: frame,
+                                    isSelected: selectedFrame?.id == frame.id,
+                                    isHovered: hoveredFrame?.id == frame.id,
+                                    onExport: { exportFrame(frame) }
+                                )
+                            } else {
+                                // Error card for invalid frames
+                                VStack {
+                                    Image(systemName: "exclamationmark.triangle")
+                                        .font(.system(size: 24, weight: .light))
+                                        .foregroundColor(.red.opacity(0.7))
+                                    Text("Invalid Frame")
+                                        .font(.system(size: 12, weight: .light, design: .monospaced))
+                                        .foregroundColor(.white.opacity(0.5))
+                                }
+                                .frame(height: 150)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(.thinMaterial)
+                                )
+                            }
+                        }
                         .onTapGesture {
                             selectedFrame = frame
                             previewFrame = frame
@@ -776,19 +809,15 @@ struct ResultsView: View {
     private func generateFilename(for frame: Frame) -> String {
         guard let videoURL = viewModel.selectedVideoURL else {
             // Fallback to simple filename if no video URL
-            let timestampForFilename = frame.formattedTimestamp
-                .replacingOccurrences(of: ":", with: "-")
-                .replacingOccurrences(of: ".", with: "-")
+            let timestampForFilename = Frame.formatTimestampForFilename(frame.timestamp)
             return "frame_\(timestampForFilename)"
         }
         
         // Get video filename without extension
         let videoName = videoURL.deletingPathExtension().lastPathComponent
         
-        // Clean up timestamp for filename
-        let timestampForFilename = frame.formattedTimestamp
-            .replacingOccurrences(of: ":", with: "-")
-            .replacingOccurrences(of: ".", with: "-")
+        // Use the safe timestamp formatting method
+        let timestampForFilename = Frame.formatTimestampForFilename(frame.timestamp)
         
         // Format: [video_name]_frame_[timestamp]
         return "\(videoName)_frame_\(timestampForFilename)"
@@ -820,81 +849,12 @@ struct FrameCard: View {
     let onExport: () -> Void
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Frame image - Gallery-like presentation
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.thinMaterial)
-                    .aspectRatio(16/9, contentMode: .fit)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(
-                                isSelected ? Color.white.opacity(0.4) : Color.white.opacity(0.1),
-                                lineWidth: isSelected ? 2 : 1
-                            )
-                    )
-                
-                // Real frame image from video
-                Image(nsImage: frame.image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .clipped()
-                    .cornerRadius(12)
-                
-                // Hover overlay - Contemplative museum piece feel
-                if isHovered {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.black.opacity(0.3))
-                        .overlay(
-                            Image(systemName: "eye")
-                                .font(.system(size: 24, weight: .ultraLight))
-                                .foregroundColor(.white.opacity(0.9))
-                        )
-                }
-            }
-            
-            // Frame info
-            VStack(spacing: 4) {
-                Text(frame.formattedTimestamp)
-                    .font(.system(size: 14, weight: .medium, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.9))
-                
-                Button(action: onExport) {
-                    Text("Export")
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.7))
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(.thinMaterial)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                                )
-                        )
-                }
-                .buttonStyle(PlainButtonStyle())
-            }
-            .padding(.vertical, 12)
+        VStack {
+            Image(nsImage: frame.image)
+                .resizable()
+                .frame(width: 200, height: 112)
+            Text(frame.formattedTimestamp)
         }
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.thinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.05), lineWidth: 1)
-                )
-                .shadow(
-                    color: Color.black.opacity(0.3),
-                    radius: isHovered ? 12 : 6,
-                    x: 0,
-                    y: isHovered ? 6 : 3
-                )
-        )
-        .scaleEffect(isHovered ? 1.02 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isHovered)
     }
 }
 
