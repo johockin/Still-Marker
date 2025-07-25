@@ -279,11 +279,8 @@ struct ResultsView: View {
         // Allow all content types so format selection works properly
         savePanel.allowedContentTypes = []
         
-        // Generate filename with timestamp
-        let timestampForFilename = frame.formattedTimestamp
-            .replacingOccurrences(of: ":", with: "-")
-            .replacingOccurrences(of: ".", with: "-")
-        savePanel.nameFieldStringValue = "frame_\(timestampForFilename)"
+        // Generate enhanced filename with video name prefix
+        savePanel.nameFieldStringValue = generateFilename(for: frame)
         
         // Create accessory view for format selection
         let formatSelector = NSPopUpButton()
@@ -375,11 +372,8 @@ struct ResultsView: View {
             var errorCount = 0
             
             for frame in self.viewModel.extractedFrames {
-                // Generate filename with timestamp
-                let timestampForFilename = frame.formattedTimestamp
-                    .replacingOccurrences(of: ":", with: "-")
-                    .replacingOccurrences(of: ".", with: "-")
-                let filename = "frame_\(timestampForFilename).\(format.fileExtension)"
+                // Generate enhanced filename with video name prefix
+                let filename = "\(self.generateFilename(for: frame)).\(format.fileExtension)"
                 let fileURL = folderURL.appendingPathComponent(filename)
                 
                 if let imageData = self.convertImageToData(frame.image, format: format) {
@@ -741,6 +735,27 @@ struct ResultsView: View {
     }
     
     // MARK: - Image Export Utilities
+    
+    private func generateFilename(for frame: Frame) -> String {
+        guard let videoURL = viewModel.selectedVideoURL else {
+            // Fallback to simple filename if no video URL
+            let timestampForFilename = frame.formattedTimestamp
+                .replacingOccurrences(of: ":", with: "-")
+                .replacingOccurrences(of: ".", with: "-")
+            return "frame_\(timestampForFilename)"
+        }
+        
+        // Get video filename without extension
+        let videoName = videoURL.deletingPathExtension().lastPathComponent
+        
+        // Clean up timestamp for filename
+        let timestampForFilename = frame.formattedTimestamp
+            .replacingOccurrences(of: ":", with: "-")
+            .replacingOccurrences(of: ".", with: "-")
+        
+        // Format: [video_name]_frame_[timestamp]
+        return "\(videoName)_frame_\(timestampForFilename)"
+    }
     
     private func convertImageToData(_ image: NSImage, format: ExportFormat) -> Data? {
         guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {

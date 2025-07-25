@@ -28,6 +28,7 @@
 - **Performance > Convention**
 - **Explicitness > DRY if it aids readability**
 - **Centralization of knowledge > scattershot insight buried in files**
+- **NEVER celebrate completion until user QA is complete** - Only user validates finished milestones
 
 ### 🎨 VISUAL DESIGN PRINCIPLES FOR STILL MARKER:
 
