@@ -160,6 +160,14 @@ Think of the interface as a digital light table where a film essayist might exam
 
 ## 📒 CHANGELOG (REVERSE CHRONOLOGICAL)
 
+### 2025-01-25 - 🔧 M4.8: Export All UX Improvements Complete ✅
+- **ENHANCED**: Export All feedback with immediate "Exporting..." notification
+- **IMPROVED**: Completion feedback with ✅ checkmark and destination folder name
+- **FIXED**: Export All dialog format options always visible (no hidden "Show Options" button)
+- **WIDENED**: Format dropdown from 90px to 180px for better readability
+- **ADDED**: Longer toast duration (5 seconds) for batch operations vs single exports (3 seconds)
+- **POLISHED**: Professional export workflow with clear feedback at every step
+
 ### 2025-01-24 - 🎉 M4.7: Frame Refinement & Progressive Enhancement Complete ✅
 - **IMPLEMENTED**: Complete Frame Refinement system with progressive enhancement
 - **ENHANCED**: Instant UI response - interface appears immediately with center frame
@@ -355,14 +363,20 @@ Think of the interface as a digital light table where a film essayist might exam
 
 ## 🚀 GO-FORWARD ROADMAP
 
-### M4.8: Final QA & Bug Fixes *(CURRENT)*
-**Target**: Address remaining build issues and prepare for visual identity work
+### M4.8: Export All UX Improvements *(✅ COMPLETED)*
+- [x] **Enhanced Export All feedback** (immediate + completion notifications)
+- [x] **Fixed Export All dialog** (format options always visible, properly sized)
+- [x] **Improved toast notifications** (longer duration for batch operations)
+- [x] **Professional export workflow** (clear feedback at every step)
 
-- [ ] **Fix build errors in ResultsView.swift** (missing functions after code cleanup)
-- [ ] **Final Frame Refinement QA** (test 7-frame system performance)
-- [ ] **Click-to-zoom to actual click location** (not just upper left)
-- [ ] **Keyboard navigation in zoomed view** (arrows currently stop working)
-- [ ] **Enhanced hover feedback** for clickable images (cursor change + visual hint)
+### M4.9: Simplified Frame Refinement *(CURRENT)*
+**Target**: Add basic frame refinement with 4-button navigation in preview
+
+- [ ] **Add refinement buttons below frame preview** (←1s, ◀, ▶, →1s)
+- [ ] **Implement time-based navigation** (±1 second jumps)
+- [ ] **Implement frame-based navigation** (previous/next extracted frames)
+- [ ] **Frame refinement persistence** (changes stick when returning to grid)
+- [ ] **Simple UX with clear button labeling** for filmmaker workflow
 
 ### M5: Visual Identity & Dark Mode *(AESTHETIC TRANSFORMATION)*
 **Target**: Chris Marker aesthetic - contemplative, precise, beautiful

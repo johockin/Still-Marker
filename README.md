@@ -5,7 +5,7 @@ A native Mac app for filmmakers to extract high-quality still images from video 
 ## Quick Start
 
 1. **Build and Run in Xcode:**
-   - Open FRAMESHIFT.xcodeproj in Xcode
+   - Open "Still Marker.xcodeproj" in Xcode
    - Build and run (⌘R)
    - Drag and drop a video file or click to browse
 
@@ -13,7 +13,9 @@ A native Mac app for filmmakers to extract high-quality still images from video 
    - Extract frames at 3-second intervals
    - High-quality JPEG output (95% quality)
    - "Shift +1s" feature to re-extract with offset
-   - Export individual frames or all at once
+   - Export individual frames or all at once with format selection
+   - Keyboard navigation (arrow keys, ESC) and click-to-zoom
+   - Toast notifications for export feedback
    - Beautiful cinematic minimal interface
 
 ## Tech Stack
