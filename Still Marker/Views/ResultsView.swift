@@ -206,7 +206,9 @@ struct ResultsView: View {
                             }
                         }
                         .onHover { hovering in
+                            let _ = print("🖱️ HOVER: Frame \(frame.formattedTimestamp) hovering=\(hovering)")
                             hoveredFrame = hovering ? frame : nil
+                            let _ = print("🖱️ HOVER SET: hoveredFrame=\(hoveredFrame?.formattedTimestamp ?? "nil")")
                         }
                         .opacity(1.0)
                         .animation(.easeIn(duration: 0.4).delay(Double(index) * 0.1), value: viewModel.extractedFrames.count)
@@ -654,20 +656,21 @@ struct ResultsView: View {
             }
             .padding()
         }
-        .background(
-            // Keyboard event capture overlay
-            KeyEventHandlingView(
-                onLeftArrow: navigateToPreviousFrame,
-                onRightArrow: navigateToNextFrame,
-                onEscape: {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        resetRefinement()
-                        viewMode = .grid
-                    }
-                }
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        )
+        // TEMP: Commented out KeyEventHandlingView to isolate hover issue
+        // .background(
+        //     // Keyboard event capture overlay
+        //     KeyEventHandlingView(
+        //         onLeftArrow: navigateToPreviousFrame,
+        //         onRightArrow: navigateToNextFrame,
+        //         onEscape: {
+        //             withAnimation(.easeInOut(duration: 0.3)) {
+        //                 resetRefinement()
+        //                 viewMode = .grid
+        //             }
+        //         }
+        //     )
+        //     .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // )
     }
     
     // MARK: - Navigation Functions
@@ -849,10 +852,27 @@ struct FrameCard: View {
     let onExport: () -> Void
     
     var body: some View {
-        VStack {
-            Image(nsImage: frame.image)
-                .resizable()
-                .frame(width: 200, height: 112)
+        let _ = print("🎴 FrameCard.body: \(frame.formattedTimestamp) isHovered=\(isHovered) isSelected=\(isSelected)")
+        return VStack {
+            ZStack {
+                Image(nsImage: frame.image)
+                    .resizable()
+                    .frame(width: 200, height: 112)
+                    .cornerRadius(8)
+                
+                // Hover overlay with eye icon
+                if isHovered {
+                    let _ = print("🎯 HOVER OVERLAY showing for \(frame.formattedTimestamp)")
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.black.opacity(0.3))
+                        .frame(width: 200, height: 112)
+                        .overlay(
+                            Image(systemName: "eye")
+                                .font(.system(size: 24, weight: .light))
+                                .foregroundColor(.white.opacity(0.9))
+                        )
+                }
+            }
             Text(frame.formattedTimestamp)
         }
     }
