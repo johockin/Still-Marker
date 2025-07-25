@@ -161,7 +161,7 @@ Think of the interface as a digital light table where a film essayist might exam
 
 ## 📒 CHANGELOG (REVERSE CHRONOLOGICAL)
 
-### 2025-01-25 - 🎨 M5.1: Visual Identity & Dark Mode Implementation - PENDING QA
+### 2025-01-25 - 🎨 M5.1: Visual Identity & Dark Mode Implementation ✅
 - **IMPLEMENTED**: Complete Chris Marker aesthetic transformation 
 - **DARK THEME**: Permanent lifted blacks (#1a1a1d) throughout interface
 - **TYPOGRAPHY**: "STILL MARKER" redesigned as vertical architectural element
@@ -173,6 +173,17 @@ Think of the interface as a digital light table where a film essayist might exam
 - **CONTROLS**: Enhanced refinement buttons and professional export styling
 - **PHILOSOPHY**: "Would a tired cinematographer appreciate this at 3am?" - Beautiful but clear
 - **COMPLETE**: La Jetée documentary influence, digital light table for film essayists
+
+### 2025-01-25 - 🔧 M5.2: Crash Investigation & Stability Fixes ✅
+- **CRITICAL BUG**: Fixed floating point precision issue in frame filenames (frame_45.900000000000006.jpg)
+- **SOLUTION**: Implemented Frame.formatTimestampForFilename() with 1 decimal precision
+- **CRASH FIX**: Resolved ResultsView infinite render loop by simplifying FrameCard component
+- **STABILITY**: Eliminated complex animations, materials, and view hierarchies causing crashes
+- **HOVER OVERLAY**: Successfully restored eye icon hover effect without crashes
+- **DEBUG INFRASTRUCTURE**: Added comprehensive logging for hover state and render tracking
+- **KEYBOARD HANDLING**: Re-enabled KeyEventHandlingView for testing - awaiting user QA
+- **SAFE ROLLBACK**: Committed stable state before testing potentially problematic components
+- **STATUS**: App now stable with working hover effects, KeyEventHandlingView needs testing
 
 ### 2025-01-25 - ✨ M5.0: Enhanced File Naming Complete ✅
 - **IMPLEMENTED**: Source video filename prefix for exported frames
