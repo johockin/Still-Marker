@@ -15,11 +15,11 @@ struct UploadProcessingView: View {
     
     var body: some View {
         ZStack {
-            // Background with cinematic lighting - lifted blacks
+            // Background with cinematic dark mode - permanent lifted blacks
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color(red: 0.1, green: 0.1, blue: 0.11).opacity(0.02), // #1a1a1d lifted black
-                    Color(red: 0.1, green: 0.1, blue: 0.11).opacity(0.05)
+                    Color(red: 0.1, green: 0.1, blue: 0.11), // #1a1a1d lifted black
+                    Color(red: 0.08, green: 0.08, blue: 0.09) // Deeper black for depth
                 ]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -44,17 +44,26 @@ struct UploadProcessingView: View {
         VStack(spacing: 40) {
             // App Title - Architectural Element (Chris Marker inspired)
             VStack(spacing: 24) {
-                // S T I L L   M A R K E R - extreme letter spacing for architectural feel
-                Text("S T I L L   M A R K E R")
-                    .font(.system(size: 36, weight: .ultraLight, design: .monospaced))
-                    .foregroundColor(.primary.opacity(0.9)) // Hierarchy through opacity
-                    .kerning(8)
-                    .tracking(4)
+                // Vertical stacking exploration: S T I L L / M A R K E R
+                VStack(spacing: 4) {
+                    Text("S T I L L")
+                        .font(.system(size: 48, weight: .ultraLight, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.9)) // High contrast white for dark mode
+                        .kerning(16) // Extreme letter spacing
+                        .tracking(8)
+                    
+                    Text("M A R K E R")
+                        .font(.system(size: 48, weight: .ultraLight, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.7)) // Hierarchy through opacity
+                        .kerning(16)
+                        .tracking(8)
+                }
                 
-                Text("Extract high-quality stills from video")
-                    .font(.system(size: 16, weight: .light, design: .default))
-                    .foregroundColor(.secondary.opacity(0.7)) // Documentary typewriter aesthetic
+                Text("A tool for filmmakers")
+                    .font(.system(size: 16, weight: .light, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.5)) // Documentary typewriter aesthetic
                     .multilineTextAlignment(.center)
+                    .padding(.top, 8)
             }
             .padding(.top, 80)
             
@@ -63,15 +72,15 @@ struct UploadProcessingView: View {
             
             Spacer()
             
-            // Privacy Notice - Clean and minimal
+            // Privacy Notice - Dark mode styling
             HStack(spacing: 10) {
                 Image(systemName: "lock.shield.fill")
-                    .foregroundColor(.secondary.opacity(0.7))
+                    .foregroundColor(.white.opacity(0.5))
                     .font(.system(size: 16, weight: .medium))
                 
                 Text("Your videos are processed locally and never leave your Mac")
-                    .font(.system(size: 14, weight: .medium, design: .default))
-                    .foregroundColor(.secondary.opacity(0.7))
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.5))
             }
             .padding(.bottom, 60)
         }
@@ -81,21 +90,21 @@ struct UploadProcessingView: View {
     private var dropZone: some View {
         Button(action: { showingFilePicker = true }) {
             ZStack {
-                // Frosted glass background using macOS materials
+                // Glass morphism done right - high-end camera filter aesthetic
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(.ultraThinMaterial)
+                    .fill(.thinMaterial)
                     .overlay(
                         RoundedRectangle(cornerRadius: 20)
                             .stroke(
-                                isDragOver ? Color.accentColor : Color.primary.opacity(0.1),
+                                isDragOver ? Color.white.opacity(0.4) : Color.white.opacity(0.1),
                                 lineWidth: isDragOver ? 2 : 1
                             )
                     )
                     .shadow(
-                        color: Color.black.opacity(0.1),
-                        radius: isDragOver ? 20 : 10,
+                        color: Color.black.opacity(0.4),
+                        radius: isDragOver ? 25 : 15,
                         x: 0,
-                        y: isDragOver ? 10 : 5
+                        y: isDragOver ? 12 : 8
                     )
                 
                 // Content
@@ -108,7 +117,7 @@ struct UploadProcessingView: View {
                         
                         Image(systemName: "film")
                             .font(.system(size: 32, weight: .light))
-                            .foregroundColor(.accentColor)
+                            .foregroundColor(.white.opacity(0.7))
                     }
                     .scaleEffect(isDragOver ? 1.1 : 1.0)
                     .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isDragOver)
@@ -116,12 +125,12 @@ struct UploadProcessingView: View {
                     // Text
                     VStack(spacing: 8) {
                         Text(isDragOver ? "Drop your video here" : "Drag or click to select video")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(.primary)
+                            .font(.system(size: 20, weight: .medium, design: .monospaced))
+                            .foregroundColor(.white.opacity(0.9))
                         
                         Text("Up to 10GB+ supported • All formats")
-                            .font(.system(size: 14, weight: .regular))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 14, weight: .regular, design: .monospaced))
+                            .foregroundColor(.white.opacity(0.5))
                     }
                 }
                 .padding(.vertical, 60)
@@ -150,7 +159,7 @@ struct UploadProcessingView: View {
                 
                 Image(systemName: "gearshape.2")
                     .font(.system(size: 40, weight: .light))
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(.white.opacity(0.7))
                     .rotationEffect(.degrees(viewModel.processingProgress * 360))
                     .animation(.linear(duration: 2).repeatForever(autoreverses: false), value: viewModel.processingProgress)
             }
@@ -158,8 +167,8 @@ struct UploadProcessingView: View {
             // Progress
             VStack(spacing: 16) {
                 Text(viewModel.processingMessage)
-                    .font(.system(size: 24, weight: .light))
-                    .foregroundColor(.primary)
+                    .font(.system(size: 24, weight: .light, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.9))
                 
                 ProgressView(value: viewModel.processingProgress)
                     .progressViewStyle(LinearProgressViewStyle())
@@ -171,12 +180,12 @@ struct UploadProcessingView: View {
             if let videoURL = viewModel.selectedVideoURL {
                 VStack(spacing: 8) {
                     Text("Processing: \(videoURL.lastPathComponent)")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 14, weight: .medium, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.7))
                     
                     Text("Intelligently selecting optimal frames")
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 12, weight: .regular, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.5))
                 }
                 .padding(.top, 20)
             }

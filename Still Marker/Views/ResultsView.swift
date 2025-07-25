@@ -88,9 +88,16 @@ struct ResultsView: View {
     
     var body: some View {
         ZStack {
-            // Background with cinematic dark aesthetic
-            Color(red: 0.1, green: 0.1, blue: 0.11) // #1a1a1d lifted black
-                .ignoresSafeArea()
+            // Permanent dark mode - cinematic edit suite aesthetic
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.1, green: 0.1, blue: 0.11), // #1a1a1d lifted black
+                    Color(red: 0.08, green: 0.08, blue: 0.09) // Deeper for atmospheric depth
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
             switch viewMode {
             case .grid:
@@ -113,21 +120,23 @@ struct ResultsView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .navigationTitle("Extracted Frames")
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button("New Video") {
                     viewModel.resetToUpload()
                 }
-                .foregroundColor(.white)
-                .padding(.vertical, 6)
-                .padding(.horizontal, 12)
+                .foregroundColor(.white.opacity(0.9))
+                .font(.system(size: 14, weight: .medium, design: .monospaced))
+                .padding(.vertical, 8)
+                .padding(.horizontal, 16)
                 .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.gray.opacity(0.3))
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(.thinMaterial)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
                         )
                 )
                 .buttonStyle(PlainButtonStyle())
@@ -140,7 +149,9 @@ struct ResultsView: View {
             // Header with controls
             headerView
             
-            Divider()
+            Rectangle()
+                .fill(Color.white.opacity(0.1))
+                .frame(height: 1)
                 .padding(.vertical, 8)
             
             // Frames grid
@@ -177,16 +188,16 @@ struct ResultsView: View {
     
     private var headerView: some View {
         HStack {
-            // Frame count and video info - High contrast for dark edit suites
+            // Frame count and video info - Professional dark edit suite hierarchy
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(viewModel.extractedFrames.count) frames extracted")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white.opacity(0.9)) // High contrast white text
+                    .font(.system(size: 16, weight: .medium, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.9)) // High contrast for professionals
                 
                 if let videoURL = viewModel.selectedVideoURL {
                     Text("from \(videoURL.lastPathComponent)")
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(.white.opacity(0.7)) // Readable secondary text
+                        .font(.system(size: 12, weight: .regular, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.5)) // Clean hierarchy
                 }
             }
             
@@ -202,17 +213,17 @@ struct ResultsView: View {
                         Image(systemName: "clock.arrow.circlepath")
                             .font(.system(size: 14))
                         Text("Shift +\(viewModel.currentOffset + 1)s")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: 14, weight: .medium, design: .monospaced))
                     }
                     .foregroundColor(.white.opacity(0.9)) // High contrast for dark backgrounds
                     .padding(.vertical, 8)
                     .padding(.horizontal, 12)
                     .background(
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(.ultraThinMaterial)
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(.thinMaterial)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
                             )
                     )
                 }
@@ -226,14 +237,18 @@ struct ResultsView: View {
                         Image(systemName: "square.and.arrow.down")
                             .font(.system(size: 14))
                         Text("Export All")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: 14, weight: .medium, design: .monospaced))
                     }
                     .foregroundColor(.white)
                     .padding(.vertical, 8)
                     .padding(.horizontal, 12)
                     .background(
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(.blue)
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.white.opacity(0.15))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            )
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -414,13 +429,14 @@ struct ResultsView: View {
                     }
                 }
                 .buttonStyle(PlainButtonStyle())
-                .foregroundColor(.white)
+                .font(.system(size: 14, weight: .medium, design: .monospaced))
+                .foregroundColor(.white.opacity(0.7))
                 
                 Spacer()
                 
                 Text("Frame Preview")
-                    .font(.headline)
-                    .foregroundColor(.white)
+                    .font(.system(size: 18, weight: .light, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.9))
                 
                 Spacer()
             }
@@ -434,9 +450,9 @@ struct ResultsView: View {
                 Button(action: navigateToPreviousFrame) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 24, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(.white.opacity(0.7))
                         .padding()
-                        .background(Color.black.opacity(0.3))
+                        .background(.thinMaterial)
                         .clipShape(Circle())
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -470,9 +486,9 @@ struct ResultsView: View {
                 Button(action: navigateToNextFrame) {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 24, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(.white.opacity(0.7))
                         .padding()
-                        .background(Color.black.opacity(0.3))
+                        .background(.thinMaterial)
                         .clipShape(Circle())
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -491,8 +507,12 @@ struct ResultsView: View {
                             .foregroundColor(.white)
                             .padding(8)
                             .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(Color.blue.opacity(0.7))
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(.thinMaterial)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                    )
                             )
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -506,8 +526,12 @@ struct ResultsView: View {
                             .foregroundColor(.white)
                             .padding(8)
                             .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(Color.blue.opacity(0.5))
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(.thinMaterial)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                    )
                             )
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -517,12 +541,12 @@ struct ResultsView: View {
                     // Current timestamp display
                     VStack(spacing: 4) {
                         Text(refinedTimestamp != nil ? "Refined" : "Original")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.6))
+                            .font(.system(size: 11, weight: .light, design: .monospaced))
+                            .foregroundColor(.white.opacity(0.5))
                         
                         Text(Frame.formatTimestamp(displayTimestamp))
-                            .font(.system(size: 16, weight: .semibold, design: .monospaced))
-                            .foregroundColor(refinedTimestamp != nil ? .blue : .white)
+                            .font(.system(size: 16, weight: .medium, design: .monospaced))
+                            .foregroundColor(refinedTimestamp != nil ? .white.opacity(0.9) : .white.opacity(0.7))
                             .padding(.horizontal, 12)
                     }
                     
@@ -533,8 +557,12 @@ struct ResultsView: View {
                             .foregroundColor(.white)
                             .padding(8)
                             .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(Color.blue.opacity(0.5))
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(.thinMaterial)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                    )
                             )
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -548,8 +576,12 @@ struct ResultsView: View {
                             .foregroundColor(.white)
                             .padding(8)
                             .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(Color.blue.opacity(0.7))
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(.thinMaterial)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                    )
                             )
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -562,12 +594,17 @@ struct ResultsView: View {
                     exportFrame(displayFrame)
                 }
                 .buttonStyle(PlainButtonStyle())
-                .foregroundColor(.white)
-                .padding(.vertical, 10)
-                .padding(.horizontal, 20)
+                .font(.system(size: 14, weight: .medium, design: .monospaced))
+                .foregroundColor(.white.opacity(0.9))
+                .padding(.vertical, 12)
+                .padding(.horizontal, 24)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.green.opacity(0.8))
+                        .fill(.thinMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                        )
                 )
                 .disabled(isRefining)
                 .opacity(isRefining ? 0.5 : 1.0)
@@ -579,8 +616,8 @@ struct ResultsView: View {
             // Frame info with navigation
             VStack(spacing: 8) {
                 Text("\(currentFrameIndex + 1) of \(viewModel.extractedFrames.count)")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.5))
+                    .font(.system(size: 12, weight: .light, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.3))
             }
             .padding()
         }
@@ -784,15 +821,15 @@ struct FrameCard: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Frame image
+            // Frame image - Gallery-like presentation
             ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(.ultraThinMaterial)
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.thinMaterial)
                     .aspectRatio(16/9, contentMode: .fit)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: 12)
                             .stroke(
-                                isSelected ? Color.accentColor : Color.primary.opacity(0.1),
+                                isSelected ? Color.white.opacity(0.4) : Color.white.opacity(0.1),
                                 lineWidth: isSelected ? 2 : 1
                             )
                     )
@@ -803,16 +840,16 @@ struct FrameCard: View {
                     .aspectRatio(contentMode: .fill)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipped()
-                    .cornerRadius(8)
+                    .cornerRadius(12)
                 
-                // Hover overlay
+                // Hover overlay - Contemplative museum piece feel
                 if isHovered {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.black.opacity(0.1))
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.black.opacity(0.3))
                         .overlay(
                             Image(systemName: "eye")
-                                .font(.system(size: 24, weight: .light))
-                                .foregroundColor(.white)
+                                .font(.system(size: 24, weight: .ultraLight))
+                                .foregroundColor(.white.opacity(0.9))
                         )
                 }
             }
@@ -820,18 +857,22 @@ struct FrameCard: View {
             // Frame info
             VStack(spacing: 4) {
                 Text(frame.formattedTimestamp)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.primary)
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.9))
                 
                 Button(action: onExport) {
                     Text("Export")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary)
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 8)
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.7))
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 12)
                         .background(
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.primary.opacity(0.05))
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(.thinMaterial)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                )
                         )
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -839,13 +880,17 @@ struct FrameCard: View {
             .padding(.vertical, 12)
         }
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.ultraThinMaterial)
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.thinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.05), lineWidth: 1)
+                )
                 .shadow(
-                    color: Color.black.opacity(0.1),
-                    radius: isHovered ? 8 : 4,
+                    color: Color.black.opacity(0.3),
+                    radius: isHovered ? 12 : 6,
                     x: 0,
-                    y: isHovered ? 4 : 2
+                    y: isHovered ? 6 : 3
                 )
         )
         .scaleEffect(isHovered ? 1.02 : 1.0)

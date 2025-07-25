@@ -161,6 +161,15 @@ Think of the interface as a digital light table where a film essayist might exam
 
 ## 📒 CHANGELOG (REVERSE CHRONOLOGICAL)
 
+### 2025-01-25 - ✨ M5.0: Enhanced File Naming Complete ✅
+- **IMPLEMENTED**: Source video filename prefix for exported frames
+- **FORMAT**: `[video_name]_frame_[timestamp].[ext]` naming convention
+- **EXAMPLE**: `interview_final_v2_frame_00-03-2.png`
+- **BENEFITS**: Better organization, context preservation, multi-video workflows
+- **FALLBACK**: Simple `frame_[timestamp]` when video URL unavailable
+- **INTEGRATION**: Applied to both single frame and batch export operations
+- **ADDED**: Rule to PROJECT_SPEC.md - never celebrate completion until user QA complete
+
 ### 2025-01-25 - ✨ M4.9: Simplified Frame Refinement Complete ✅
 - **IMPLEMENTED**: 4-button refinement controls: `<< < timecode > >>`
 - **ADDED**: Coarse navigation (±0.5s) with double chevrons (`<<` `>>`)
@@ -388,13 +397,13 @@ Think of the interface as a digital light table where a film essayist might exam
 - [x] **Enhanced control panel** (moved Export button for prominence)
 - [x] **Preview-only refinement** (no persistence complexity)
 
-### M5.0: Enhanced File Naming *(CURRENT)*
+### M5.0: Enhanced File Naming *(✅ COMPLETED)*
 **Target**: Improve export file naming with source video context
 
-- [ ] **Add source video filename prefix** to exported frames
-- [ ] **Format**: `[video_name]_frame_[timestamp].[ext]`
-- [ ] **Example**: `interview_final_v2_frame_00-03-2.png`
-- [ ] **Benefits**: Better organization, context preservation, multi-video workflows
+- [x] **Add source video filename prefix** to exported frames
+- [x] **Format**: `[video_name]_frame_[timestamp].[ext]`
+- [x] **Example**: `interview_final_v2_frame_00-03-2.png`
+- [x] **Benefits**: Better organization, context preservation, multi-video workflows
 
 ### M5.1: Visual Identity & Dark Mode *(AESTHETIC TRANSFORMATION)*
 **Target**: Chris Marker aesthetic - contemplative, precise, beautiful
