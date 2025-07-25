@@ -264,7 +264,7 @@ struct ResultsView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
                 
-                // Export all button
+                // Export all button - Warm Emulsion with maximum glass
                 Button(action: {
                     exportAllFrames()
                 }) {
@@ -279,11 +279,17 @@ struct ResultsView: View {
                     .padding(.horizontal, 12)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.white.opacity(0.15))
+                            .fill(Color(red: 0.8, green: 0.561, blue: 0.173)) // Warm Emulsion #CC8F2C
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                    .fill(.thinMaterial) // Maximum glass morphism
+                                    .blendMode(.overlay)
                             )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                            )
+                            .shadow(color: Color(red: 0.8, green: 0.561, blue: 0.173).opacity(0.3), radius: 4, x: 0, y: 2)
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -624,22 +630,28 @@ struct ResultsView: View {
                     .opacity(isRefining ? 0.5 : 1.0)
                 }
                 
-                // Export button
+                // Export button - Warm Emulsion with maximum glass
                 Button("Export This Frame") {
                     exportFrame(displayFrame)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .font(.system(size: 14, weight: .medium, design: .monospaced))
-                .foregroundColor(.white.opacity(0.9))
+                .foregroundColor(.white)
                 .padding(.vertical, 12)
                 .padding(.horizontal, 24)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(.thinMaterial)
+                        .fill(Color(red: 0.8, green: 0.561, blue: 0.173)) // Warm Emulsion #CC8F2C
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                .fill(.thinMaterial) // Maximum glass morphism
+                                .blendMode(.overlay)
                         )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                        .shadow(color: Color(red: 0.8, green: 0.561, blue: 0.173).opacity(0.3), radius: 4, x: 0, y: 2)
                 )
                 .disabled(isRefining)
                 .opacity(isRefining ? 0.5 : 1.0)
@@ -852,7 +864,7 @@ struct FrameCard: View {
     
     var body: some View {
         let _ = print("🎴 FrameCard.body: \(frame.formattedTimestamp) isHovered=\(isHovered) isSelected=\(isSelected)")
-        return VStack {
+        return VStack(spacing: 8) {
             ZStack {
                 Image(nsImage: frame.image)
                     .resizable()
@@ -871,8 +883,44 @@ struct FrameCard: View {
                                 .foregroundColor(.white.opacity(0.9))
                         )
                 }
+                
+                // Export button - appears on hover in top-right corner
+                if isHovered {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Button(action: onExport) {
+                                Image(systemName: "square.and.arrow.down")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .fill(Color(red: 0.8, green: 0.561, blue: 0.173)) // Warm Emulsion #CC8F2C
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 6)
+                                                    .fill(.thinMaterial) // Maximum glass morphism
+                                                    .blendMode(.overlay)
+                                            )
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 6)
+                                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                            )
+                                            .shadow(color: Color(red: 0.8, green: 0.561, blue: 0.173).opacity(0.3), radius: 4, x: 0, y: 2)
+                                    )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .padding(.trailing, 8)
+                        }
+                        Spacer()
+                    }
+                    .padding(.top, 8)
+                }
             }
+            
             Text(frame.formattedTimestamp)
+                .font(.system(size: 12, weight: .light, design: .monospaced))
+                .foregroundColor(.white.opacity(0.7))
         }
     }
 }
