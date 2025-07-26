@@ -35,12 +35,12 @@ struct UploadProcessingView: View {
                 )
                 .ignoresSafeArea()
                 
-                // Crimson spotlight in bottom right corner
+                // Crimson spotlight in bottom right corner - 40% dimmer
                 RadialGradient(
                     gradient: Gradient(colors: [
-                        Color(red: 0.8, green: 0.1, blue: 0.2).opacity(0.6),     // Crimson center
-                        Color(red: 0.6, green: 0.08, blue: 0.15).opacity(0.4),   // Mid crimson
-                        Color(red: 0.4, green: 0.05, blue: 0.1).opacity(0.2),    // Fading crimson
+                        Color(red: 0.8, green: 0.1, blue: 0.2).opacity(0.36),    // Crimson center
+                        Color(red: 0.6, green: 0.08, blue: 0.15).opacity(0.24),  // Mid crimson
+                        Color(red: 0.4, green: 0.05, blue: 0.1).opacity(0.12),   // Fading crimson
                         Color.clear                                               // Fade out
                     ]),
                     center: UnitPoint(x: 0.85, y: 0.85),  // Bottom right corner position
@@ -117,21 +117,21 @@ struct UploadProcessingView: View {
             ZStack {
                 // Enhanced glass morphism with multiple layers
                 ZStack {
-                    // Base glass panel - more visible
+                    // Base glass panel - more transparent for glassy effect
                     RoundedRectangle(cornerRadius: 24)
                         .fill(.thinMaterial)
                         .overlay(
                             RoundedRectangle(cornerRadius: 24)
-                                .fill(Color.white.opacity(0.1))
+                                .fill(Color.white.opacity(0.05))
                         )
                     
-                    // Inner glass highlight - more prominent
+                    // Inner glass highlight - reduced for transparency
                     RoundedRectangle(cornerRadius: 24)
                         .fill(
                             LinearGradient(
                                 gradient: Gradient(colors: [
-                                    Color.white.opacity(0.25),
-                                    Color.white.opacity(0.1),
+                                    Color.white.opacity(0.15),
+                                    Color.white.opacity(0.05),
                                     Color.clear
                                 ]),
                                 startPoint: .topLeading,
@@ -139,13 +139,13 @@ struct UploadProcessingView: View {
                             )
                         )
                     
-                    // Border with enhanced glow - more visible
+                    // Border with subtle glow - reduced for transparency
                     RoundedRectangle(cornerRadius: 24)
                         .stroke(
                             LinearGradient(
                                 gradient: Gradient(colors: [
-                                    isDragOver ? Color.white.opacity(0.8) : Color.white.opacity(0.4),
-                                    isDragOver ? Color.white.opacity(0.5) : Color.white.opacity(0.2)
+                                    isDragOver ? Color.white.opacity(0.6) : Color.white.opacity(0.25),
+                                    isDragOver ? Color.white.opacity(0.3) : Color.white.opacity(0.1)
                                 ]),
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -185,12 +185,12 @@ struct UploadProcessingView: View {
                             )
                             .frame(width: 100, height: 100)
                         
-                        // Glass circle - more visible
+                        // Glass circle - reduced opacity for transparency
                         Circle()
                             .fill(.thinMaterial)
                             .overlay(
                                 Circle()
-                                    .fill(Color.white.opacity(0.1))
+                                    .fill(Color.white.opacity(0.05))
                             )
                             .overlay(
                                 Circle()
