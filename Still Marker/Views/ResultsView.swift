@@ -96,6 +96,8 @@ struct ResultsView: View {
     @State private var viewMode: ViewMode = .grid
     @State private var isGridReady: Bool = false
     @State private var visibleFrameCount: Int = 0
+    @State private var hoveredFrameID: UUID? = nil
+    @State private var hoveredExportButtonID: UUID? = nil
     @State private var previewFrame: Frame?
     @State private var previewScaleMode: PreviewScaleMode = .fit
     @State private var selectedExportFormat: ExportFormat = .png
@@ -228,10 +230,15 @@ struct ResultsView: View {
                                         FrameCard(
                                             frame: frame,
                                             isSelected: selectedFrame?.id == frame.id,
+                                            isHovered: hoveredFrameID == frame.id,
+                                            isExportHovered: hoveredExportButtonID == frame.id,
                                             onTap: {
                                                 selectedFrame = frame
                                                 previewFrame = frame
                                                 currentFrameIndex = index
+                                                withAnimation(.easeInOut(duration: 0.3)) {
+                                                    viewMode = .framePreview
+                                                }
                                             },
                                             onDoubleTap: {
                                                 selectedFrame = frame
@@ -241,7 +248,13 @@ struct ResultsView: View {
                                                     viewMode = .framePreview
                                                 }
                                             },
-                                            onExport: { exportFrame(frame) }
+                                            onExport: { exportFrame(frame) },
+                                            onHover: { isHovering in
+                                                hoveredFrameID = isHovering ? frame.id : nil
+                                            },
+                                            onExportHover: { isHovering in
+                                                hoveredExportButtonID = isHovering ? frame.id : nil
+                                            }
                                         )
                                     } else {
                                         // Error card for invalid frames
@@ -904,46 +917,109 @@ struct ResultsView: View {
 
 struct FilmExportButtonStyle: ButtonStyle {
     let isHovered: Bool
+    let startsAsGrey: Bool // New parameter for grid vs main export buttons
+    
+    init(isHovered: Bool, startsAsGrey: Bool = false) {
+        self.isHovered = isHovered
+        self.startsAsGrey = startsAsGrey
+    }
     
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 11, weight: .medium, design: .monospaced))
-            .foregroundColor(.black) // Black text on gold background
+            .foregroundColor(.black) // Black text works on both grey and gold
             .opacity(isHovered ? 1.0 : 0.85) // Subtle opacity change
             .padding(.vertical, 6)
             .padding(.horizontal, 12)
             .background(
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(Color(hex: "#E6A532")) // Always Kodak Gold
-                    .shadow(color: Color(hex: "#8B0000"), radius: isHovered ? 2 : 1, x: 0, y: 1) // Crimson red shadow
+                    .fill(buttonBackgroundColor) // Dynamic background color
+                    .overlay(
+                        // Glassy hover overlay
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(.ultraThinMaterial) // Glass effect
+                            .opacity(isHovered ? 0.7 : (startsAsGrey ? 0.3 : 0.0)) // Always subtle glass on grey buttons
+                            .overlay(
+                                // Gradient highlight + hard light combo
+                                ZStack {
+                                    // Subtle gradient background
+                                    LinearGradient(
+                                        colors: [.white.opacity(0.2), .clear],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                    .opacity(isHovered ? 1.0 : 0.0)
+                                    
+                                    // Hard light edge on top
+                                    VStack {
+                                        Rectangle()
+                                            .fill(.white.opacity(0.55)) // Split the difference
+                                            .frame(height: 2) // Hard edge
+                                            .opacity(isHovered ? 1.0 : 0.0)
+                                        Spacer()
+                                    }
+                                }
+                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                            )
+                    )
             )
-            .animation(.easeInOut(duration: 0.15), value: isHovered)
+            .animation(.easeInOut(duration: 0.1), value: isHovered) // Fast transition, no scale
+    }
+    
+    private var buttonBackgroundColor: Color {
+        if startsAsGrey {
+            // Grid buttons: Grey → Gold
+            return isHovered ? Color(hex: "#E6A532") : Color.gray.opacity(0.4)
+        } else {
+            // Export All & Preview buttons: Always Gold
+            return Color(hex: "#E6A532")
+        }
     }
 }
 
 struct FrameCard: View {
     let frame: Frame
     let isSelected: Bool
+    let isHovered: Bool
+    let isExportHovered: Bool
     let onTap: () -> Void
     let onDoubleTap: () -> Void
     let onExport: () -> Void
+    let onHover: (Bool) -> Void
+    let onExportHover: (Bool) -> Void
     
     // NO @State variables at all!
     
     var body: some View {
         VStack(spacing: 8) {
-            Image(nsImage: frame.thumbnail)
-                .resizable()
-                .frame(width: 200, height: 112)
-                .cornerRadius(8)
-                .overlay(
-                    isSelected ? 
+            ZStack {
+                Image(nsImage: frame.thumbnail)
+                    .resizable()
+                    .frame(width: 200, height: 112)
+                    .cornerRadius(8)
+                
+                // Hover overlay (no animation for Step 1)
+                if isHovered {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.black.opacity(0.4))
+                        .overlay(
+                            Image(systemName: "eye.fill")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(.white.opacity(0.9))
+                        )
+                }
+                
+                // Selection border
+                if isSelected {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(Color(hex: "#E6A532"), lineWidth: 3)
-                    : nil
-                )
-                .onTapGesture(count: 2) { onDoubleTap() }
-                .onTapGesture { onTap() }
+                }
+            }
+            .onTapGesture(count: 2) { onDoubleTap() }
+            .onTapGesture { onTap() }
+            .onHover { hovering in
+                onHover(hovering)
+            }
             
             Text(frame.formattedTimestamp)
                 .font(.system(size: 12, weight: .medium, design: .monospaced))
@@ -952,15 +1028,10 @@ struct FrameCard: View {
             Button("Export") {
                 onExport()
             }
-            .font(.system(size: 11, weight: .medium, design: .monospaced))
-            .foregroundColor(.black)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color(hex: "#E6A532")) // Kodak Gold
-                    .shadow(color: Color(hex: "#8B0000"), radius: 1, x: 0, y: 1) // Crimson red shadow
-            )
+            .buttonStyle(FilmExportButtonStyle(isHovered: isExportHovered, startsAsGrey: true))
+            .onHover { hovering in
+                onExportHover(hovering)
+            }
         }
     }
 }
