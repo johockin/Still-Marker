@@ -10,6 +10,33 @@ import AppKit
 import UniformTypeIdentifiers
 import AVFoundation
 
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (1, 1, 1, 0)
+        }
+        
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue:  Double(b) / 255,
+            opacity: Double(a) / 255
+        )
+    }
+}
+
 enum ViewMode {
     case grid
     case framePreview
@@ -64,8 +91,11 @@ enum ToastType {
 struct ResultsView: View {
     @ObservedObject var viewModel: AppViewModel
     @State private var selectedFrame: Frame?
-    @State private var hoveredFrame: Frame?
+    @State private var hoveredExportAllButton: Bool = false
+    @State private var hoveredFramePreviewExportButton: Bool = false
     @State private var viewMode: ViewMode = .grid
+    @State private var isGridReady: Bool = false
+    @State private var visibleFrameCount: Int = 0
     @State private var previewFrame: Frame?
     @State private var previewScaleMode: PreviewScaleMode = .fit
     @State private var selectedExportFormat: ExportFormat = .png
@@ -87,8 +117,7 @@ struct ResultsView: View {
     ]
     
     var body: some View {
-        let _ = print("🏁 ResultsView.body called with \(viewModel.extractedFrames.count) frames")
-        return ZStack {
+        ZStack {
             // More visible dark mode with lifted blacks
             ZStack {
                 LinearGradient(
@@ -168,56 +197,82 @@ struct ResultsView: View {
                 .frame(height: 1)
                 .padding(.vertical, 8)
             
-            // Frames grid with error handling
-            ScrollView {
-                LazyVGrid(columns: columns, spacing: 16) {
-                    ForEach(Array(viewModel.extractedFrames.enumerated()), id: \.element.id) { index, frame in
-                        Group {
-                            if frame.thumbnail.isValid && !frame.formattedTimestamp.isEmpty {
-                                FrameCard(
-                                    frame: frame,
-                                    isSelected: selectedFrame?.id == frame.id,
-                                    isHovered: hoveredFrame?.id == frame.id,
-                                    onExport: { exportFrame(frame) }
-                                )
-                            } else {
-                                // Error card for invalid frames
-                                VStack {
-                                    Image(systemName: "exclamationmark.triangle")
-                                        .font(.system(size: 24, weight: .light))
-                                        .foregroundColor(.red.opacity(0.7))
-                                    Text("Invalid Frame")
-                                        .font(.system(size: 12, weight: .light, design: .monospaced))
-                                        .foregroundColor(.white.opacity(0.5))
+            // Frames grid with loading state protection
+            Group {
+                if !isGridReady {
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(1.5)
+                        
+                        Text("Loading \(viewModel.extractedFrames.count) frames...")
+                            .font(.system(size: 14, weight: .medium, design: .monospaced))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onAppear {
+                        // Delay grid rendering to prevent crash
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            isGridReady = true
+                            // Start progressive loading with first batch
+                            loadFramesProgressively()
+                        }
+                    }
+                } else {
+                    ScrollView {
+                        LazyVGrid(columns: columns, spacing: 16) {
+                            ForEach(0..<min(visibleFrameCount, viewModel.extractedFrames.count), id: \.self) { index in
+                                let frame = viewModel.extractedFrames[index]
+                                Group {
+                                    if frame.thumbnail.isValid && !frame.formattedTimestamp.isEmpty {
+                                        FrameCard(
+                                            frame: frame,
+                                            isSelected: selectedFrame?.id == frame.id,
+                                            onTap: {
+                                                selectedFrame = frame
+                                                previewFrame = frame
+                                                currentFrameIndex = index
+                                            },
+                                            onDoubleTap: {
+                                                selectedFrame = frame
+                                                previewFrame = frame
+                                                currentFrameIndex = index
+                                                withAnimation(.easeInOut(duration: 0.3)) {
+                                                    viewMode = .framePreview
+                                                }
+                                            },
+                                            onExport: { exportFrame(frame) }
+                                        )
+                                    } else {
+                                        // Error card for invalid frames
+                                        VStack {
+                                            Image(systemName: "exclamationmark.triangle")
+                                                .font(.system(size: 24, weight: .light))
+                                                .foregroundColor(.red.opacity(0.7))
+                                            Text("Invalid Frame")
+                                                .font(.system(size: 12, weight: .light, design: .monospaced))
+                                                .foregroundColor(.white.opacity(0.5))
+                                        }
+                                        .frame(height: 150)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(.thinMaterial)
+                                        )
+                                    }
                                 }
-                                .frame(height: 150)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(.thinMaterial)
-                                )
                             }
                         }
-                        .onTapGesture {
-                            selectedFrame = frame
-                            previewFrame = frame
-                            currentFrameIndex = index
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                viewMode = .framePreview
-                            }
-                        }
-                        .onHover { hovering in
-                            let _ = print("🖱️ HOVER: Frame \(frame.formattedTimestamp) hovering=\(hovering)")
-                            hoveredFrame = hovering ? frame : nil
-                            let _ = print("🖱️ HOVER SET: hoveredFrame=\(hoveredFrame?.formattedTimestamp ?? "nil")")
-                        }
-                        .opacity(1.0)
-                        .animation(.easeIn(duration: 0.4).delay(Double(index) * 0.1), value: viewModel.extractedFrames.count)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 24)
                     }
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 24)
             }
             .background(Color.clear)
+            .onChange(of: viewModel.extractedFrames.count) { _ in
+                // Reset loading state when frames change
+                isGridReady = false
+                visibleFrameCount = 0
+            }
         }
     }
     
@@ -264,7 +319,7 @@ struct ResultsView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
                 
-                // Export all button - Warm Emulsion with maximum glass
+                // Export all button with Kodak Gold hover
                 Button(action: {
                     exportAllFrames()
                 }) {
@@ -274,25 +329,11 @@ struct ResultsView: View {
                         Text("Export All")
                             .font(.system(size: 14, weight: .medium, design: .monospaced))
                     }
-                    .foregroundColor(.white)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(red: 0.8, green: 0.561, blue: 0.173)) // Warm Emulsion #CC8F2C
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(.thinMaterial) // Maximum glass morphism
-                                    .blendMode(.overlay)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                            )
-                            .shadow(color: Color(red: 0.8, green: 0.561, blue: 0.173).opacity(0.3), radius: 4, x: 0, y: 2)
-                    )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(FilmExportButtonStyle(isHovered: hoveredExportAllButton))
+                .onHover { hovering in
+                    hoveredExportAllButton = hovering
+                }
             }
         }
         .padding(.horizontal, 24)
@@ -324,6 +365,26 @@ struct ResultsView: View {
         )
         .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
         .padding(.horizontal, 24)
+    }
+    
+    private func loadFramesProgressively() {
+        let batchSize = 8  // Load 8 frames at a time
+        let totalFrames = viewModel.extractedFrames.count
+        
+        // Start with first batch
+        visibleFrameCount = min(batchSize, totalFrames)
+        
+        // Continue loading in batches if there are more frames
+        guard totalFrames > batchSize else { return }
+        
+        let timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+            DispatchQueue.main.async {
+                self.visibleFrameCount = min(self.visibleFrameCount + batchSize, totalFrames)
+                if self.visibleFrameCount >= totalFrames {
+                    timer.invalidate()
+                }
+            }
+        }
     }
     
     private func exportFrame(_ frame: Frame) {
@@ -630,29 +691,14 @@ struct ResultsView: View {
                     .opacity(isRefining ? 0.5 : 1.0)
                 }
                 
-                // Export button - Warm Emulsion with maximum glass
+                // Export button with Kodak Gold hover
                 Button("Export This Frame") {
                     exportFrame(displayFrame)
                 }
-                .buttonStyle(PlainButtonStyle())
-                .font(.system(size: 14, weight: .medium, design: .monospaced))
-                .foregroundColor(.white)
-                .padding(.vertical, 12)
-                .padding(.horizontal, 24)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color(red: 0.8, green: 0.561, blue: 0.173)) // Warm Emulsion #CC8F2C
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(.thinMaterial) // Maximum glass morphism
-                                .blendMode(.overlay)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                        )
-                        .shadow(color: Color(red: 0.8, green: 0.561, blue: 0.173).opacity(0.3), radius: 4, x: 0, y: 2)
-                )
+                .buttonStyle(FilmExportButtonStyle(isHovered: hoveredFramePreviewExportButton && !isRefining))
+                .onHover { hovering in
+                    hoveredFramePreviewExportButton = hovering
+                }
                 .disabled(isRefining)
                 .opacity(isRefining ? 0.5 : 1.0)
             }
@@ -856,41 +902,65 @@ struct ResultsView: View {
     
 }
 
+struct FilmExportButtonStyle: ButtonStyle {
+    let isHovered: Bool
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 11, weight: .medium, design: .monospaced))
+            .foregroundColor(.black) // Black text on gold background
+            .opacity(isHovered ? 1.0 : 0.85) // Subtle opacity change
+            .padding(.vertical, 6)
+            .padding(.horizontal, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color(hex: "#E6A532")) // Always Kodak Gold
+                    .shadow(color: Color(hex: "#8B0000"), radius: isHovered ? 2 : 1, x: 0, y: 1) // Crimson red shadow
+            )
+            .animation(.easeInOut(duration: 0.15), value: isHovered)
+    }
+}
+
 struct FrameCard: View {
     let frame: Frame
     let isSelected: Bool
-    let isHovered: Bool
+    let onTap: () -> Void
+    let onDoubleTap: () -> Void
     let onExport: () -> Void
     
+    // NO @State variables at all!
+    
     var body: some View {
-        let _ = print("🎴 FrameCard.body: \(frame.formattedTimestamp) isHovered=\(isHovered) isSelected=\(isSelected)")
-        return VStack {
-            ZStack {
-                Image(nsImage: frame.thumbnail)
-                    .resizable()
-                    .frame(width: 200, height: 112)
-                    .cornerRadius(8)
-                
-                // Hover overlay with eye icon
-                if isHovered {
-                    let _ = print("🎯 HOVER OVERLAY showing for \(frame.formattedTimestamp)")
+        VStack(spacing: 8) {
+            Image(nsImage: frame.thumbnail)
+                .resizable()
+                .frame(width: 200, height: 112)
+                .cornerRadius(8)
+                .overlay(
+                    isSelected ? 
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.black.opacity(0.3))
-                        .frame(width: 200, height: 112)
-                        .overlay(
-                            Image(systemName: "eye")
-                                .font(.system(size: 24, weight: .light))
-                                .foregroundColor(.white.opacity(0.9))
-                        )
-                }
-            }
+                        .stroke(Color(hex: "#E6A532"), lineWidth: 3)
+                    : nil
+                )
+                .onTapGesture(count: 2) { onDoubleTap() }
+                .onTapGesture { onTap() }
             
             Text(frame.formattedTimestamp)
+                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                .foregroundColor(.white.opacity(0.7))
             
             Button("Export") {
                 onExport()
             }
-            .foregroundColor(Color(red: 0.8, green: 0.561, blue: 0.173))
+            .font(.system(size: 11, weight: .medium, design: .monospaced))
+            .foregroundColor(.black)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color(hex: "#E6A532")) // Kodak Gold
+                    .shadow(color: Color(hex: "#8B0000"), radius: 1, x: 0, y: 1) // Crimson red shadow
+            )
         }
     }
 }

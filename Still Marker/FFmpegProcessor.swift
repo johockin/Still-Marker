@@ -65,16 +65,25 @@ class FFmpegProcessor: ObservableObject {
                     outputURL: frameURL
                 )
                 
-                // Load the extracted frame
+                // Load the extracted frame ONLY to create thumbnail
                 if let fullImage = NSImage(contentsOf: frameURL) {
                     // Generate thumbnail for memory efficiency
                     let thumbnail = fullImage.resizedToFit(maxSize: CGSize(width: 200, height: 112))
-                    let frame = Frame(timestamp: timestamp, thumbnail: thumbnail, fullImage: fullImage)
+                    
+                    // Create permanent file for full image storage
+                    let frameID = UUID()
+                    let permanentURL = Frame.createTempImageURL(for: frameID)
+                    
+                    // Move the extracted file to permanent location
+                    try? FileManager.default.moveItem(at: frameURL, to: permanentURL)
+                    
+                    // Create frame with URL reference (no full image in memory)
+                    let frame = Frame(id: frameID, timestamp: timestamp, thumbnail: thumbnail, fullImageURL: permanentURL) 
                     frames.append(frame)
+                } else {
+                    // Clean up failed extraction file
+                    try? FileManager.default.removeItem(at: frameURL)
                 }
-                
-                // Clean up individual frame file
-                try? FileManager.default.removeItem(at: frameURL)
                 
             } catch {
                 print("Failed to extract frame at \(timestamp)s: \(error)")
