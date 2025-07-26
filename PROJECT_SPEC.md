@@ -174,16 +174,53 @@ Think of the interface as a digital light table where a film essayist might exam
 - **PHILOSOPHY**: "Would a tired cinematographer appreciate this at 3am?" - Beautiful but clear
 - **COMPLETE**: La Jetée documentary influence, digital light table for film essayists
 
+### 2025-01-26 - 🚀 M5.3: Thumbnail Generation System (IMPLEMENTED - AWAITING QA)
+**Target**: Solve memory pressure crashes by implementing dual-resolution frame system
+
+#### **Memory Crisis Resolution**
+- **PROBLEM IDENTIFIED**: Loading 40 full-resolution frames (1920×1080) causes ~330MB memory usage
+- **CRASH CAUSE**: SwiftUI view complexity crashes due to memory pressure, not view nesting
+- **SOLUTION IMPLEMENTED**: Dual-resolution frame architecture for 98% memory reduction
+
+#### **Technical Implementation Completed**
+- **Frame Model Enhancement** ✅:
+  ```swift
+  struct Frame {
+      private let _thumbnail: NSImage    // 200×112 for grid display (~3.6MB total)
+      private let _fullImage: NSImage?   // Full resolution for preview/export
+      var thumbnail: NSImage { return _thumbnail }
+      var image: NSImage { return _fullImage ?? _thumbnail }
+  }
+  ```
+- **NSImage Extension** ✅: `resizedToFit(maxSize:)` method with high-quality interpolation
+- **FFmpeg Integration** ✅: Generates thumbnail immediately after each frame extraction (line 71)
+- **View Optimization** ✅: FrameCard uses thumbnails, preview mode uses full resolution
+
+#### **Expected Performance Impact**
+- **Memory Reduction**: From ~330MB to ~3.6MB in grid view (98% reduction)
+- **Extraction Time**: Increases by ~2 seconds (50ms per thumbnail × 40 frames)
+- **App Responsiveness**: Should eliminate crash risk entirely
+- **Export Quality**: Unchanged - still uses full resolution frames
+
+#### **⚠️ PENDING USER QA**
+**Implementation complete but requires user testing to verify:**
+1. Memory stability with 40+ frame videos
+2. No crashes during grid display
+3. Export quality unchanged (uses full resolution)
+4. Acceptable extraction time increase (~2 seconds)
+5. Preview mode still shows full quality
+
 ### 2025-01-25 - 🔧 M5.2: Crash Investigation & Stability Fixes ✅
 - **CRITICAL BUG**: Fixed floating point precision issue in frame filenames (frame_45.900000000000006.jpg)
 - **SOLUTION**: Implemented Frame.formatTimestampForFilename() with 1 decimal precision
-- **CRASH FIX**: Resolved ResultsView infinite render loop by simplifying FrameCard component
-- **STABILITY**: Eliminated complex animations, materials, and view hierarchies causing crashes
+- **CRASH DIAGNOSIS**: Initially thought SwiftUI view complexity, actually memory pressure from full-res images
+- **TEMPORARY FIX**: Simplified FrameCard export button to reduce view nesting
+- **EXPORT BUTTONS**: Added Warm Emulsion (#CC8F2C) colored export functionality with glass morphism
 - **HOVER OVERLAY**: Successfully restored eye icon hover effect without crashes
 - **DEBUG INFRASTRUCTURE**: Added comprehensive logging for hover state and render tracking
-- **KEYBOARD HANDLING**: Re-enabled KeyEventHandlingView for testing - awaiting user QA
-- **SAFE ROLLBACK**: Committed stable state before testing potentially problematic components
-- **STATUS**: App now stable with working hover effects, KeyEventHandlingView needs testing
+- **KEYBOARD HANDLING**: Re-enabled KeyEventHandlingView - confirmed stable
+- **DISCOVERY**: 40×1920×1080 images = ~330MB memory usage is root cause of crashes
+- **NEXT MILESTONE**: M5.3 thumbnail system will solve memory issues permanently
 
 ### 2025-01-25 - ✨ M5.0: Enhanced File Naming Complete ✅
 - **IMPLEMENTED**: Source video filename prefix for exported frames

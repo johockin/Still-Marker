@@ -866,7 +866,7 @@ struct FrameCard: View {
         let _ = print("🎴 FrameCard.body: \(frame.formattedTimestamp) isHovered=\(isHovered) isSelected=\(isSelected)")
         return VStack {
             ZStack {
-                Image(nsImage: frame.image)
+                Image(nsImage: frame.thumbnail)
                     .resizable()
                     .frame(width: 200, height: 112)
                     .cornerRadius(8)
