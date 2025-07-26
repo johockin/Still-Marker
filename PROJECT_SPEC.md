@@ -174,6 +174,15 @@ Think of the interface as a digital light table where a film essayist might exam
 - **PHILOSOPHY**: "Would a tired cinematographer appreciate this at 3am?" - Beautiful but clear
 - **COMPLETE**: La Jetée documentary influence, digital light table for film essayists
 
+### 2025-01-26 - ✨ M5.1 Enhanced: Glassy Texture & Atmospheric Depth ✅
+- **DOT PAPER TEXTURE**: Implemented subtle black 1px dots every 50px for film essayist aesthetic
+- **EXPANDED RADIAL GRADIENT**: Enlarged from 600px to 1000px radius covering more interface area
+- **ENHANCED GLASS MORPHISM**: Added 3-layer gradient system with improved atmospheric lighting
+- **REPOSITIONED SPOTLIGHT**: Moved radial center to top (y: 0.0) for better light distribution
+- **INCREASED PROMINENCE**: Enhanced brightness and opacity (0.7 vs 0.5) for more visible depth
+- **DOCUMENTARY TEXTURE**: Creates contemplative "dot paper" feel Chris Marker would appreciate
+- **GLASSY PANELS**: Interface now feels like high-end camera filters with textural depth
+
 ### 2025-01-26 - 🚀 M5.3: Thumbnail Generation System (IMPLEMENTED - AWAITING QA)
 **Target**: Solve memory pressure crashes by implementing dual-resolution frame system
 
@@ -632,6 +641,17 @@ let interval = calculateFrameInterval(videoDuration: 48.92)
 - **10-minute short film**: 40 frames at 15s intervals
 - **Consistent filmmaker experience** across content lengths
 - **Performance optimization** for long-form content
+
+---
+
+## 🔜 FUTURE DEVELOPMENT TASKS
+
+### Upcoming Sprint Items
+- **Remove Shift+1 functionality**: The UI button has been removed (2025-01-26), but the underlying offset functionality remains in AppViewModel. Future sprint should remove:
+  - `currentOffset` property from AppViewModel
+  - `shiftOffset()` method from AppViewModel
+  - Any frame offset logic in the extraction process
+  - Keyboard shortcut handling for this feature (if any)
 
 ---
 

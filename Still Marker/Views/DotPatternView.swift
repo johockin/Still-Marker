@@ -8,23 +8,34 @@
 import SwiftUI
 
 struct DotPatternView: View {
+    let dotSize: CGFloat
+    let spacing: CGFloat
+    let opacity: Double
+    
+    init(dotSize: CGFloat = 1.0, spacing: CGFloat = 50.0, opacity: Double = 0.12) {
+        self.dotSize = dotSize
+        self.spacing = spacing
+        self.opacity = opacity
+    }
+    
     var body: some View {
         Canvas { context, size in
-            // Calculate dot spacing - approximately 1cm (28.35 points)
-            let dotSpacing: CGFloat = 24
-            let dotSize: CGFloat = 2.4
+            guard size.width > 0 && size.height > 0 else { return }
             
-            // Calculate grid dimensions
-            let cols = Int(size.width / dotSpacing) + 1
-            let rows = Int(size.height / dotSpacing) + 1
+            // Calculate grid dimensions based on custom spacing
+            let cols = Int(size.width / spacing) + 1
+            let rows = Int(size.height / spacing) + 1
             
-            // Draw dot grid
+            // Draw dot grid with black dots for film paper texture
             for row in 0..<rows {
                 for col in 0..<cols {
-                    let x = CGFloat(col) * dotSpacing
-                    let y = CGFloat(row) * dotSpacing
+                    let x = CGFloat(col) * spacing
+                    let y = CGFloat(row) * spacing
                     
-                    // Create tiny dot
+                    // Ensure dot is within bounds
+                    guard x < size.width && y < size.height else { continue }
+                    
+                    // Create simple circle dot
                     let dotRect = CGRect(
                         x: x - dotSize / 2,
                         y: y - dotSize / 2,
@@ -32,20 +43,22 @@ struct DotPatternView: View {
                         height: dotSize
                     )
                     
+                    // Use ellipse instead of roundedRect for simpler rendering
                     context.fill(
                         Path(ellipseIn: dotRect),
-                        with: .color(Color.gray.opacity(0.4))
+                        with: .color(.black.opacity(opacity))
                     )
                 }
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
 struct DotPatternView_Previews: PreviewProvider {
     static var previews: some View {
-        DotPatternView()
+        DotPatternView(dotSize: 2.0, spacing: 50.0, opacity: 0.25)
             .frame(width: 400, height: 300)
-            .background(Color.gray.opacity(0.2))
+            .background(Color(red: 0.12, green: 0.12, blue: 0.13))
     }
 }

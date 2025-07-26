@@ -21,23 +21,34 @@ struct UploadProcessingView: View {
                 Color(red: 0.1, green: 0.1, blue: 0.11)
                     .ignoresSafeArea()
                 
-                // Spotlight gradient towards top - more visible
+                // Warmer spotlight gradient - smaller, dimmer, moved left
                 RadialGradient(
                     gradient: Gradient(colors: [
-                        Color(red: 0.25, green: 0.22, blue: 0.20).opacity(1.0), // Much warmer spotlight
-                        Color(red: 0.18, green: 0.16, blue: 0.15).opacity(0.7), // Mid tone
-                        Color(red: 0.12, green: 0.12, blue: 0.13).opacity(0.3)  // Fade to background
+                        Color(red: 0.32, green: 0.28, blue: 0.24).opacity(1.0),  // 20% dimmer warm cream center
+                        Color(red: 0.24, green: 0.21, blue: 0.18).opacity(0.8),  // Dimmer mid tone
+                        Color(red: 0.16, green: 0.14, blue: 0.13).opacity(0.5),  // Dimmer transition
+                        Color.clear                                               // Fade out
                     ]),
-                    center: UnitPoint(x: 0.5, y: 0.1),
-                    startRadius: 100,
-                    endRadius: 500
+                    center: UnitPoint(x: 0.3, y: 0.45),  // Moved 20% to the left (from 0.5 to 0.3)
+                    startRadius: 60,   // Smaller radius
+                    endRadius: 400     // Smaller coverage
                 )
                 .ignoresSafeArea()
                 
-                // Dot pattern temporarily disabled due to crash
-                // DotPatternView()
-                //     .opacity(0.2)
-                //     .ignoresSafeArea()
+                // Crimson spotlight in bottom right corner
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        Color(red: 0.8, green: 0.1, blue: 0.2).opacity(0.6),     // Crimson center
+                        Color(red: 0.6, green: 0.08, blue: 0.15).opacity(0.4),   // Mid crimson
+                        Color(red: 0.4, green: 0.05, blue: 0.1).opacity(0.2),    // Fading crimson
+                        Color.clear                                               // Fade out
+                    ]),
+                    center: UnitPoint(x: 0.85, y: 0.85),  // Bottom right corner position
+                    startRadius: 40,
+                    endRadius: 350
+                )
+                .ignoresSafeArea()
+                
             }
             
             if viewModel.state == .upload {

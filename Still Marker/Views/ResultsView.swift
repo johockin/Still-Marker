@@ -120,8 +120,9 @@ struct ResultsView: View {
     
     var body: some View {
         ZStack {
-            // More visible dark mode with lifted blacks
+            // Enhanced glassy dark mode with dot paper texture
             ZStack {
+                // Base lifted black gradient
                 LinearGradient(
                     gradient: Gradient(colors: [
                         Color(red: 0.12, green: 0.12, blue: 0.13), // Lifted black
@@ -132,17 +133,46 @@ struct ResultsView: View {
                 )
                 .ignoresSafeArea()
                 
-                // Warm spotlight overlay for visibility
+                // Warmer spotlight gradient - smaller, dimmer, moved left
                 RadialGradient(
                     gradient: Gradient(colors: [
-                        Color(red: 0.22, green: 0.20, blue: 0.18).opacity(0.5),
-                        Color.clear
+                        Color(red: 0.32, green: 0.28, blue: 0.24).opacity(1.0),  // 20% dimmer warm cream center
+                        Color(red: 0.24, green: 0.21, blue: 0.18).opacity(0.8),  // Dimmer mid tone
+                        Color(red: 0.16, green: 0.14, blue: 0.13).opacity(0.5),  // Dimmer transition
+                        Color.clear                                               // Fade out
                     ]),
-                    center: UnitPoint(x: 0.5, y: 0.1),
-                    startRadius: 100,
-                    endRadius: 600
+                    center: UnitPoint(x: 0.3, y: 0.45),  // Moved 20% to the left (from 0.5 to 0.3)
+                    startRadius: 60,   // Smaller radius
+                    endRadius: 400     // Smaller coverage
                 )
                 .ignoresSafeArea()
+                
+                // Crimson spotlight in bottom right corner
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        Color(red: 0.8, green: 0.1, blue: 0.2).opacity(0.6),     // Crimson center
+                        Color(red: 0.6, green: 0.08, blue: 0.15).opacity(0.4),   // Mid crimson
+                        Color(red: 0.4, green: 0.05, blue: 0.1).opacity(0.2),    // Fading crimson
+                        Color.clear                                               // Fade out
+                    ]),
+                    center: UnitPoint(x: 0.85, y: 0.85),  // Bottom right corner position
+                    startRadius: 40,
+                    endRadius: 350
+                )
+                .ignoresSafeArea()
+                
+                // Additional subtle glass morphism layer
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color.white.opacity(0.02),
+                        Color.clear,
+                        Color.black.opacity(0.02)
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                
             }
             
             switch viewMode {
@@ -165,6 +195,7 @@ struct ResultsView: View {
                 .animation(.easeInOut(duration: 0.3), value: showToast)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
+            
         }
         .navigationTitle("")
         .toolbar {
@@ -308,6 +339,8 @@ struct ResultsView: View {
             
             // Controls
             HStack(spacing: 12) {
+                // Shift+1 button removed - functionality to be removed in future sprint
+                /*
                 // Offset control
                 Button(action: {
                     viewModel.shiftOffset()
@@ -331,6 +364,7 @@ struct ResultsView: View {
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
+                */
                 
                 // Export all button with Kodak Gold hover
                 Button(action: {
