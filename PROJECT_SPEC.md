@@ -19,8 +19,9 @@
 - **Specs over assumptions** - When in doubt, ask for clarification
 - **No magic** - Code must be explainable to any collaborator
 - **Work in stable milestones** - Each chunk of progress must be committable and testable
-- **User does the QA** - AI guides testing, user runs tests locally/in browser
+- **User does the QA** - AI guides testing, user runs tests locally/in browser - AI should never guess at QA results by reading code
 - **This file is allowed to be sprawling** - It's the beating heart of the project
+- **Flag spec inconsistencies** - AI must identify and flag any issues or inconsistencies found in this spec
 
 ### 🧠 Guiding Philosophy:
 - **Transparency > Cleverness**
@@ -183,6 +184,14 @@ Think of the interface as a digital light table where a film essayist might exam
 - **CONSISTENT STYLING**: Unified button styling across grid and preview modes for professional workflow
 - **TOOLBAR REMOVAL**: Moved New Video from macOS toolbar to custom header for better control
 - **VISUAL HIERARCHY**: Three equal header sections with clear navigation patterns
+
+### 2025-01-27 - 🎨 M5.2.1: Header Alignment & Button Style Refinements ✅
+- **BUTTON COLOR CORRECTION**: Fixed New Video button hover state to remain grey (navigation) instead of gold (export)
+- **CREATED GREY BUTTON STYLE**: Added `GreyNavigationButtonStyle` with proper glass morphism effects for navigation actions
+- **PRECISE ALIGNMENT**: Fine-tuned header margins to perfectly align buttons with grid content edges
+- **SPACING OPTIMIZATION**: Moved header content up and increased bottom padding for balanced visual hierarchy
+- **MARGIN PRECISION**: Used negative padding to compensate for button internal padding and achieve pixel-perfect alignment
+- **VISUAL CONSISTENCY**: Maintained yellow/gold exclusively for export actions, grey for navigation throughout app
 
 ### 2025-01-26 - ✨ M5.1 Enhanced: Glassy Texture & Atmospheric Depth ✅
 - **DOT PAPER TEXTURE**: Implemented subtle black 1px dots every 50px for film essayist aesthetic

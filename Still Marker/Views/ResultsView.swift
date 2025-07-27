@@ -92,6 +92,7 @@ struct ResultsView: View {
     @ObservedObject var viewModel: AppViewModel
     @State private var selectedFrame: Frame?
     @State private var hoveredExportAllButton: Bool = false
+    @State private var hoveredNewVideoButton: Bool = false
     @State private var hoveredFramePreviewExportButton: Bool = false
     @State private var viewMode: ViewMode = .grid
     @State private var isGridReady: Bool = false
@@ -205,10 +206,6 @@ struct ResultsView: View {
             // Header with controls
             headerView
             
-            Rectangle()
-                .fill(Color.white.opacity(0.1))
-                .frame(height: 1)
-                .padding(.vertical, 8)
             
             // Frames grid with loading state protection
             Group {
@@ -301,30 +298,25 @@ struct ResultsView: View {
     }
     
     private var headerView: some View {
-        HStack {
-            // New Video button - prominent with back arrow
+        HStack(spacing: 12) {    // Slightly reduced spacing to help alignment
+            // New Video button - matches grid cell width
             Button(action: {
                 viewModel.resetToUpload()
             }) {
                 HStack(spacing: 8) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 12, weight: .medium))
                     Text("New Video")
-                        .font(.system(size: 14, weight: .medium, design: .monospaced))
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
                 }
-                .foregroundColor(.white.opacity(0.9))
-                .padding(.vertical, 12)
-                .padding(.horizontal, 20)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(.thinMaterial)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                        )
-                )
             }
-            .buttonStyle(PlainButtonStyle())
+            .frame(width: 200)
+            .buttonStyle(GreyNavigationButtonStyle(isHovered: hoveredNewVideoButton))
+            .onHover { hovering in
+                withAnimation(.easeInOut(duration: 0.1)) {
+                    hoveredNewVideoButton = hovering
+                }
+            }
             
             Spacer()
             
@@ -343,38 +335,29 @@ struct ResultsView: View {
             
             Spacer()
             
-            // Export All button - prominent with equal spacing
+            // Export All button - matches grid cell width
             Button(action: {
                 exportAllFrames()
             }) {
                 HStack(spacing: 8) {
                     Image(systemName: "square.and.arrow.down")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 12, weight: .medium))
                     Text("Export All")
-                        .font(.system(size: 14, weight: .medium, design: .monospaced))
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
                 }
-                .foregroundColor(.white.opacity(0.9))
-                .padding(.vertical, 12)
-                .padding(.horizontal, 20)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color(hex: "#E6A532"))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                        )
-                )
             }
-            .buttonStyle(PlainButtonStyle())
-            .scaleEffect(hoveredExportAllButton ? 1.05 : 1.0)
+            .frame(width: 200)
+            .buttonStyle(FilmExportButtonStyle(isHovered: hoveredExportAllButton, startsAsGrey: false))
             .onHover { hovering in
-                withAnimation(.easeInOut(duration: 0.2)) {
+                withAnimation(.easeInOut(duration: 0.1)) {
                     hoveredExportAllButton = hovering
                 }
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 16)
+        .padding(.leading, -8)   // Move New Video button 1 final point left
+        .padding(.trailing, -5)  // Move Export All button 1 more point left
+        .padding(.top, 8)
+        .padding(.bottom, 32)    // Double the previous padding for better balance
     }
     
     private var toastView: some View {
@@ -953,6 +936,52 @@ struct ResultsView: View {
         }
     }
     
+}
+
+struct GreyNavigationButtonStyle: ButtonStyle {
+    let isHovered: Bool
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 11, weight: .medium, design: .monospaced))
+            .foregroundColor(.white.opacity(0.9))
+            .opacity(isHovered ? 1.0 : 0.85)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.gray.opacity(0.4))
+                    .overlay(
+                        // Enhanced glassy hover overlay for grey buttons
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(.ultraThinMaterial)
+                            .opacity(isHovered ? 0.7 : 0.3)
+                            .overlay(
+                                // Gradient highlight + hard light combo
+                                ZStack {
+                                    // Subtle gradient background
+                                    LinearGradient(
+                                        colors: [.white.opacity(0.2), .clear],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                    .opacity(isHovered ? 1.0 : 0.0)
+                                    
+                                    // Hard light edge on top
+                                    VStack {
+                                        Rectangle()
+                                            .fill(.white.opacity(0.55))
+                                            .frame(height: 2)
+                                            .opacity(isHovered ? 1.0 : 0.0)
+                                        Spacer()
+                                    }
+                                }
+                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                            )
+                    )
+            )
+            .animation(.easeInOut(duration: 0.1), value: isHovered)
+    }
 }
 
 struct FilmExportButtonStyle: ButtonStyle {
