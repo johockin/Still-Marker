@@ -174,6 +174,16 @@ Think of the interface as a digital light table where a film essayist might exam
 - **PHILOSOPHY**: "Would a tired cinematographer appreciate this at 3am?" - Beautiful but clear
 - **COMPLETE**: La Jetée documentary influence, digital light table for film essayists
 
+### 2025-01-27 - 🎨 M5.2: Header Redesign & Navigation Clarity ✅
+- **HEADER LAYOUT REDESIGN**: Redesigned with prominent Export All and New Video buttons in equal spacing around centered title
+- **NAVIGATION CLARITY**: Added back arrow (< chevron) to New Video button indicating backward navigation
+- **CENTERED CONTENT**: Title and frame count now centered in header area for better visual hierarchy
+- **FRAME ALIGNMENT**: Left-aligned timecode to photo edge, right-aligned export button within photo width
+- **SIMPLIFIED PREVIEW**: Frame preview replaced simple "← Back to Grid" with prominent styled button
+- **CONSISTENT STYLING**: Unified button styling across grid and preview modes for professional workflow
+- **TOOLBAR REMOVAL**: Moved New Video from macOS toolbar to custom header for better control
+- **VISUAL HIERARCHY**: Three equal header sections with clear navigation patterns
+
 ### 2025-01-26 - ✨ M5.1 Enhanced: Glassy Texture & Atmospheric Depth ✅
 - **DOT PAPER TEXTURE**: Implemented subtle black 1px dots every 50px for film essayist aesthetic
 - **EXPANDED RADIAL GRADIENT**: Enlarged from 600px to 1000px radius covering more interface area

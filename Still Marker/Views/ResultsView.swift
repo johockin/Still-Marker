@@ -198,26 +198,6 @@ struct ResultsView: View {
             
         }
         .navigationTitle("")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button("New Video") {
-                    viewModel.resetToUpload()
-                }
-                .foregroundColor(.white.opacity(0.9))
-                .font(.system(size: 14, weight: .medium, design: .monospaced))
-                .padding(.vertical, 8)
-                .padding(.horizontal, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(.thinMaterial)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                        )
-                )
-                .buttonStyle(PlainButtonStyle())
-            }
-        }
     }
     
     private var gridView: some View {
@@ -322,63 +302,73 @@ struct ResultsView: View {
     
     private var headerView: some View {
         HStack {
-            // Frame count and video info - Professional dark edit suite hierarchy
-            VStack(alignment: .leading, spacing: 4) {
+            // New Video button - prominent with back arrow
+            Button(action: {
+                viewModel.resetToUpload()
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 14, weight: .medium))
+                    Text("New Video")
+                        .font(.system(size: 14, weight: .medium, design: .monospaced))
+                }
+                .foregroundColor(.white.opacity(0.9))
+                .padding(.vertical, 12)
+                .padding(.horizontal, 20)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(.thinMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                        )
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            Spacer()
+            
+            // Centered title and frame count
+            VStack(spacing: 4) {
                 Text("\(viewModel.extractedFrames.count) frames extracted")
                     .font(.system(size: 16, weight: .medium, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.9)) // High contrast for professionals
+                    .foregroundColor(.white.opacity(0.9))
                 
                 if let videoURL = viewModel.selectedVideoURL {
                     Text("from \(videoURL.lastPathComponent)")
                         .font(.system(size: 12, weight: .regular, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.5)) // Clean hierarchy
+                        .foregroundColor(.white.opacity(0.5))
                 }
             }
             
             Spacer()
             
-            // Controls
-            HStack(spacing: 12) {
-                // Shift+1 button removed - functionality to be removed in future sprint
-                /*
-                // Offset control
-                Button(action: {
-                    viewModel.shiftOffset()
-                }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "clock.arrow.circlepath")
-                            .font(.system(size: 14))
-                        Text("Shift +\(viewModel.currentOffset + 1)s")
-                            .font(.system(size: 14, weight: .medium, design: .monospaced))
-                    }
-                    .foregroundColor(.white.opacity(0.9)) // High contrast for dark backgrounds
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(.thinMaterial)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                            )
-                    )
+            // Export All button - prominent with equal spacing
+            Button(action: {
+                exportAllFrames()
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "square.and.arrow.down")
+                        .font(.system(size: 14, weight: .medium))
+                    Text("Export All")
+                        .font(.system(size: 14, weight: .medium, design: .monospaced))
                 }
-                .buttonStyle(PlainButtonStyle())
-                */
-                
-                // Export all button with Kodak Gold hover
-                Button(action: {
-                    exportAllFrames()
-                }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "square.and.arrow.down")
-                            .font(.system(size: 14))
-                        Text("Export All")
-                            .font(.system(size: 14, weight: .medium, design: .monospaced))
-                    }
-                }
-                .buttonStyle(FilmExportButtonStyle(isHovered: hoveredExportAllButton))
-                .onHover { hovering in
+                .foregroundColor(.white.opacity(0.9))
+                .padding(.vertical, 12)
+                .padding(.horizontal, 20)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(hex: "#E6A532"))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                        )
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+            .scaleEffect(hoveredExportAllButton ? 1.05 : 1.0)
+            .onHover { hovering in
+                withAnimation(.easeInOut(duration: 0.2)) {
                     hoveredExportAllButton = hovering
                 }
             }
@@ -569,17 +559,33 @@ struct ResultsView: View {
         let displayTimestamp = refinedTimestamp ?? frame.timestamp
         
         return VStack {
-            // Back button
+            // Prominent Back to Grid button
             HStack {
-                Button("← Back to Grid") {
+                Button(action: {
                     withAnimation(.easeInOut(duration: 0.3)) {
                         resetRefinement()
                         viewMode = .grid
                     }
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 14, weight: .medium))
+                        Text("Back to Grid")
+                            .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    }
+                    .foregroundColor(.white.opacity(0.9))
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(.thinMaterial)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                            )
+                    )
                 }
                 .buttonStyle(PlainButtonStyle())
-                .font(.system(size: 14, weight: .medium, design: .monospaced))
-                .foregroundColor(.white.opacity(0.7))
                 
                 Spacer()
                 
@@ -1055,17 +1061,23 @@ struct FrameCard: View {
                 onHover(hovering)
             }
             
-            Text(frame.formattedTimestamp)
-                .font(.system(size: 12, weight: .medium, design: .monospaced))
-                .foregroundColor(.white.opacity(0.7))
-            
-            Button("Export") {
-                onExport()
+            // Align timecode left and export button right
+            HStack {
+                Text(frame.formattedTimestamp)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.7))
+                
+                Spacer()
+                
+                Button("Export") {
+                    onExport()
+                }
+                .buttonStyle(FilmExportButtonStyle(isHovered: isExportHovered, startsAsGrey: true))
+                .onHover { hovering in
+                    onExportHover(hovering)
+                }
             }
-            .buttonStyle(FilmExportButtonStyle(isHovered: isExportHovered, startsAsGrey: true))
-            .onHover { hovering in
-                onExportHover(hovering)
-            }
+            .frame(width: 200) // Match the image width
         }
     }
 }
