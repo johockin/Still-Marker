@@ -542,8 +542,9 @@ struct ResultsView: View {
         let displayTimestamp = refinedTimestamp ?? frame.timestamp
         
         return VStack {
-            // Prominent Back to Grid button
+            // Compact header - minimal structure
             HStack {
+                // Back to Grid button - simplified styling
                 Button(action: {
                     withAnimation(.easeInOut(duration: 0.3)) {
                         resetRefinement()
@@ -552,13 +553,13 @@ struct ResultsView: View {
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: 12, weight: .medium))
                         Text("Back to Grid")
-                            .font(.system(size: 14, weight: .medium, design: .monospaced))
+                            .font(.system(size: 12, weight: .medium, design: .monospaced))
                     }
                     .foregroundColor(.white.opacity(0.9))
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 20)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
                             .fill(.thinMaterial)
@@ -570,24 +571,32 @@ struct ResultsView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
                 
-                Spacer()
-                
-                Text("Frame Preview")
-                    .font(.system(size: 18, weight: .light, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.9))
-                
-                Spacer()
+                // Title text aligned to the right
+                HStack {
+                    Spacer()
+                    Text("Frame \(currentFrameIndex + 1) of \(viewModel.extractedFrames.count)")
+                        .font(.system(size: 12, weight: .light, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.9))
+                }
             }
-            .padding()
+            .padding(.leading, 60)  // Move button more to the right
+            .padding(.trailing, 60) // Split the difference - halfway between 40 and 80
+            .padding(.top, 16)      // Reduced top padding
+            .padding(.bottom, 32)   // Keep bottom padding
             
             // Frame display with navigation
             Spacer()
             
-            HStack {
+            HStack(spacing: 0) {
+                // Outer spacer (lower priority - less space)
+                Spacer()
+                    .frame(maxWidth: .infinity)
+                    .layoutPriority(1)
+                
                 // Previous frame button
                 Button(action: navigateToPreviousFrame) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 24, weight: .medium))
+                        .font(.system(size: 12, weight: .medium))  // Half the size
                         .foregroundColor(.white.opacity(0.7))
                         .padding()
                         .background(.thinMaterial)
@@ -597,7 +606,10 @@ struct ResultsView: View {
                 .disabled(currentFrameIndex <= 0)
                 .opacity(currentFrameIndex <= 0 ? 0.3 : 1.0)
                 
+                // Inner spacer (higher priority - more space, moves button closer to center)
                 Spacer()
+                    .frame(maxWidth: .infinity)
+                    .layoutPriority(2)
                 
                 // Frame image with refinement overlay
                 ZStack {
@@ -617,13 +629,17 @@ struct ResultsView: View {
                             )
                     }
                 }
+                .layoutPriority(3)  // Highest priority - ensure image gets space
                 
+                // Inner spacer (higher priority - more space, moves button closer to center)
                 Spacer()
+                    .frame(maxWidth: .infinity)
+                    .layoutPriority(2)
                 
                 // Next frame button
                 Button(action: navigateToNextFrame) {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 24, weight: .medium))
+                        .font(.system(size: 12, weight: .medium))  // Half the size
                         .foregroundColor(.white.opacity(0.7))
                         .padding()
                         .background(.thinMaterial)
@@ -632,6 +648,11 @@ struct ResultsView: View {
                 .buttonStyle(PlainButtonStyle())
                 .disabled(currentFrameIndex >= viewModel.extractedFrames.count - 1)
                 .opacity(currentFrameIndex >= viewModel.extractedFrames.count - 1 ? 0.3 : 1.0)
+                
+                // Outer spacer (lower priority - less space)
+                Spacer()
+                    .frame(maxWidth: .infinity)
+                    .layoutPriority(1)
             }
             
             // Frame refinement and export controls
@@ -742,13 +763,6 @@ struct ResultsView: View {
             
             Spacer()
             
-            // Frame info with navigation
-            VStack(spacing: 8) {
-                Text("\(currentFrameIndex + 1) of \(viewModel.extractedFrames.count)")
-                    .font(.system(size: 12, weight: .light, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.3))
-            }
-            .padding()
         }
         .background(
             // Keyboard event capture overlay
