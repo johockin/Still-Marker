@@ -143,21 +143,22 @@ class FFmpegProcessor: ObservableObject {
         process.standardError = errorPipe // Capture error output for debugging
         
         return try await withCheckedThrowingContinuation { continuation in
+            // Set termination handler BEFORE running process to avoid race condition
+            process.terminationHandler = { process in
+                if process.terminationStatus == 0 {
+                    print("✅ Frame extracted successfully at \(timestamp)s")
+                    continuation.resume()
+                } else {
+                    let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+                    let errorOutput = String(data: errorData, encoding: .utf8) ?? ""
+                    print("❌ Frame extraction failed at \(timestamp)s: \(errorOutput)")
+                    continuation.resume(throwing: FFmpegError.frameExtractionFailed)
+                }
+            }
+            
             do {
                 print("🚀 FFmpeg FAST-SEEK Command: \(ffmpegPath) -ss \(timestamp) -i \"\(videoURL.path)\" -vframes 1 -q:v 2 -y \"\(outputURL.path)\"")
                 try process.run()
-                
-                process.terminationHandler = { process in
-                    if process.terminationStatus == 0 {
-                        print("✅ Frame extracted successfully at \(timestamp)s")
-                        continuation.resume()
-                    } else {
-                        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-                        let errorOutput = String(data: errorData, encoding: .utf8) ?? ""
-                        print("❌ Frame extraction failed at \(timestamp)s: \(errorOutput)")
-                        continuation.resume(throwing: FFmpegError.frameExtractionFailed)
-                    }
-                }
             } catch {
                 print("❌ Failed to run FFmpeg frame extraction: \(error)")
                 continuation.resume(throwing: error)
