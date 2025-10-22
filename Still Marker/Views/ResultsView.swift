@@ -404,7 +404,7 @@ struct ResultsView: View {
         // Continue loading in batches if there are more frames
         guard totalFrames > batchSize else { return }
         
-        let timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+        _ = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
             DispatchQueue.main.async {
                 self.visibleFrameCount = min(self.visibleFrameCount + batchSize, totalFrames)
                 if self.visibleFrameCount >= totalFrames {

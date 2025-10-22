@@ -143,12 +143,15 @@ class FFmpegProcessor: ObservableObject {
         process.standardError = errorPipe // Capture error output for debugging
         
         return try await withCheckedThrowingContinuation { continuation in
-            var hasResumed = false
+            let hasResumed = OSAllocatedUnfairLock(initialState: false)
             
             // Set termination handler BEFORE running process to avoid race condition
             process.terminationHandler = { process in
-                guard !hasResumed else { return }
-                hasResumed = true
+                guard !hasResumed.withLock({ resumed in
+                    if resumed { return true }
+                    resumed = true
+                    return false
+                }) else { return }
                 
                 if process.terminationStatus == 0 {
                     print("✅ Frame extracted successfully at \(timestamp)s")
@@ -163,8 +166,11 @@ class FFmpegProcessor: ObservableObject {
             
             // Timeout after 10 seconds to prevent indefinite hangs
             DispatchQueue.global().asyncAfter(deadline: .now() + 10.0) {
-                guard !hasResumed else { return }
-                hasResumed = true
+                guard !hasResumed.withLock({ resumed in
+                    if resumed { return true }
+                    resumed = true
+                    return false
+                }) else { return }
                 print("⏱️ FFmpeg timeout at \(timestamp)s - killing process")
                 process.terminate()
                 continuation.resume(throwing: FFmpegError.frameExtractionFailed)
@@ -174,8 +180,11 @@ class FFmpegProcessor: ObservableObject {
                 print("🚀 FFmpeg FAST-SEEK Command: \(ffmpegPath) -ss \(timestamp) -i \"\(videoURL.path)\" -vframes 1 -q:v 2 -y \"\(outputURL.path)\"")
                 try process.run()
             } catch {
-                guard !hasResumed else { return }
-                hasResumed = true
+                guard !hasResumed.withLock({ resumed in
+                    if resumed { return true }
+                    resumed = true
+                    return false
+                }) else { return }
                 print("❌ Failed to run FFmpeg frame extraction: \(error)")
                 continuation.resume(throwing: error)
             }
