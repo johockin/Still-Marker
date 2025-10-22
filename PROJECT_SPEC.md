@@ -162,6 +162,29 @@ Think of the interface as a digital light table where a film essayist might exam
 
 ## 📒 CHANGELOG (REVERSE CHRONOLOGICAL)
 
+### 2025-10-22 - 🐛 Frame Refinement Hang Resolution & Drag-Drop Enhancement ✅
+
+#### **Frame Refinement Hang Bug (Critical)**
+- **SYMPTOM**: App would hang indefinitely when pressing frame refinement buttons (< > << >> 2s 10s)
+- **ROOT CAUSE #1**: Process.terminationHandler set AFTER process.run() creating race condition
+- **ROOT CAUSE #2**: Main thread blocking in button action callback
+- **FIXES APPLIED**:
+  1. Moved terminationHandler setup BEFORE process.run() in FFmpegProcessor
+  2. Added 10-second timeout to prevent indefinite hangs
+  3. Added hasResumed flag to prevent double-resume of continuation
+  4. Wrapped refineToTimestamp call in Task { @MainActor } to avoid main thread blocking
+  5. Added concurrent request guard to prevent multiple simultaneous FFmpeg processes
+- **DEBUG**: Added comprehensive logging throughout refinement chain for future diagnostics
+- **RESULT**: Frame refinement now works reliably without hanging
+- **LEARNING**: Swift continuations require careful ordering and timeout protection
+
+#### **Drag-and-Drop in Grid View**
+- **ENHANCEMENT**: Added ability to drop new video file directly onto grid view
+- **BENEFIT**: No need to click "New Video" button - just drag next video onto window
+- **VALIDATION**: Shows error toast for unsupported file types
+- **WORKFLOW**: Seamless rapid video processing workflow for filmmakers
+- **IMPLEMENTATION**: Reused existing drag-drop logic from UploadProcessingView
+
 ### 2025-10-22 - ✨ QOL Enhancements: Refinement Controls & Toast Positioning ✅
 
 #### **Enhanced Refinement Controls**
