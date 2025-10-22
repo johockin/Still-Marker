@@ -162,6 +162,117 @@ Think of the interface as a digital light table where a film essayist might exam
 
 ## 📒 CHANGELOG (REVERSE CHRONOLOGICAL)
 
+### 2025-10-22 - 🏗️ SwiftUI View Complexity Crash Resolution ✅
+
+#### **Frame Preview Crash (Critical Architecture Issue) - RESOLVED**
+- **SYMPTOM**: App crashes when clicking thumbnail to open frame preview, also crashes on Escape key press
+- **STACK TRACE**: Crash at line 901 in `framePreviewView(frame:)` during view construction
+- **ROOT CAUSE**: SwiftUI type inference system hitting complexity limits with 240-line view builder function
+- **DISCOVERY**: Comprehensive codebase-auditor analysis revealed line 901 (`.frame()` modifier) was innocent - the real issue was the entire `framePreviewView` function overwhelming SwiftUI's type system with deeply nested view hierarchies
+- **SOLUTION**: Complete architectural refactoring with component extraction pattern
+
+#### **Architecture Analysis Results**
+- **View Complexity**: Single function constructing VStack → HStack → ZStack → Button chains with 93+ modifier applications
+- **Type Inference Burden**: Type signature growing to thousands of characters, exceeding SwiftUI internal limits
+- **Pattern Recognition**: Each nested container multiplies type system complexity exponentially
+- **Crash Location Deception**: Debugger reports "last processed line" (line 901) but crashes happen during overall type inference, not at specific line
+
+#### **Fixes Applied (Phase 1)**
+
+1. **RefineButton Component Extraction** ✅
+   - **Location**: `ResultsView.swift` lines 95-153 (moved to top-level struct)
+   - **Impact**: Reduced refinement control HStack from 9 inline buttons (173 lines) to 9 simple component calls
+   - **Complexity Reduction**: ~90% decrease in type inference burden for refinement controls
+   - **Pattern**: Encapsulates repeated button structure with enum-based label system
+   ```swift
+   RefineButton(
+       label: .text("10s"),
+       action: refineBackward10s,
+       isDisabled: refineButtonsDisabled,
+       opacity: refineButtonOpacity
+   )
+   ```
+
+2. **Systematic @State Value Extraction** ✅
+   - **Location**: `ResultsView.swift` lines 662-681 (framePreviewView function start)
+   - **Pattern**: Extract ALL @State values to local constants before view construction
+   ```swift
+   let currentRefiningState = isRefining
+   let currentFrameIdx = currentFrameIndex
+   let totalFrames = viewModel.extractedFrames.count
+   // All derived values computed from locals only
+   ```
+   - **Impact**: Eliminates nested @State captures and property wrapper indirection
+   - **Fixes**: Replaced 15+ direct @State accesses in view body with local constants
+
+3. **Extracted Keyboard Handlers to Functions** ✅
+   - **Location**: `ResultsView.swift` lines 904-959
+   - **Created**: Dedicated `handleEscapeKey()` function matching arrow handler pattern
+   - **Before**: Inline closure accessing @State during construction → CRASH
+   - **After**: Function reference passed to KeyEventHandlingView
+   ```swift
+   KeyEventHandlingView(
+       onLeftArrow: navigateToPreviousFrame,
+       onRightArrow: navigateToNextFrame,
+       onEscape: handleEscapeKey  // Now a function reference
+   )
+   ```
+
+4. **Standardized onHover Mutations** ✅
+   - **Location**: `ResultsView.swift` line 878-881
+   - **Pattern**: Wrap state mutations with `withAnimation` for consistency
+   ```swift
+   .onHover { hovering in
+       withAnimation(.easeInOut(duration: 0.1)) {
+           hoveredFramePreviewExportButton = hovering
+       }
+   }
+   ```
+
+#### **Fixes Applied (Phase 2 - COMPLETE)** ✅
+
+5. **Component Extraction for framePreviewView** ✅
+   - **Achieved**: Successfully broke 240-line function into 3 dedicated components
+   - **Components Created**:
+     1. `FramePreviewHeader` - Back button and frame counter (lines 155-199)
+     2. `FrameNavigationView` - Frame display with prev/next arrows (lines 201-281)
+     3. `FrameControlsView` - Refinement buttons and export (lines 283-413)
+   - **Result**: Reduced framePreviewView from 240 lines to 60 lines of clean component composition
+   - **Impact**: Each component now has simple type signature - SwiftUI type-checks without hitting complexity limits
+   - **User Verification**: App now opens frame preview without crashing - STABLE VERSION CONFIRMED
+
+#### **Code Locations**
+- RefineButton component: `ResultsView.swift` lines 95-153
+- FramePreviewHeader component: `ResultsView.swift` lines 155-199
+- FrameNavigationView component: `ResultsView.swift` lines 201-281
+- FrameControlsView component: `ResultsView.swift` lines 283-413
+- framePreviewView (refactored): `ResultsView.swift` lines 920-978 (extension - now only 60 lines)
+- handleEscapeKey function: `ResultsView.swift` inline in framePreviewView
+
+#### **Lessons Learned**
+- **SwiftUI Type System Limits**: Functions with 200+ lines of nested view construction hit undocumented complexity thresholds
+- **Crash Location Misleading**: Stack traces point to "last processed line" not actual root cause
+- **Component Extraction is Critical**: Not optional for complex views - required for stability
+- **Extension Functions Don't Help**: Extension-based view organization still contributes to type inference burden
+- **Pattern to Follow**: Extract components early and often - RefineButton pattern should be applied broadly
+
+#### **Architectural Insights from Auditor**
+- **The Good**: RefineButton extraction, @State extraction, handler functions, component extraction pattern
+- **The Fixed**: framePreviewView complexity resolved (240 lines → 60 lines), component composition pattern applied
+- **For Future**: Extension-based view functions pattern acceptable for small functions, Frame.image synchronous I/O deferred
+
+#### **Status**: ✅ **COMPLETE** - All phases complete, app stable and verified by user
+
+#### **Completed Work**
+- [x] Extract FramePreviewHeader component
+- [x] Extract FrameNavigationView component
+- [x] Extract FrameControlsView component
+- [x] Replace framePreviewView with simple component composition
+- [x] Test crash resolution - PASSED (user confirmed stable)
+- [ ] (Future) Fix Frame.image synchronous disk I/O issue - Deferred to future optimization sprint
+
+---
+
 ### 2025-10-22 - 🐛 Frame Refinement Hang Resolution & Drag-Drop Enhancement ✅
 
 #### **Frame Refinement Hang Bug (Critical)**

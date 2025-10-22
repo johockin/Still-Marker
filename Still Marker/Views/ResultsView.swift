@@ -92,6 +92,326 @@ enum ToastType {
     }
 }
 
+// MARK: - Refine Button Component
+
+/// Simplified button component for frame refinement controls
+/// Reduces view complexity by encapsulating repeated button structure
+struct RefineButton: View {
+    let label: RefineButtonLabel
+    let action: () -> Void
+    let isDisabled: Bool
+    let opacity: Double
+
+    enum RefineButtonLabel {
+        case text(String)
+        case icon(String)
+
+        var isText: Bool {
+            if case .text = self { return true }
+            return false
+        }
+    }
+
+    var body: some View {
+        Button(action: action) {
+            Group {
+                switch label {
+                case .text(let text):
+                    Text(text)
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                case .icon(let iconName):
+                    Image(systemName: iconName)
+                        .font(.system(size: 14, weight: .medium))
+                        .symbolRenderingMode(.hierarchical)
+                }
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, label.isText ? 6 : 8)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(.thinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color.white.opacity(strokeOpacity), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(isDisabled)
+        .opacity(opacity)
+    }
+
+    private var strokeOpacity: Double {
+        switch label {
+        case .text(let text):
+            return text == "10s" ? 0.4 : 0.35
+        case .icon(let icon):
+            return icon.contains("2") ? 0.3 : 0.2
+        }
+    }
+}
+
+// MARK: - Frame Preview Header Component
+
+/// Header for frame preview with back button and frame counter
+struct FramePreviewHeader: View {
+    let currentFrameIndex: Int
+    let totalFrames: Int
+    let onBack: () -> Void
+
+    var body: some View {
+        HStack {
+            Button(action: onBack) {
+                HStack(spacing: 8) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 12, weight: .medium))
+                        .symbolRenderingMode(.hierarchical)
+                    Text("Back to Grid")
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                }
+                .foregroundColor(.white.opacity(0.9))
+                .padding(.vertical, 8)
+                .padding(.horizontal, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(.thinMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                        )
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+
+            HStack {
+                Spacer()
+                Text("Frame \(currentFrameIndex + 1) of \(totalFrames)")
+                    .font(.system(size: 12, weight: .light, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.9))
+            }
+        }
+        .padding(.leading, 60)
+        .padding(.trailing, 60)
+        .padding(.top, 16)
+        .padding(.bottom, 32)
+    }
+}
+
+// MARK: - Frame Navigation View Component
+
+/// Frame display with previous/next navigation arrows
+struct FrameNavigationView: View {
+    let frame: Frame
+    let isRefining: Bool
+    let currentFrameIndex: Int
+    let totalFrames: Int
+    let onPrevious: () -> Void
+    let onNext: () -> Void
+
+    private var prevButtonOpacity: Double {
+        currentFrameIndex <= 0 ? 0.3 : 1.0
+    }
+
+    private var nextButtonOpacity: Double {
+        currentFrameIndex >= totalFrames - 1 ? 0.3 : 1.0
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Spacer()
+                .frame(maxWidth: .infinity)
+                .layoutPriority(1)
+
+            Button(action: onPrevious) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.7))
+                    .padding()
+                    .background(.thinMaterial)
+                    .clipShape(Circle())
+            }
+            .buttonStyle(PlainButtonStyle())
+            .disabled(currentFrameIndex <= 0)
+            .opacity(prevButtonOpacity)
+
+            Spacer()
+                .frame(maxWidth: .infinity)
+                .layoutPriority(2)
+
+            ZStack {
+                Image(nsImage: frame.image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                if isRefining {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.black.opacity(0.6))
+                        .overlay(
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(1.5)
+                        )
+                }
+            }
+            .layoutPriority(3)
+
+            Spacer()
+                .frame(maxWidth: .infinity)
+                .layoutPriority(2)
+
+            Button(action: onNext) {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.7))
+                    .padding()
+                    .background(.thinMaterial)
+                    .clipShape(Circle())
+            }
+            .buttonStyle(PlainButtonStyle())
+            .disabled(currentFrameIndex >= totalFrames - 1)
+            .opacity(nextButtonOpacity)
+
+            Spacer()
+                .frame(maxWidth: .infinity)
+                .layoutPriority(1)
+        }
+    }
+}
+
+// MARK: - Frame Controls View Component
+
+/// Refinement controls and export button for frame preview
+struct FrameControlsView: View {
+    let frame: Frame
+    let refinedTimestamp: Double?
+    let isRefining: Bool
+    let isExportHovered: Bool
+    let onRefineBackward10s: () -> Void
+    let onRefineBackward2s: () -> Void
+    let onRefineBackwardCoarse: () -> Void
+    let onRefineBackwardFine: () -> Void
+    let onRefineForwardFine: () -> Void
+    let onRefineForwardCoarse: () -> Void
+    let onRefineForward2s: () -> Void
+    let onRefineForward10s: () -> Void
+    let onExport: () -> Void
+    let onExportHover: (Bool) -> Void
+
+    private var displayTimestamp: Double {
+        refinedTimestamp ?? frame.timestamp
+    }
+
+    private var buttonOpacity: Double {
+        isRefining ? 0.5 : 1.0
+    }
+
+    private var refineButtonOpacity: Double {
+        isRefining || displayTimestamp <= 0 ? 0.5 : 1.0
+    }
+
+    private var refineButtonsDisabled: Bool {
+        isRefining || displayTimestamp <= 0
+    }
+
+    private var statusText: String {
+        refinedTimestamp != nil ? "Refined" : "Original"
+    }
+
+    private var statusColor: Color {
+        refinedTimestamp != nil ? Color.white.opacity(0.9) : Color.white.opacity(0.7)
+    }
+
+    var body: some View {
+        VStack(spacing: 16) {
+            // Refinement controls
+            HStack(spacing: 8) {
+                // Left buttons - backward navigation
+                RefineButton(
+                    label: .text("10s"),
+                    action: onRefineBackward10s,
+                    isDisabled: refineButtonsDisabled,
+                    opacity: refineButtonOpacity
+                )
+
+                RefineButton(
+                    label: .text("2s"),
+                    action: onRefineBackward2s,
+                    isDisabled: refineButtonsDisabled,
+                    opacity: refineButtonOpacity
+                )
+
+                RefineButton(
+                    label: .icon("chevron.left.2"),
+                    action: onRefineBackwardCoarse,
+                    isDisabled: refineButtonsDisabled,
+                    opacity: refineButtonOpacity
+                )
+
+                RefineButton(
+                    label: .icon("chevron.left"),
+                    action: onRefineBackwardFine,
+                    isDisabled: refineButtonsDisabled,
+                    opacity: refineButtonOpacity
+                )
+
+                // Current timestamp display
+                VStack(spacing: 4) {
+                    Text(statusText)
+                        .font(.system(size: 11, weight: .light, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.5))
+
+                    Text(Frame.formatTimestamp(displayTimestamp))
+                        .font(.system(size: 16, weight: .medium, design: .monospaced))
+                        .foregroundColor(statusColor)
+                        .padding(.horizontal, 12)
+                }
+
+                // Right buttons - forward navigation
+                RefineButton(
+                    label: .icon("chevron.right"),
+                    action: onRefineForwardFine,
+                    isDisabled: isRefining,
+                    opacity: buttonOpacity
+                )
+
+                RefineButton(
+                    label: .icon("chevron.right.2"),
+                    action: onRefineForwardCoarse,
+                    isDisabled: isRefining,
+                    opacity: buttonOpacity
+                )
+
+                RefineButton(
+                    label: .text("2s"),
+                    action: onRefineForward2s,
+                    isDisabled: isRefining,
+                    opacity: buttonOpacity
+                )
+
+                RefineButton(
+                    label: .text("10s"),
+                    action: onRefineForward10s,
+                    isDisabled: isRefining,
+                    opacity: buttonOpacity
+                )
+            }
+
+            // Export button
+            Button("Export This Frame", action: onExport)
+                .buttonStyle(FilmExportButtonStyle(
+                    isHovered: isExportHovered && !isRefining,
+                    startsAsGrey: false
+                ))
+                .onHover(perform: onExportHover)
+                .disabled(isRefining)
+                .opacity(buttonOpacity)
+        }
+        .padding(.vertical, 16)
+    }
+}
+
 struct ResultsView: View {
     @ObservedObject var viewModel: AppViewModel
     @State private var selectedFrame: Frame?
@@ -459,6 +779,11 @@ struct ResultsView: View {
     }
     
     private func exportFrame(_ frame: Frame) {
+        // Extract @State values to avoid capture issues
+        let currentFormat = selectedExportFormat
+        let currentFormatExtension = currentFormat.fileExtension
+        let currentFormatIndex = ExportFormat.allCases.firstIndex(of: currentFormat) ?? 0
+
         let savePanel = NSSavePanel()
         savePanel.title = "Export Frame"
         savePanel.showsResizeIndicator = true
@@ -466,16 +791,16 @@ struct ResultsView: View {
         savePanel.canCreateDirectories = true
         // Allow all content types so format selection works properly
         savePanel.allowedContentTypes = []
-        
+
         // Generate enhanced filename with video name prefix AND extension
-        savePanel.nameFieldStringValue = "\(generateFilename(for: frame)).\(selectedExportFormat.fileExtension)"
-        
+        savePanel.nameFieldStringValue = "\(generateFilename(for: frame)).\(currentFormatExtension)"
+
         // Create accessory view for format selection
         let formatSelector = NSPopUpButton()
         for format in ExportFormat.allCases {
             formatSelector.addItem(withTitle: format.rawValue)
         }
-        formatSelector.selectItem(at: ExportFormat.allCases.firstIndex(of: selectedExportFormat) ?? 0)
+        formatSelector.selectItem(at: currentFormatIndex)
         
         let accessoryView = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 30))
         let label = NSTextField(labelWithString: "Format:")
@@ -587,336 +912,66 @@ struct ResultsView: View {
             }
         }
     }
-    
+
+}
+
+// MARK: - Frame Preview View
+
+extension ResultsView {
     private func framePreviewView(frame: Frame) -> some View {
         let displayFrame = refinedFrame ?? frame
-        let displayTimestamp = refinedTimestamp ?? frame.timestamp
-        
+
         return VStack {
-            // Compact header - minimal structure
-            HStack {
-                // Back to Grid button - simplified styling
-                Button(action: {
+            FramePreviewHeader(
+                currentFrameIndex: currentFrameIndex,
+                totalFrames: viewModel.extractedFrames.count,
+                onBack: {
                     withAnimation(.easeInOut(duration: 0.3)) {
                         resetRefinement()
                         viewMode = .grid
                     }
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 12, weight: .medium))
-                            .symbolRenderingMode(.hierarchical)
-                        Text("Back to Grid")
-                            .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    }
-                    .foregroundColor(.white.opacity(0.9))
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(.thinMaterial)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                            )
-                    )
                 }
-                .buttonStyle(PlainButtonStyle())
-                
-                // Title text aligned to the right
-                HStack {
-                    Spacer()
-                    Text("Frame \(currentFrameIndex + 1) of \(viewModel.extractedFrames.count)")
-                        .font(.system(size: 12, weight: .light, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.9))
-                }
-            }
-            .padding(.leading, 60)  // Move button more to the right
-            .padding(.trailing, 60) // Split the difference - halfway between 40 and 80
-            .padding(.top, 16)      // Reduced top padding
-            .padding(.bottom, 32)   // Keep bottom padding
-            
-            // Frame display with navigation
+            )
+
             Spacer()
-            
-            HStack(spacing: 0) {
-                // Outer spacer (lower priority - less space)
-                Spacer()
-                    .frame(maxWidth: .infinity)
-                    .layoutPriority(1)
-                
-                // Previous frame button
-                Button(action: navigateToPreviousFrame) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 12, weight: .medium))  // Half the size
-                        .foregroundColor(.white.opacity(0.7))
-                        .padding()
-                        .background(.thinMaterial)
-                        .clipShape(Circle())
-                }
-                .buttonStyle(PlainButtonStyle())
-                .disabled(currentFrameIndex <= 0)
-                .opacity(currentFrameIndex <= 0 ? 0.3 : 1.0)
-                
-                // Inner spacer (higher priority - more space, moves button closer to center)
-                Spacer()
-                    .frame(maxWidth: .infinity)
-                    .layoutPriority(2)
-                
-                // Frame image with refinement overlay
-                ZStack {
-                    Image(nsImage: displayFrame.image)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    
-                    // Loading overlay for refinement
-                    if isRefining {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.black.opacity(0.6))
-                            .overlay(
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                    .scaleEffect(1.5)
-                            )
+
+            FrameNavigationView(
+                frame: displayFrame,
+                isRefining: isRefining,
+                currentFrameIndex: currentFrameIndex,
+                totalFrames: viewModel.extractedFrames.count,
+                onPrevious: navigateToPreviousFrame,
+                onNext: navigateToNextFrame
+            )
+
+            FrameControlsView(
+                frame: displayFrame,
+                refinedTimestamp: refinedTimestamp,
+                isRefining: isRefining,
+                isExportHovered: hoveredFramePreviewExportButton,
+                onRefineBackward10s: refineBackward10s,
+                onRefineBackward2s: refineBackward2s,
+                onRefineBackwardCoarse: refineBackwardCoarse,
+                onRefineBackwardFine: refineBackwardFine,
+                onRefineForwardFine: refineForwardFine,
+                onRefineForwardCoarse: refineForwardCoarse,
+                onRefineForward2s: refineForward2s,
+                onRefineForward10s: refineForward10s,
+                onExport: { exportFrame(displayFrame) },
+                onExportHover: { hovering in
+                    withAnimation(.easeInOut(duration: 0.1)) {
+                        hoveredFramePreviewExportButton = hovering
                     }
                 }
-                .layoutPriority(3)  // Highest priority - ensure image gets space
-                
-                // Inner spacer (higher priority - more space, moves button closer to center)
-                Spacer()
-                    .frame(maxWidth: .infinity)
-                    .layoutPriority(2)
-                
-                // Next frame button
-                Button(action: navigateToNextFrame) {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .medium))  // Half the size
-                        .foregroundColor(.white.opacity(0.7))
-                        .padding()
-                        .background(.thinMaterial)
-                        .clipShape(Circle())
-                }
-                .buttonStyle(PlainButtonStyle())
-                .disabled(currentFrameIndex >= viewModel.extractedFrames.count - 1)
-                .opacity(currentFrameIndex >= viewModel.extractedFrames.count - 1 ? 0.3 : 1.0)
-                
-                // Outer spacer (lower priority - less space)
-                Spacer()
-                    .frame(maxWidth: .infinity)
-                    .layoutPriority(1)
-            }
-            
-            // Frame refinement and export controls
-            VStack(spacing: 16) {
-                // Refinement controls: <<<< <<< << < timecode > >> >>> >>>>
-                HStack(spacing: 8) {
-                    // <<<< 10s backward
-                    Button(action: refineBackward10s) {
-                        Text("10s")
-                            .font(.system(size: 11, weight: .medium, design: .monospaced))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(.thinMaterial)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .stroke(Color.white.opacity(0.4), lineWidth: 1)
-                                    )
-                            )
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .disabled(isRefining || displayTimestamp <= 0)
-                    .opacity(isRefining || displayTimestamp <= 0 ? 0.5 : 1.0)
-                    
-                    // <<< 2s backward
-                    Button(action: refineBackward2s) {
-                        Text("2s")
-                            .font(.system(size: 11, weight: .medium, design: .monospaced))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(.thinMaterial)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .stroke(Color.white.opacity(0.35), lineWidth: 1)
-                                    )
-                            )
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .disabled(isRefining || displayTimestamp <= 0)
-                    .opacity(isRefining || displayTimestamp <= 0 ? 0.5 : 1.0)
-                    
-                    // << 0.5s backward
-                    Button(action: refineBackwardCoarse) {
-                        Image(systemName: "chevron.left.2")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
-                            .symbolRenderingMode(.hierarchical)
-                            .padding(8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(.thinMaterial)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                                    )
-                            )
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .disabled(isRefining || displayTimestamp <= 0)
-                    .opacity(isRefining || displayTimestamp <= 0 ? 0.5 : 1.0)
-                    
-                    // < 1 frame backward
-                    Button(action: refineBackwardFine) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
-                            .symbolRenderingMode(.hierarchical)
-                            .padding(8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(.thinMaterial)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                    )
-                            )
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .disabled(isRefining || displayTimestamp <= 0)
-                    .opacity(isRefining || displayTimestamp <= 0 ? 0.5 : 1.0)
-                    
-                    // Current timestamp display
-                    VStack(spacing: 4) {
-                        Text(refinedTimestamp != nil ? "Refined" : "Original")
-                            .font(.system(size: 11, weight: .light, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.5))
-                        
-                        Text(Frame.formatTimestamp(displayTimestamp))
-                            .font(.system(size: 16, weight: .medium, design: .monospaced))
-                            .foregroundColor(refinedTimestamp != nil ? .white.opacity(0.9) : .white.opacity(0.7))
-                            .padding(.horizontal, 12)
-                    }
-                    
-                    // > 1 frame forward
-                    Button(action: refineForwardFine) {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
-                            .symbolRenderingMode(.hierarchical)
-                            .padding(8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(.thinMaterial)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                    )
-                            )
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .disabled(isRefining)
-                    .opacity(isRefining ? 0.5 : 1.0)
-                    
-                    // >> 0.5s forward
-                    Button(action: refineForwardCoarse) {
-                        Image(systemName: "chevron.right.2")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
-                            .symbolRenderingMode(.hierarchical)
-                            .padding(8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(.thinMaterial)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                                    )
-                            )
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .disabled(isRefining)
-                    .opacity(isRefining ? 0.5 : 1.0)
-                    
-                    // >>> 2s forward
-                    Button(action: refineForward2s) {
-                        Text("2s")
-                            .font(.system(size: 11, weight: .medium, design: .monospaced))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(.thinMaterial)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .stroke(Color.white.opacity(0.35), lineWidth: 1)
-                                    )
-                            )
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .disabled(isRefining)
-                    .opacity(isRefining ? 0.5 : 1.0)
-                    
-                    // >>>> 10s forward
-                    Button(action: refineForward10s) {
-                        Text("10s")
-                            .font(.system(size: 11, weight: .medium, design: .monospaced))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(.thinMaterial)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .stroke(Color.white.opacity(0.4), lineWidth: 1)
-                                    )
-                            )
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .disabled(isRefining)
-                    .opacity(isRefining ? 0.5 : 1.0)
-                }
-                
-                // Export button with Kodak Gold hover
-                Button("Export This Frame") {
-                    exportFrame(displayFrame)
-                }
-                .buttonStyle(FilmExportButtonStyle(isHovered: hoveredFramePreviewExportButton && !isRefining))
-                .onHover { hovering in
-                    hoveredFramePreviewExportButton = hovering
-                }
-                .disabled(isRefining)
-                .opacity(isRefining ? 0.5 : 1.0)
-            }
-            .padding(.vertical, 16)
-            
+            )
+
             Spacer()
-            
         }
         .background(
-            // Keyboard event capture overlay
             KeyEventHandlingView(
                 onLeftArrow: navigateToPreviousFrame,
                 onRightArrow: navigateToNextFrame,
-                onEscape: {
-                    print("⚠️ Escape handler called")
-                    // Don't interrupt active refinement
-                    guard !isRefining else {
-                        print("⛔️ Escape blocked - refinement in progress")
-                        return
-                    }
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        resetRefinement()
-                        viewMode = .grid
-                    }
-                }
+                onEscape: handleEscapeKey
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         )
@@ -925,7 +980,8 @@ struct ResultsView: View {
     // MARK: - Navigation Functions
     
     private func navigateToPreviousFrame() {
-        print("⬅️ navigateToPreviousFrame called - isRefining: \(isRefining)")
+        let refiningState = isRefining
+        print("⬅️ navigateToPreviousFrame called - isRefining: \(refiningState)")
         // Don't interrupt active refinement
         guard !isRefining else {
             print("⛔️ Previous frame navigation blocked - refinement in progress")
@@ -939,7 +995,8 @@ struct ResultsView: View {
     }
     
     private func navigateToNextFrame() {
-        print("➡️ navigateToNextFrame called - isRefining: \(isRefining)")
+        let refiningState = isRefining
+        print("➡️ navigateToNextFrame called - isRefining: \(refiningState)")
         // Don't interrupt active refinement
         guard !isRefining else {
             print("⛔️ Next frame navigation blocked - refinement in progress")
@@ -951,7 +1008,20 @@ struct ResultsView: View {
         selectedFrame = previewFrame
         resetRefinement()
     }
-    
+
+    private func handleEscapeKey() {
+        print("⚠️ Escape handler called")
+        // Don't interrupt active refinement
+        guard !isRefining else {
+            print("⛔️ Escape blocked - refinement in progress")
+            return
+        }
+        withAnimation(.easeInOut(duration: 0.3)) {
+            resetRefinement()
+            viewMode = .grid
+        }
+    }
+
     // MARK: - Frame Refinement Functions
     
     private func refineBackward10s() {
@@ -997,7 +1067,8 @@ struct ResultsView: View {
     }
     
     private func refineByAmount(_ seconds: Double) {
-        print("🟢🟢🟢 refineByAmount ENTERED - seconds: \(seconds), isRefining: \(isRefining) 🟢🟢🟢")
+        let refiningState = isRefining
+        print("🟢🟢🟢 refineByAmount ENTERED - seconds: \(seconds), isRefining: \(refiningState) 🟢🟢🟢")
         print("🟢 refineByAmount called with \(seconds)s")
         guard let frame = previewFrame,
               let videoURL = viewModel.selectedVideoURL else {
