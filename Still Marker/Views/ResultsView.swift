@@ -928,6 +928,12 @@ struct ResultsView: View {
     }
     
     private func refineToTimestamp(_ timestamp: Double, videoURL: URL) {
+        // Guard against concurrent refinement requests
+        guard !isRefining else {
+            print("⚠️ Refinement already in progress, ignoring request")
+            return
+        }
+        
         isRefining = true
         
         Task {
