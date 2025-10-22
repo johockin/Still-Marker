@@ -191,7 +191,7 @@ struct ResultsView: View {
                     Spacer()
                     toastView
                     Spacer()
-                        .frame(height: 80) // Bottom margin
+                        .frame(height: 180) // Bottom margin - high enough to clear refinement controls
                 }
                 .animation(.easeInOut(duration: 0.3), value: showToast)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
