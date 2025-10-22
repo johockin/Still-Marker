@@ -73,10 +73,14 @@ enum ToastType {
     case success
     case error
     
-    var color: Color {
+    var accentColor: Color {
         switch self {
-        case .success: return .green
-        case .error: return .red
+        case .success: 
+            // Warm film emulsion green - like developing photo paper
+            return Color(red: 0.5, green: 0.75, blue: 0.55)
+        case .error: 
+            // Cinematic crimson - matches background spotlight
+            return Color(red: 0.8, green: 0.2, blue: 0.25)
         }
     }
     
@@ -125,50 +129,50 @@ struct ResultsView: View {
             ZStack {
                 // Base lifted black gradient
                 LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color(red: 0.12, green: 0.12, blue: 0.13), // Lifted black
-                        Color(red: 0.1, green: 0.1, blue: 0.11) // Slightly deeper
-                    ]),
+                    colors: [
+                        Color(red: 0.12, green: 0.12, blue: 0.13),
+                        Color(red: 0.1, green: 0.1, blue: 0.11)
+                    ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
                 .ignoresSafeArea()
                 
-                // Warmer spotlight gradient - smaller, dimmer, moved left
+                // Warmer spotlight gradient
                 RadialGradient(
-                    gradient: Gradient(colors: [
-                        Color(red: 0.32, green: 0.28, blue: 0.24).opacity(1.0),  // 20% dimmer warm cream center
-                        Color(red: 0.24, green: 0.21, blue: 0.18).opacity(0.8),  // Dimmer mid tone
-                        Color(red: 0.16, green: 0.14, blue: 0.13).opacity(0.5),  // Dimmer transition
-                        Color.clear                                               // Fade out
-                    ]),
-                    center: UnitPoint(x: 0.3, y: 0.45),  // Moved 20% to the left (from 0.5 to 0.3)
-                    startRadius: 60,   // Smaller radius
-                    endRadius: 400     // Smaller coverage
+                    colors: [
+                        Color(red: 0.32, green: 0.28, blue: 0.24).opacity(1.0),
+                        Color(red: 0.24, green: 0.21, blue: 0.18).opacity(0.8),
+                        Color(red: 0.16, green: 0.14, blue: 0.13).opacity(0.5),
+                        Color.clear
+                    ],
+                    center: UnitPoint(x: 0.3, y: 0.45),
+                    startRadius: 60,
+                    endRadius: 400
                 )
                 .ignoresSafeArea()
                 
-                // Crimson spotlight in bottom right corner - 40% dimmer
+                // Crimson spotlight
                 RadialGradient(
-                    gradient: Gradient(colors: [
-                        Color(red: 0.8, green: 0.1, blue: 0.2).opacity(0.36),    // Crimson center
-                        Color(red: 0.6, green: 0.08, blue: 0.15).opacity(0.24),  // Mid crimson
-                        Color(red: 0.4, green: 0.05, blue: 0.1).opacity(0.12),   // Fading crimson
-                        Color.clear                                               // Fade out
-                    ]),
-                    center: UnitPoint(x: 0.85, y: 0.85),  // Bottom right corner position
+                    colors: [
+                        Color(red: 0.8, green: 0.1, blue: 0.2).opacity(0.36),
+                        Color(red: 0.6, green: 0.08, blue: 0.15).opacity(0.24),
+                        Color(red: 0.4, green: 0.05, blue: 0.1).opacity(0.12),
+                        Color.clear
+                    ],
+                    center: UnitPoint(x: 0.85, y: 0.85),
                     startRadius: 40,
                     endRadius: 350
                 )
                 .ignoresSafeArea()
                 
-                // Additional subtle glass morphism layer
+                // Glass morphism layer
                 LinearGradient(
-                    gradient: Gradient(colors: [
+                    colors: [
                         Color.white.opacity(0.02),
                         Color.clear,
                         Color.black.opacity(0.02)
-                    ]),
+                    ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -367,31 +371,71 @@ struct ResultsView: View {
     }
     
     private var toastView: some View {
-        HStack(spacing: 12) {
-            Image(systemName: toastType.icon)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white)
-                .symbolRenderingMode(.hierarchical)
+        HStack(spacing: 14) {
+            // Icon with glassy circular background
+            ZStack {
+                Circle()
+                    .fill(toastType.accentColor.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                
+                Circle()
+                    .strokeBorder(toastType.accentColor.opacity(0.3), lineWidth: 1)
+                    .frame(width: 36, height: 36)
+                
+                Image(systemName: toastType.icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(toastType.accentColor)
+                    .symbolRenderingMode(.hierarchical)
+            }
             
             Text(toastMessage)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white)
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .foregroundColor(.white.opacity(0.95))
                 .multilineTextAlignment(.leading)
+                .lineLimit(2)
             
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(toastType.color.opacity(0.9))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(toastType.color, lineWidth: 1)
-                )
+            ZStack {
+                // Frosted glass base
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(.ultraThinMaterial)
+                
+                // Simple gradient overlay
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                toastType.accentColor.opacity(0.08),
+                                Color.clear,
+                                Color.black.opacity(0.15)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                
+                // Border with accent hint
+                RoundedRectangle(cornerRadius: 14)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                toastType.accentColor.opacity(0.4),
+                                Color.white.opacity(0.15)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1.5
+                    )
+            }
         )
-        .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
-        .padding(.horizontal, 24)
+        .shadow(color: toastType.accentColor.opacity(0.15), radius: 12, x: 0, y: 6)
+        .shadow(color: Color.black.opacity(0.25), radius: 24, x: 0, y: 8)
+        .padding(.horizontal, 40)
     }
     
     private func loadFramesProgressively() {
@@ -862,6 +906,12 @@ struct ResultsView: View {
                 onLeftArrow: navigateToPreviousFrame,
                 onRightArrow: navigateToNextFrame,
                 onEscape: {
+                    print("⚠️ Escape handler called")
+                    // Don't interrupt active refinement
+                    guard !isRefining else {
+                        print("⛔️ Escape blocked - refinement in progress")
+                        return
+                    }
                     withAnimation(.easeInOut(duration: 0.3)) {
                         resetRefinement()
                         viewMode = .grid
@@ -875,6 +925,12 @@ struct ResultsView: View {
     // MARK: - Navigation Functions
     
     private func navigateToPreviousFrame() {
+        print("⬅️ navigateToPreviousFrame called - isRefining: \(isRefining)")
+        // Don't interrupt active refinement
+        guard !isRefining else {
+            print("⛔️ Previous frame navigation blocked - refinement in progress")
+            return
+        }
         guard currentFrameIndex > 0 else { return }
         currentFrameIndex -= 1
         previewFrame = viewModel.extractedFrames[currentFrameIndex]
@@ -883,6 +939,12 @@ struct ResultsView: View {
     }
     
     private func navigateToNextFrame() {
+        print("➡️ navigateToNextFrame called - isRefining: \(isRefining)")
+        // Don't interrupt active refinement
+        guard !isRefining else {
+            print("⛔️ Next frame navigation blocked - refinement in progress")
+            return
+        }
         guard currentFrameIndex < viewModel.extractedFrames.count - 1 else { return }
         currentFrameIndex += 1
         previewFrame = viewModel.extractedFrames[currentFrameIndex]
@@ -898,8 +960,10 @@ struct ResultsView: View {
     }
     
     private func refineBackward2s() {
+        print("🔵🔵🔵 refineBackward2s() ENTERED 🔵🔵🔵")
         print("🔵 refineBackward2s() called")
         refineByAmount(-2.0) // Back 2 seconds
+        print("🔵🔵🔵 refineBackward2s() EXITED 🔵🔵🔵")
     }
     
     private func refineBackwardCoarse() {
@@ -933,6 +997,7 @@ struct ResultsView: View {
     }
     
     private func refineByAmount(_ seconds: Double) {
+        print("🟢🟢🟢 refineByAmount ENTERED - seconds: \(seconds), isRefining: \(isRefining) 🟢🟢🟢")
         print("🟢 refineByAmount called with \(seconds)s")
         guard let frame = previewFrame,
               let videoURL = viewModel.selectedVideoURL else {
@@ -954,6 +1019,7 @@ struct ResultsView: View {
         } else {
             print("⚠️ Timestamps are the same, skipping refinement")
         }
+        print("🟢🟢🟢 refineByAmount EXITED 🟢🟢🟢")
     }
     
     private func refineToTimestamp(_ timestamp: Double, videoURL: URL) {
@@ -975,13 +1041,16 @@ struct ResultsView: View {
                 print("✅ Frame extracted successfully")
                 
                 await MainActor.run {
+                    print("✅✅✅ Refinement complete, updating UI ✅✅✅")
                     refinedTimestamp = timestamp
                     refinedFrame = Frame(
                         id: UUID(),
                         timestamp: timestamp,
                         image: refinedImage
                     )
+                    print("🔓 Setting isRefining = false")
                     isRefining = false
+                    print("✅✅✅ UI updated successfully ✅✅✅")
                 }
             } catch {
                 await MainActor.run {

@@ -9,6 +9,20 @@ import Foundation
 import AppKit
 import AVFoundation
 
+// Thread-safe state manager for continuation resume
+private final class ResumeState: @unchecked Sendable {
+    let lock = NSLock()
+    var hasResumed = false
+    
+    func attemptResume() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        if hasResumed { return false }
+        hasResumed = true
+        return true
+    }
+}
+
 class FFmpegProcessor: ObservableObject {
     private lazy var ffmpegPath: String = {
         guard let path = Bundle.main.path(forResource: "ffmpeg", ofType: nil) else {
@@ -141,20 +155,6 @@ class FFmpegProcessor: ObservableObject {
         ]
         process.standardOutput = Pipe() // Suppress output
         process.standardError = errorPipe // Capture error output for debugging
-        
-        // Use a class to hold mutable state (reference type avoids capture issues)
-        final class ResumeState {
-            let lock = NSLock()
-            var hasResumed = false
-            
-            func attemptResume() -> Bool {
-                lock.lock()
-                defer { lock.unlock() }
-                if hasResumed { return false }
-                hasResumed = true
-                return true
-            }
-        }
         
         return try await withCheckedThrowingContinuation { continuation in
             let state = ResumeState()

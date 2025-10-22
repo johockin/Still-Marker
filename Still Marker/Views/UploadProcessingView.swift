@@ -21,29 +21,29 @@ struct UploadProcessingView: View {
                 Color(red: 0.1, green: 0.1, blue: 0.11)
                     .ignoresSafeArea()
                 
-                // Warmer spotlight gradient - smaller, dimmer, moved left
+                // Warmer spotlight gradient
                 RadialGradient(
-                    gradient: Gradient(colors: [
-                        Color(red: 0.32, green: 0.28, blue: 0.24).opacity(1.0),  // 20% dimmer warm cream center
-                        Color(red: 0.24, green: 0.21, blue: 0.18).opacity(0.8),  // Dimmer mid tone
-                        Color(red: 0.16, green: 0.14, blue: 0.13).opacity(0.5),  // Dimmer transition
-                        Color.clear                                               // Fade out
-                    ]),
-                    center: UnitPoint(x: 0.3, y: 0.45),  // Moved 20% to the left (from 0.5 to 0.3)
-                    startRadius: 60,   // Smaller radius
-                    endRadius: 400     // Smaller coverage
+                    colors: [
+                        Color(red: 0.32, green: 0.28, blue: 0.24).opacity(1.0),
+                        Color(red: 0.24, green: 0.21, blue: 0.18).opacity(0.8),
+                        Color(red: 0.16, green: 0.14, blue: 0.13).opacity(0.5),
+                        Color.clear
+                    ],
+                    center: UnitPoint(x: 0.3, y: 0.45),
+                    startRadius: 60,
+                    endRadius: 400
                 )
                 .ignoresSafeArea()
                 
-                // Crimson spotlight in bottom right corner - 40% dimmer
+                // Crimson spotlight
                 RadialGradient(
-                    gradient: Gradient(colors: [
-                        Color(red: 0.8, green: 0.1, blue: 0.2).opacity(0.36),    // Crimson center
-                        Color(red: 0.6, green: 0.08, blue: 0.15).opacity(0.24),  // Mid crimson
-                        Color(red: 0.4, green: 0.05, blue: 0.1).opacity(0.12),   // Fading crimson
-                        Color.clear                                               // Fade out
-                    ]),
-                    center: UnitPoint(x: 0.85, y: 0.85),  // Bottom right corner position
+                    colors: [
+                        Color(red: 0.8, green: 0.1, blue: 0.2).opacity(0.36),
+                        Color(red: 0.6, green: 0.08, blue: 0.15).opacity(0.24),
+                        Color(red: 0.4, green: 0.05, blue: 0.1).opacity(0.12),
+                        Color.clear
+                    ],
+                    center: UnitPoint(x: 0.85, y: 0.85),
                     startRadius: 40,
                     endRadius: 350
                 )

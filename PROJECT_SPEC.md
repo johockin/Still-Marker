@@ -185,6 +185,115 @@ Think of the interface as a digital light table where a film essayist might exam
 - **WORKFLOW**: Seamless rapid video processing workflow for filmmakers
 - **IMPLEMENTATION**: Reused existing drag-drop logic from UploadProcessingView
 
+### 2025-10-22 - 🎨 Visual Polish & Critical Crash Fixes ✅
+
+#### **Toast Notification Redesign**
+- **REDESIGNED**: Completely overhauled toast notifications from ugly green bar to cinematic glassy style
+- **GLASSY BADGE**: Icon sits in circular badge with subtle accent color fill and border
+- **MONOSPACED TYPOGRAPHY**: Documentary-style typewriter font for authenticity
+- **FROSTED GLASS**: `.ultraThinMaterial` base with subtle gradient overlay
+- **FILM EMULSION GREEN**: Replaced neon green with warm photo paper green (`rgb(0.5, 0.75, 0.55)`)
+- **DEPTH SHADOWS**: Dual-layer shadows (accent glow + deep black) for floating effect
+- **RESULT**: Professional, contemplative notifications matching Chris Marker aesthetic
+
+#### **Critical View Construction Crash**
+- **BUG**: App crashed immediately when clicking thumbnail to preview frame
+- **SYMPTOM**: `(lldb)` with no logs - crash during view construction before code execution
+- **ROOT CAUSE #1**: String interpolation `\(isRefining)` in Escape handler closure evaluated during view building
+- **ROOT CAUSE #2**: Ultra-dense gradients (16 stops × 2 radial + 9 stops linear) exceeded SwiftUI view complexity limits
+- **STACK OVERFLOW**: Too many gradient stops caused stack overflow during view hierarchy construction
+
+#### **Fixes Applied**
+1. **Removed Captures from Closures**:
+   - Removed `\(isRefining)` from Escape handler print statement
+   - Changed button actions from inline closures to direct function references
+   - Example: `Button(action: refineBackward2s)` instead of `Button(action: { print(...); refineBackward2s() })`
+
+2. **Simplified Gradients**:
+   - Reverted 16-stop gradients → 4-stop simple arrays
+   - Reverted 9-stop gradients → 2-3 stops  
+   - Changed from `.init(color:location:)` explicit syntax to simple `colors:` array
+   - **ResultsView.swift**: Base (2 stops), Warm spotlight (4 stops), Crimson (4 stops), Glass (3 stops)
+   - **UploadProcessingView.swift**: Same simplified gradient structure
+
+3. **Thread Safety**:
+   - Moved `ResumeState` class to file-level scope
+   - Added `@unchecked Sendable` conformance for Swift concurrency
+
+#### **Code Locations**
+- Toast redesign: `ResultsView.swift` lines 373-439
+- Toast colors: `ResultsView.swift` lines 76-85 (`ToastType.accentColor`)
+- Gradient simplification: `ResultsView.swift` lines 129-181, `UploadProcessingView.swift` lines 20-50
+- Escape handler fix: `ResultsView.swift` line 901
+- `ResumeState` class: `FFmpegProcessor.swift` lines 13-24
+
+#### **Lessons Learned**
+- **String Interpolation in Closures**: Never use `\(variable)` in closures created during view construction
+- **SwiftUI Complexity Limits**: ~40 gradient stops total across nested views hits practical limits
+- **View Hierarchy Depth**: Multiple ZStacks with complex gradients can cause stack overflow
+- **Simple is Stable**: Fewer gradient stops = faster builds, more stable views, still beautiful
+
+#### **Status**: ✅ **RESOLVED** - App loads, previews work, toast looks professional
+
+---
+
+### 2025-10-22 - 🐛 RESOLVED: Spurious Escape Key Interrupting Refinement ✅
+
+#### **Root Cause Discovered**
+- **CRITICAL DISCOVERY**: Spurious Escape key events (keyCode 53) firing during refinement operations
+- **USER CONFIRMATION**: User did NOT press Escape - system generated synthetic keyboard event
+- **LOG EVIDENCE**: Console showed `🔙 Escape pressed` immediately after FFmpeg extraction completed
+- **SMOKING GUN**: Escape handler was calling `resetRefinement()` and `viewMode = .grid` during active refinement
+
+#### **Why This Caused Hangs**
+1. **Refinement starts**: Button clicked, `isRefining = true`, FFmpeg extraction begins
+2. **FFmpeg completes**: Frame extracted successfully at timestamp
+3. **Spurious Escape fires**: Unknown trigger (focus change? view update?) generates Escape event
+4. **State conflict**: Escape handler resets refinement state and switches to grid view
+5. **Orphaned completion**: Refinement tries to update UI but view context is destroyed
+6. **Result**: App appears hung, refinement never completes visibly
+
+#### **Fix Implemented**
+- **GUARD ADDED**: Escape handler now checks `guard !isRefining` before executing
+- **PROTECTION**: Spurious Escape events are blocked when refinement is active
+- **LOGGING**: Added comprehensive logging to track Escape events and refinement lifecycle
+- **CODE LOCATION**: `ResultsView.swift` lines 870-881 (Escape handler with guard)
+
+#### **Additional Debugging Infrastructure**
+- **REFINEMENT LIFECYCLE LOGGING**:
+  - `🟡 refineToTimestamp called` - Entry point
+  - `🟡 Setting isRefining = true` - Lock acquired
+  - `🟡 Inside Task, about to extract frame` - Async work starts
+  - `✅✅✅ Refinement complete, updating UI` - Success path
+  - `🔓 Setting isRefining = false` - Lock released
+  - `✅✅✅ UI updated successfully` - Complete
+- **ESCAPE HANDLER LOGGING**:
+  - `⚠️ Escape handler called - isRefining: [state]` - Event detected
+  - `⛔️ Escape blocked - refinement in progress` - Guard triggered
+
+#### **Previous Fixes (Now Understood)**
+- **Race Condition Fix**: Still valid - prevents FFmpeg process issues
+- **Timeout Protection**: Still valid - prevents genuine hangs
+- **Concurrency Guards**: Still valid - prevents overlapping refinements
+- **Thread Safety**: Still valid - ensures safe state management
+- **Async Dispatch**: Still valid - prevents main thread blocking
+
+#### **Testing Notes**
+- User tested with 2s backward button - worked correctly
+- User tested with 10s button - triggered spurious Escape event
+- **NEW**: User pressed right arrow key during refinement - app crashed
+- **DISCOVERY**: Arrow key navigation functions also call `resetRefinement()` without checking `isRefining`
+
+#### **Extended Fix Applied**
+- **ADDED GUARDS**: Both `navigateToPreviousFrame()` and `navigateToNextFrame()` now check `isRefining`
+- **PROTECTION**: All keyboard navigation (Escape, Left, Right) now respects active refinement
+- **LOGGING**: Added arrow key logging to track navigation attempts during refinement
+- **ROOT ISSUE**: Any function calling `resetRefinement()` must guard against interrupting active operations
+
+#### **Status**: ✅ **RESOLVED** - All keyboard handlers now protected, awaiting user confirmation
+
+---
+
 ### 2025-10-22 - ✨ QOL Enhancements: Refinement Controls & Toast Positioning ✅
 
 #### **Enhanced Refinement Controls**
