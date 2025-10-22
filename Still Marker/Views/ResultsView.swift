@@ -657,19 +657,59 @@ struct ResultsView: View {
             
             // Frame refinement and export controls
             VStack(spacing: 16) {
-                // Refinement controls: << < timecode > >>
-                HStack(spacing: 12) {
-                    // << Coarse backward (0.5s)
+                // Refinement controls: <<<< <<< << < timecode > >> >>> >>>>
+                HStack(spacing: 8) {
+                    // <<<< 10s backward
+                    Button(action: refineBackward10s) {
+                        Text("10s")
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(.thinMaterial)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(Color.white.opacity(0.4), lineWidth: 1)
+                                    )
+                            )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .disabled(isRefining || displayTimestamp <= 0)
+                    .opacity(isRefining || displayTimestamp <= 0 ? 0.5 : 1.0)
+                    
+                    // <<< 2s backward
+                    Button(action: refineBackward2s) {
+                        Text("2s")
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(.thinMaterial)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(Color.white.opacity(0.35), lineWidth: 1)
+                                    )
+                            )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .disabled(isRefining || displayTimestamp <= 0)
+                    .opacity(isRefining || displayTimestamp <= 0 ? 0.5 : 1.0)
+                    
+                    // << 0.5s backward
                     Button(action: refineBackwardCoarse) {
                         Image(systemName: "chevron.left.2")
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white)
                             .padding(8)
                             .background(
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: 6)
                                     .fill(.thinMaterial)
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
+                                        RoundedRectangle(cornerRadius: 6)
                                             .stroke(Color.white.opacity(0.3), lineWidth: 1)
                                     )
                             )
@@ -678,17 +718,17 @@ struct ResultsView: View {
                     .disabled(isRefining || displayTimestamp <= 0)
                     .opacity(isRefining || displayTimestamp <= 0 ? 0.5 : 1.0)
                     
-                    // < Fine backward (1 frame)
+                    // < 1 frame backward
                     Button(action: refineBackwardFine) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white)
                             .padding(8)
                             .background(
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: 6)
                                     .fill(.thinMaterial)
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
+                                        RoundedRectangle(cornerRadius: 6)
                                             .stroke(Color.white.opacity(0.2), lineWidth: 1)
                                     )
                             )
@@ -709,17 +749,17 @@ struct ResultsView: View {
                             .padding(.horizontal, 12)
                     }
                     
-                    // > Fine forward (1 frame)
+                    // > 1 frame forward
                     Button(action: refineForwardFine) {
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white)
                             .padding(8)
                             .background(
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: 6)
                                     .fill(.thinMaterial)
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
+                                        RoundedRectangle(cornerRadius: 6)
                                             .stroke(Color.white.opacity(0.2), lineWidth: 1)
                                     )
                             )
@@ -728,18 +768,58 @@ struct ResultsView: View {
                     .disabled(isRefining)
                     .opacity(isRefining ? 0.5 : 1.0)
                     
-                    // >> Coarse forward (0.5s)
+                    // >> 0.5s forward
                     Button(action: refineForwardCoarse) {
                         Image(systemName: "chevron.right.2")
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white)
                             .padding(8)
                             .background(
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: 6)
                                     .fill(.thinMaterial)
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
+                                        RoundedRectangle(cornerRadius: 6)
                                             .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                    )
+                            )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .disabled(isRefining)
+                    .opacity(isRefining ? 0.5 : 1.0)
+                    
+                    // >>> 2s forward
+                    Button(action: refineForward2s) {
+                        Text("2s")
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(.thinMaterial)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(Color.white.opacity(0.35), lineWidth: 1)
+                                    )
+                            )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .disabled(isRefining)
+                    .opacity(isRefining ? 0.5 : 1.0)
+                    
+                    // >>>> 10s forward
+                    Button(action: refineForward10s) {
+                        Text("10s")
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(.thinMaterial)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(Color.white.opacity(0.4), lineWidth: 1)
                                     )
                             )
                     }
@@ -800,6 +880,14 @@ struct ResultsView: View {
     
     // MARK: - Frame Refinement Functions
     
+    private func refineBackward10s() {
+        refineByAmount(-10.0) // Back 10 seconds
+    }
+    
+    private func refineBackward2s() {
+        refineByAmount(-2.0) // Back 2 seconds
+    }
+    
     private func refineBackwardCoarse() {
         refineByAmount(-0.5) // Back 0.5 seconds
     }
@@ -814,6 +902,14 @@ struct ResultsView: View {
     
     private func refineForwardCoarse() {
         refineByAmount(0.5) // Forward 0.5 seconds
+    }
+    
+    private func refineForward2s() {
+        refineByAmount(2.0) // Forward 2 seconds
+    }
+    
+    private func refineForward10s() {
+        refineByAmount(10.0) // Forward 10 seconds
     }
     
     private func refineByAmount(_ seconds: Double) {
