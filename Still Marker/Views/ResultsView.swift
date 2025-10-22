@@ -893,14 +893,17 @@ struct ResultsView: View {
     // MARK: - Frame Refinement Functions
     
     private func refineBackward10s() {
+        print("🔵 refineBackward10s() called")
         refineByAmount(-10.0) // Back 10 seconds
     }
     
     private func refineBackward2s() {
+        print("🔵 refineBackward2s() called")
         refineByAmount(-2.0) // Back 2 seconds
     }
     
     private func refineBackwardCoarse() {
+        print("🔵 refineBackwardCoarse() called")
         refineByAmount(-0.5) // Back 0.5 seconds
     }
     
@@ -915,14 +918,17 @@ struct ResultsView: View {
     }
     
     private func refineForwardCoarse() {
+        print("🔵 refineForwardCoarse() called")
         refineByAmount(0.5) // Forward 0.5 seconds
     }
     
     private func refineForward2s() {
+        print("🔵 refineForward2s() called")
         refineByAmount(2.0) // Forward 2 seconds
     }
     
     private func refineForward10s() {
+        print("🔵 refineForward10s() called")
         refineByAmount(10.0) // Forward 10 seconds
     }
     
@@ -1245,15 +1251,25 @@ struct FrameCard: View {
                     .frame(width: 200, height: 112)
                     .cornerRadius(8)
                 
-                // Hover overlay with refined animation
+                // Hover overlay with refined animation - subtle and glassy
                 if isHovered {
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.black.opacity(0.4))
+                        .fill(.ultraThinMaterial) // Glass morphism instead of solid black
                         .overlay(
-                            Image(systemName: "eye.fill")
-                                .font(.system(size: 24, weight: .medium))
-                                .foregroundColor(.white.opacity(0.9))
-                                .symbolRenderingMode(.hierarchical) // Tier 1: SF Symbols hierarchical
+                            ZStack {
+                                // Subtle gradient overlay
+                                LinearGradient(
+                                    colors: [Color.black.opacity(0.3), Color.black.opacity(0.5)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                                
+                                Image(systemName: "eye.fill")
+                                    .font(.system(size: 24, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .symbolRenderingMode(.hierarchical)
+                                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                            }
                         )
                 }
                 
