@@ -142,16 +142,26 @@ class FFmpegProcessor: ObservableObject {
         process.standardOutput = Pipe() // Suppress output
         process.standardError = errorPipe // Capture error output for debugging
         
-        return try await withCheckedThrowingContinuation { continuation in
+        // Use a class to hold mutable state (reference type avoids capture issues)
+        final class ResumeState {
             let lock = NSLock()
             var hasResumed = false
             
-            // Set termination handler BEFORE running process to avoid race condition
-            process.terminationHandler = { process in
+            func attemptResume() -> Bool {
                 lock.lock()
                 defer { lock.unlock() }
-                guard !hasResumed else { return }
+                if hasResumed { return false }
                 hasResumed = true
+                return true
+            }
+        }
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            let state = ResumeState()
+            
+            // Set termination handler BEFORE running process to avoid race condition
+            process.terminationHandler = { process in
+                guard state.attemptResume() else { return }
                 
                 if process.terminationStatus == 0 {
                     print("✅ Frame extracted successfully at \(timestamp)s")
@@ -166,10 +176,7 @@ class FFmpegProcessor: ObservableObject {
             
             // Timeout after 10 seconds to prevent indefinite hangs
             DispatchQueue.global().asyncAfter(deadline: .now() + 10.0) {
-                lock.lock()
-                defer { lock.unlock() }
-                guard !hasResumed else { return }
-                hasResumed = true
+                guard state.attemptResume() else { return }
                 print("⏱️ FFmpeg timeout at \(timestamp)s - killing process")
                 process.terminate()
                 continuation.resume(throwing: FFmpegError.frameExtractionFailed)
@@ -179,10 +186,7 @@ class FFmpegProcessor: ObservableObject {
                 print("🚀 FFmpeg FAST-SEEK Command: \(ffmpegPath) -ss \(timestamp) -i \"\(videoURL.path)\" -vframes 1 -q:v 2 -y \"\(outputURL.path)\"")
                 try process.run()
             } catch {
-                lock.lock()
-                defer { lock.unlock() }
-                guard !hasResumed else { return }
-                hasResumed = true
+                guard state.attemptResume() else { return }
                 print("❌ Failed to run FFmpeg frame extraction: \(error)")
                 continuation.resume(throwing: error)
             }
