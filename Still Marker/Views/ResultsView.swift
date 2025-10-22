@@ -416,8 +416,8 @@ struct ResultsView: View {
         // Allow all content types so format selection works properly
         savePanel.allowedContentTypes = []
         
-        // Generate enhanced filename with video name prefix
-        savePanel.nameFieldStringValue = generateFilename(for: frame)
+        // Generate enhanced filename with video name prefix AND extension
+        savePanel.nameFieldStringValue = "\(generateFilename(for: frame)).\(selectedExportFormat.fileExtension)"
         
         // Create accessory view for format selection
         let formatSelector = NSPopUpButton()
