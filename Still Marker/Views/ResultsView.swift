@@ -295,6 +295,9 @@ struct ResultsView: View {
                 visibleFrameCount = 0
             }
         }
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            handleDrop(providers: providers)
+        }
     }
     
     private var headerView: some View {
@@ -1044,6 +1047,37 @@ struct ResultsView: View {
         case .tiff:
             return bitmapRep.representation(using: .tiff, properties: [:])
         }
+    }
+    
+    // MARK: - Drag and Drop in Grid View
+    
+    private func handleDrop(providers: [NSItemProvider]) -> Bool {
+        guard let provider = providers.first else { return false }
+        
+        provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { (urlData, error) in
+            DispatchQueue.main.async {
+                if let urlData = urlData as? Data,
+                   let url = URL(dataRepresentation: urlData, relativeTo: nil) {
+                    self.processVideoFile(url: url)
+                }
+            }
+        }
+        return true
+    }
+    
+    private func processVideoFile(url: URL) {
+        // Basic validation
+        let allowedExtensions = ["mp4", "mov", "avi", "mkv", "m4v", "wmv", "flv", "webm"]
+        let fileExtension = url.pathExtension.lowercased()
+        
+        guard allowedExtensions.contains(fileExtension) else {
+            showToast(message: "Unsupported file type: .\(fileExtension)", type: .error)
+            return
+        }
+        
+        // Reset to upload view and start processing new video
+        viewModel.resetToUpload()
+        viewModel.startProcessing(videoURL: url)
     }
     
 }

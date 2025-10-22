@@ -162,6 +162,22 @@ Think of the interface as a digital light table where a film essayist might exam
 
 ## 📒 CHANGELOG (REVERSE CHRONOLOGICAL)
 
+### 2025-10-22 - ✨ QOL Enhancements: Refinement Controls & Toast Positioning ✅
+
+#### **Enhanced Refinement Controls**
+- **ADDED**: 2-second forward/backward refinement buttons
+- **ADDED**: 10-second forward/backward refinement buttons
+- **NEW LAYOUT**: `[10s] [2s] << < [timecode] > >> [2s] [10s]`
+- **DESIGN**: Text labels for larger jumps (10s, 2s), chevron icons for precise control (<< < > >>)
+- **BENEFIT**: Faster navigation through longer video sequences
+- **WORKFLOW**: Quick 10s jumps for scouting, then fine-tune with frame-level precision
+
+#### **Toast Notification Positioning Fix**
+- **ISSUE**: Success toast (green bar) was covering refinement buttons during rapid export workflow
+- **FIX**: Increased bottom margin from 80px to 180px
+- **RESULT**: Toast now appears clearly above all control interfaces
+- **IMPACT**: No more blocked clicks while in rush workflow
+
 ### 2025-10-22 - 🔧 Critical Bug Fixes: Export System & App Icon Setup ✅
 
 #### **Export Filename Bug Fix**
