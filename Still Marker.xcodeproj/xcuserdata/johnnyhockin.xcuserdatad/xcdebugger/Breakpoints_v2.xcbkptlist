@@ -16,8 +16,38 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "900"
             endingLineNumber = "900"
-            landmarkName = "refineBackwardFine()"
+            landmarkName = "refineBackward2s()"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "6D42A1F2-416B-4ACE-970E-EDC36DF7BB2E - ccf349377859882e"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Still_Marker.ResultsView.refineBackwardFine() -&gt; ()"
+                  moduleName = "Still Marker.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/johnnyhockin/AI%20Playground/Still-Marker/Still%20Marker/Views/ResultsView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "900"
+                  endingLineNumber = "900">
+               </Location>
+               <Location
+                  uuid = "6D42A1F2-416B-4ACE-970E-EDC36DF7BB2E - 1a9cd14ef6c7670f"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Still_Marker.ResultsView.refineBackward2s() -&gt; ()"
+                  moduleName = "Still Marker.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/johnnyhockin/AI%20Playground/Still-Marker/Still%20Marker/Views/ResultsView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "900"
+                  endingLineNumber = "900">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

@@ -270,6 +270,7 @@ struct ResultsView: View {
                                             Image(systemName: "exclamationmark.triangle")
                                                 .font(.system(size: 24, weight: .light))
                                                 .foregroundColor(.red.opacity(0.7))
+                                                .symbolRenderingMode(.hierarchical)
                                             Text("Invalid Frame")
                                                 .font(.system(size: 12, weight: .light, design: .monospaced))
                                                 .foregroundColor(.white.opacity(0.5))
@@ -309,6 +310,7 @@ struct ResultsView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 12, weight: .medium))
+                        .symbolRenderingMode(.hierarchical)
                     Text("New Video")
                         .font(.system(size: 12, weight: .medium, design: .monospaced))
                 }
@@ -345,6 +347,7 @@ struct ResultsView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "square.and.arrow.down")
                         .font(.system(size: 12, weight: .medium))
+                        .symbolRenderingMode(.hierarchical)
                     Text("Export All")
                         .font(.system(size: 12, weight: .medium, design: .monospaced))
                 }
@@ -368,6 +371,7 @@ struct ResultsView: View {
             Image(systemName: toastType.icon)
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.white)
+                .symbolRenderingMode(.hierarchical)
             
             Text(toastMessage)
                 .font(.system(size: 14, weight: .medium))
@@ -557,6 +561,7 @@ struct ResultsView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 12, weight: .medium))
+                            .symbolRenderingMode(.hierarchical)
                         Text("Back to Grid")
                             .font(.system(size: 12, weight: .medium, design: .monospaced))
                     }
@@ -707,6 +712,7 @@ struct ResultsView: View {
                         Image(systemName: "chevron.left.2")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white)
+                            .symbolRenderingMode(.hierarchical)
                             .padding(8)
                             .background(
                                 RoundedRectangle(cornerRadius: 6)
@@ -726,6 +732,7 @@ struct ResultsView: View {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white)
+                            .symbolRenderingMode(.hierarchical)
                             .padding(8)
                             .background(
                                 RoundedRectangle(cornerRadius: 6)
@@ -757,6 +764,7 @@ struct ResultsView: View {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white)
+                            .symbolRenderingMode(.hierarchical)
                             .padding(8)
                             .background(
                                 RoundedRectangle(cornerRadius: 6)
@@ -776,6 +784,7 @@ struct ResultsView: View {
                         Image(systemName: "chevron.right.2")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white)
+                            .symbolRenderingMode(.hierarchical)
                             .padding(8)
                             .background(
                                 RoundedRectangle(cornerRadius: 6)
@@ -1236,7 +1245,7 @@ struct FrameCard: View {
                     .frame(width: 200, height: 112)
                     .cornerRadius(8)
                 
-                // Hover overlay (no animation for Step 1)
+                // Hover overlay with refined animation
                 if isHovered {
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Color.black.opacity(0.4))
@@ -1244,6 +1253,7 @@ struct FrameCard: View {
                             Image(systemName: "eye.fill")
                                 .font(.system(size: 24, weight: .medium))
                                 .foregroundColor(.white.opacity(0.9))
+                                .symbolRenderingMode(.hierarchical) // Tier 1: SF Symbols hierarchical
                         )
                 }
                 
@@ -1253,6 +1263,14 @@ struct FrameCard: View {
                         .stroke(Color(hex: "#E6A532"), lineWidth: 3)
                 }
             }
+            .scaleEffect(isHovered ? 1.02 : 1.0) // Tier 1: Subtle hover scale
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isHovered) // Tier 1: Spring physics
+            .shadow( // Tier 1: Shadow depth with warm tint
+                color: isHovered ? Color(red: 0.32, green: 0.28, blue: 0.24).opacity(0.4) : Color.black.opacity(0.2),
+                radius: isHovered ? 16 : 8,
+                x: 0,
+                y: isHovered ? 8 : 4
+            )
             .onTapGesture(count: 2) { onDoubleTap() }
             .onTapGesture { onTap() }
             .onHover { hovering in
