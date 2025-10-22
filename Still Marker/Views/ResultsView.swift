@@ -896,10 +896,12 @@ struct ResultsView: View {
     }
     
     private func refineBackwardFine() {
+        print("🔵 refineBackwardFine() called")
         refineByAmount(-0.033) // Back 1 frame (assuming ~30fps)
     }
     
     private func refineForwardFine() {
+        print("🔵 refineForwardFine() called")
         refineByAmount(0.033) // Forward 1 frame (assuming ~30fps)
     }
     
@@ -916,29 +918,46 @@ struct ResultsView: View {
     }
     
     private func refineByAmount(_ seconds: Double) {
+        print("🟢 refineByAmount called with \(seconds)s")
         guard let frame = previewFrame,
-              let videoURL = viewModel.selectedVideoURL else { return }
+              let videoURL = viewModel.selectedVideoURL else {
+            print("❌ No frame or video URL")
+            return
+        }
         
+        print("🟢 Frame and video URL OK")
         let currentTimestamp = refinedTimestamp ?? frame.timestamp
         let newTimestamp = max(0, currentTimestamp + seconds)
+        print("🟢 Timestamps calculated: current=\(currentTimestamp), new=\(newTimestamp)")
         
         if newTimestamp != currentTimestamp {
-            refineToTimestamp(newTimestamp, videoURL: videoURL)
+            print("🟢 Calling refineToTimestamp")
+            // Dispatch to avoid blocking main thread
+            Task { @MainActor in
+                refineToTimestamp(newTimestamp, videoURL: videoURL)
+            }
+        } else {
+            print("⚠️ Timestamps are the same, skipping refinement")
         }
     }
     
     private func refineToTimestamp(_ timestamp: Double, videoURL: URL) {
+        print("🟡 refineToTimestamp called with timestamp=\(timestamp)")
         // Guard against concurrent refinement requests
         guard !isRefining else {
             print("⚠️ Refinement already in progress, ignoring request")
             return
         }
         
+        print("🟡 Setting isRefining = true")
         isRefining = true
         
+        print("🟡 Creating Task")
         Task {
+            print("🟡 Inside Task, about to extract frame")
             do {
                 let refinedImage = try await extractFrameAtTimestamp(timestamp, from: videoURL)
+                print("✅ Frame extracted successfully")
                 
                 await MainActor.run {
                     refinedTimestamp = timestamp
