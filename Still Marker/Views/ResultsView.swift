@@ -967,12 +967,22 @@ extension ResultsView {
             )
 
             Spacer()
+
+            // Keyboard shortcuts hint
+            Text("← → frame  •  ⇧← ⇧→ 2s  •  ↑ ↓ photos  •  ESC exit")
+                .font(.system(size: 11, weight: .regular, design: .monospaced))
+                .foregroundColor(.white.opacity(0.4))
+                .padding(.bottom, 20)
         }
         .background(
             KeyEventHandlingView(
-                onLeftArrow: navigateToPreviousFrame,
-                onRightArrow: navigateToNextFrame,
-                onEscape: handleEscapeKey
+                onLeftArrow: refineBackwardFine,        // ← = -1 frame
+                onRightArrow: refineForwardFine,        // → = +1 frame
+                onShiftLeftArrow: refineBackward2s,     // ⇧← = -2s
+                onShiftRightArrow: refineForward2s,     // ⇧→ = +2s
+                onUpArrow: navigateToPreviousFrame,     // ↑ = prev grid frame
+                onDownArrow: navigateToNextFrame,       // ↓ = next grid frame
+                onEscape: handleEscapeKey               // ESC = close preview
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         )
@@ -1504,19 +1514,31 @@ struct FrameCard: View {
 struct KeyEventHandlingView: NSViewRepresentable {
     let onLeftArrow: () -> Void
     let onRightArrow: () -> Void
+    let onShiftLeftArrow: () -> Void
+    let onShiftRightArrow: () -> Void
+    let onUpArrow: () -> Void
+    let onDownArrow: () -> Void
     let onEscape: () -> Void
-    
+
     func makeNSView(context: Context) -> KeyCaptureView {
         let view = KeyCaptureView()
         view.onLeftArrow = onLeftArrow
         view.onRightArrow = onRightArrow
+        view.onShiftLeftArrow = onShiftLeftArrow
+        view.onShiftRightArrow = onShiftRightArrow
+        view.onUpArrow = onUpArrow
+        view.onDownArrow = onDownArrow
         view.onEscape = onEscape
         return view
     }
-    
+
     func updateNSView(_ nsView: KeyCaptureView, context: Context) {
         nsView.onLeftArrow = onLeftArrow
         nsView.onRightArrow = onRightArrow
+        nsView.onShiftLeftArrow = onShiftLeftArrow
+        nsView.onShiftRightArrow = onShiftRightArrow
+        nsView.onUpArrow = onUpArrow
+        nsView.onDownArrow = onDownArrow
         nsView.onEscape = onEscape
     }
 }
@@ -1524,11 +1546,15 @@ struct KeyEventHandlingView: NSViewRepresentable {
 class KeyCaptureView: NSView {
     var onLeftArrow: (() -> Void)?
     var onRightArrow: (() -> Void)?
+    var onShiftLeftArrow: (() -> Void)?
+    var onShiftRightArrow: (() -> Void)?
+    var onUpArrow: (() -> Void)?
+    var onDownArrow: (() -> Void)?
     var onEscape: (() -> Void)?
-    
+
     override var acceptsFirstResponder: Bool { true }
     override var canBecomeKeyView: Bool { true }
-    
+
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         // Delay to ensure the view is fully set up
@@ -1536,23 +1562,40 @@ class KeyCaptureView: NSView {
             self?.window?.makeFirstResponder(self)
         }
     }
-    
+
     override func mouseDown(with event: NSEvent) {
         // Make this view first responder when clicked
         window?.makeFirstResponder(self)
         super.mouseDown(with: event)
     }
-    
+
     override func keyDown(with event: NSEvent) {
-        print("🎹 Key pressed: \(event.keyCode)")
-        
+        let isShiftPressed = event.modifierFlags.contains(.shift)
+        print("🎹 Key pressed: \(event.keyCode), Shift: \(isShiftPressed)")
+
         switch event.keyCode {
         case 123: // Left arrow
-            print("⬅️ Left arrow pressed")
-            onLeftArrow?()
+            if isShiftPressed {
+                print("⬅️⇧ Shift+Left arrow pressed")
+                onShiftLeftArrow?()
+            } else {
+                print("⬅️ Left arrow pressed")
+                onLeftArrow?()
+            }
         case 124: // Right arrow
-            print("➡️ Right arrow pressed") 
-            onRightArrow?()
+            if isShiftPressed {
+                print("➡️⇧ Shift+Right arrow pressed")
+                onShiftRightArrow?()
+            } else {
+                print("➡️ Right arrow pressed")
+                onRightArrow?()
+            }
+        case 125: // Down arrow
+            print("⬇️ Down arrow pressed")
+            onDownArrow?()
+        case 126: // Up arrow
+            print("⬆️ Up arrow pressed")
+            onUpArrow?()
         case 53: // Escape
             print("🔙 Escape pressed")
             onEscape?()
@@ -1561,7 +1604,7 @@ class KeyCaptureView: NSView {
             super.keyDown(with: event)
         }
     }
-    
+
     // Accept all key events
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
         return true

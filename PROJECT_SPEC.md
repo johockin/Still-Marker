@@ -162,6 +162,63 @@ Think of the interface as a digital light table where a film essayist might exam
 
 ## 📒 CHANGELOG (REVERSE CHRONOLOGICAL)
 
+### 2025-10-23 - ⌨️ Enhanced Keyboard Navigation in Frame Preview ✅
+
+#### **Intuitive Keyboard Shortcuts System**
+- **GOAL**: Create powerful, discoverable keyboard navigation for frame refinement workflow
+- **USER REQUEST**: More intuitive keyboard layout separating temporal vs spatial navigation
+- **RESULT**: Professional frame-by-frame workflow with clear visual hints
+
+#### **Implementation**
+1. **Rewired Arrow Key Navigation** ✅
+   - **← / →**: Frame-by-frame refinement (±0.033s / ±1 frame)
+   - **Shift+← / Shift+→**: 2-second jumps for rapid navigation
+   - **↑ / ↓**: Navigate between grid frames (previous/next photo)
+   - **ESC**: Close preview (unchanged)
+
+2. **Modifier Key Detection** ✅
+   - Added Shift key detection using `event.modifierFlags.contains(.shift)`
+   - NSEvent-based approach for reliable modifier key handling
+   - Enhanced console logging shows key state for debugging
+
+3. **Expanded KeyEventHandlingView Architecture** ✅
+   - Added 4 new callback parameters: `onShiftLeftArrow`, `onShiftRightArrow`, `onUpArrow`, `onDownArrow`
+   - Updated `KeyCaptureView` class with new properties and enhanced `keyDown` method
+   - Wired callbacks to existing refinement functions (no new logic needed)
+
+4. **Visual Keyboard Hints** ✅
+   - Always-visible hint at bottom of frame preview
+   - Text: `"← → frame  •  ⇧← ⇧→ 2s  •  ↑ ↓ photos  •  ESC exit"`
+   - 11pt monospaced font at 40% opacity (documentary aesthetic)
+   - Subtle, professional, matches Chris Marker contemplative style
+
+#### **Design Rationale**
+- **Temporal vs Spatial Separation**: Left/right = time manipulation, up/down = photo navigation
+- **Progressive Refinement**: Frame-by-frame (precise) → 2-second jumps (rapid) → photo switching (context)
+- **Discoverability**: Always-visible hints eliminate guesswork for new users
+- **Filmmaker Workflow**: Mirrors professional editing keyboard shortcuts
+
+#### **Safety & Edge Cases**
+- All refinement functions already have `isRefining` guards - concurrent operations blocked
+- Video boundary handling: Lower bound clamped to 0, upper bound handled gracefully by FFmpeg
+- Grid navigation wrap-around: First ↑ wraps to last, last ↓ wraps to first
+- Rapid key press protection via existing concurrency guards
+
+#### **Code Locations**
+- KeyEventHandlingView struct: `ResultsView.swift` lines 1504-1534
+- KeyCaptureView class: `ResultsView.swift` lines 1536-1602
+- Keyboard mapping: `ResultsView.swift` lines 978-986
+- Visual hints: `ResultsView.swift` lines 972-975
+
+#### **User Validation**
+- ✅ "Everything works!" - All keyboard shortcuts tested and verified
+- ✅ Frame-by-frame refinement precise and responsive
+- ✅ Shift+arrow 2s jumps work correctly
+- ✅ Up/down grid navigation smooth
+- ✅ Visual hints clear and unobtrusive
+
+---
+
 ### 2025-10-22 - ✨ Frame Grid Hover Effect Polish ✅
 
 #### **"Film Light Table" Hover Refinement**
