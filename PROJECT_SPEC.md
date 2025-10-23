@@ -162,6 +162,67 @@ Think of the interface as a digital light table where a film essayist might exam
 
 ## 📒 CHANGELOG (REVERSE CHRONOLOGICAL)
 
+### 2025-10-22 - ✨ Frame Grid Hover Effect Polish ✅
+
+#### **"Film Light Table" Hover Refinement**
+- **GOAL**: Replace opaque overlay with elegant hover effect that enhances visibility
+- **USER FEEDBACK**: Original brown overlay obscured frame content, defeated evaluation purpose
+- **DESIGN COLLABORATION**: design-systems-architect agent vetted and refined proposal
+
+#### **Implementation**
+1. **Removed Opaque Overlay** ✅
+   - Eliminated `.ultraThinMaterial` brown overlay covering entire frame
+   - Frames now MORE visible when hovered, not less
+
+2. **Light Through Film Effect** ✅
+   - 8% brightness boost creates "backlit film slide" aesthetic
+   - 5% saturation increase for subtle richness
+   - Mimics examining film on light table
+
+3. **Warm White Luminous Border** ✅
+   - Gradient border (50% → 30% opacity) suggests backlit film edge
+   - Warm white (#FFF9F0) respects all frame color palettes
+   - 1px stroke with subtle glow
+
+4. **Dual Shadow System** ✅
+   - White glow (12% opacity, 4px radius) for luminance
+   - Warm depth shadow (40% opacity, 16px radius) for dimension
+
+5. **Thick Glass Eye Icon Badge** ✅
+   - 50px circular `.ultraThinMaterial` badge with eye icon
+   - Scales in from 0 with bouncy spring animation (0.3s response, 0.7 damping)
+   - 0.05s delay after border appears for layered polish
+   - Dual shadows (black depth + white glow)
+   - Positioned center of frame like "magnifying glass loupe"
+
+6. **Asymmetric Animation** ✅
+   - **Enter**: 0.35s spring with 0.78 damping (feels alive, responsive)
+   - **Exit**: 0.18s easeOut (snappy, 2× faster than enter)
+   - Respects reduced motion accessibility preferences
+
+7. **Grid Layout Fix** ✅
+   - Added 16px top padding to prevent border/shadow clipping on top row
+   - Maintains 24px horizontal and bottom padding
+
+#### **Design Philosophy**
+- **Metaphor**: Examining film slides on light table - frame "lifts to light" for inspection
+- **Chris Marker Aesthetic**: Contemplative, precise, beautiful without obscuring content
+- **3am Cinematographer Test**: PASSED - tired filmmaker can evaluate frames clearly
+- **Visibility First**: Hover effect enhances frame visibility instead of covering it
+
+#### **Code Locations**
+- FrameCard hover effect: `ResultsView.swift` lines 1384-1456
+- LazyVGrid padding: `ResultsView.swift` lines 611-613
+
+#### **User Validation**
+- ✅ "This is sick" - User confirmed effect ready for release
+- ✅ Frame visibility enhanced during hover
+- ✅ Animation feels professional and polished
+- ✅ Top row clipping resolved
+- ✅ Eye badge provides clear "preview" affordance
+
+---
+
 ### 2025-10-22 - 🏗️ SwiftUI View Complexity Crash Resolution ✅
 
 #### **Frame Preview Crash (Critical Architecture Issue) - RESOLVED**

@@ -609,6 +609,7 @@ struct ResultsView: View {
                             }
                         }
                         .padding(.horizontal, 24)
+                        .padding(.top, 16)
                         .padding(.bottom, 24)
                     }
                 }
@@ -1380,9 +1381,25 @@ struct FrameCard: View {
     let onExport: () -> Void
     let onHover: (Bool) -> Void
     let onExportHover: (Bool) -> Void
-    
-    // NO @State variables at all!
-    
+
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
+
+    private var hoverAnimation: Animation {
+        if reduceMotion {
+            return .linear(duration: 0.1)
+        } else {
+            return .spring(response: 0.35, dampingFraction: 0.78, blendDuration: 0)
+        }
+    }
+
+    private var exitAnimation: Animation {
+        if reduceMotion {
+            return .linear(duration: 0.1)
+        } else {
+            return .easeOut(duration: 0.18)
+        }
+    }
+
     var body: some View {
         VStack(spacing: 8) {
             ZStack {
@@ -1390,42 +1407,70 @@ struct FrameCard: View {
                     .resizable()
                     .frame(width: 200, height: 112)
                     .cornerRadius(8)
-                
-                // Hover overlay with refined animation - subtle and glassy
-                if isHovered {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(.ultraThinMaterial) // Glass morphism instead of solid black
-                        .overlay(
-                            ZStack {
-                                // Subtle gradient overlay
-                                LinearGradient(
-                                    colors: [Color.black.opacity(0.3), Color.black.opacity(0.5)],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                                
-                                Image(systemName: "eye.fill")
-                                    .font(.system(size: 24, weight: .medium))
-                                    .foregroundColor(.white)
-                                    .symbolRenderingMode(.hierarchical)
-                                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                            }
-                        )
-                }
-                
+                    .brightness(isHovered ? 0.08 : 0.0) // Light through film effect
+                    .saturation(isHovered ? 1.05 : 1.0) // Subtle richness boost
+
+                // Subtle luminous border on hover - like backlit film edge
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 1.0, green: 0.98, blue: 0.94, opacity: isHovered ? 0.5 : 0.0),
+                                Color(red: 1.0, green: 0.98, blue: 0.94, opacity: isHovered ? 0.3 : 0.0)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ),
+                        lineWidth: 1
+                    )
+
                 // Selection border
                 if isSelected {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(Color(hex: "#E6A532"), lineWidth: 3)
                 }
+
+                // Thick glass eye icon badge on hover
+                if isHovered {
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .frame(width: 50, height: 50)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                        .overlay(
+                            Image(systemName: "eye.fill")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundColor(.white.opacity(0.9))
+                                .symbolRenderingMode(.hierarchical)
+                        )
+                        .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
+                        .shadow(color: Color.white.opacity(0.2), radius: 4, x: 0, y: 2)
+                        .scaleEffect(isHovered ? 1.0 : 0.0)
+                        .animation(
+                            .spring(response: 0.3, dampingFraction: 0.7, blendDuration: 0)
+                                .delay(0.05),
+                            value: isHovered
+                        )
+                }
             }
-            .scaleEffect(isHovered ? 1.02 : 1.0) // Tier 1: Subtle hover scale
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isHovered) // Tier 1: Spring physics
-            .shadow( // Tier 1: Shadow depth with warm tint
+            .scaleEffect(isHovered ? 1.02 : 1.0)
+            .shadow(
+                color: Color.white.opacity(isHovered ? 0.12 : 0),
+                radius: 4,
+                x: 0,
+                y: 2
+            )
+            .shadow(
                 color: isHovered ? Color(red: 0.32, green: 0.28, blue: 0.24).opacity(0.4) : Color.black.opacity(0.2),
                 radius: isHovered ? 16 : 8,
                 x: 0,
                 y: isHovered ? 8 : 4
+            )
+            .animation(
+                isHovered ? hoverAnimation : exitAnimation,
+                value: isHovered
             )
             .onTapGesture(count: 2) { onDoubleTap() }
             .onTapGesture { onTap() }
