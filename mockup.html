@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Still Marker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --black: #000000;
+            --text: rgba(255,255,255,0.87);
+            --text-dim: rgba(255,255,255,0.50);
+            --text-ghost: rgba(255,255,255,0.25);
+            --gold: #c4a44a;
+            --gold-dim: rgba(196,164,74,0.25);
+            --speed: 150ms;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background: var(--black);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            cursor: default;
+        }
+
+        /* ===========================
+           VIEW: UPLOAD
+           The eye. The question. Nothing else.
+           =========================== */
+        .view-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            cursor: pointer;
+        }
+
+        .view-upload.hidden { display: none; }
+
+        .view-upload.drag-over .eye-pupil {
+            transform: scale(1.5);
+        }
+
+        .view-upload.drag-over .eye-ring {
+            opacity: 1;
+            stroke-dashoffset: 0;
+        }
+
+        .eye-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .eye-svg {
+            width: 160px;
+            height: 80px;
+        }
+
+        .eye-outline {
+            fill: none;
+            stroke: rgba(255,255,255,0.18);
+            stroke-width: 1.5;
+        }
+
+        .eye-pupil {
+            fill: rgba(255,255,255,0.08);
+            stroke: rgba(255,255,255,0.22);
+            stroke-width: 1.5;
+            transition: transform 0.4s ease-out;
+            transform-origin: 80px 40px;
+        }
+
+        .eye-catch {
+            fill: rgba(255,255,255,0.3);
+        }
+
+        .eye-ring {
+            fill: none;
+            stroke: var(--gold);
+            stroke-width: 1.5;
+            stroke-dasharray: 157;
+            stroke-dashoffset: 157;
+            opacity: 0;
+            transition: stroke-dashoffset 0.6s ease-out, opacity 0.3s;
+            transform-origin: 80px 40px;
+        }
+
+        .eye-prompt {
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--text-dim);
+            letter-spacing: 0.01em;
+        }
+
+        /* ===========================
+           SHARED: MINIMAL NAV BAR
+           =========================== */
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            height: 44px;
+            flex-shrink: 0;
+        }
+
+        .nav-link {
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--text-dim);
+            background: none;
+            border: none;
+            border-bottom: 1px solid transparent;
+            cursor: pointer;
+            padding: 0;
+            transition: color var(--speed), border-color var(--speed);
+        }
+
+        .nav-link:hover {
+            color: var(--text);
+            border-bottom-color: var(--text-dim);
+        }
+
+        .nav-link-gold {
+            color: var(--gold-dim);
+        }
+
+        .nav-link-gold:hover {
+            color: var(--gold);
+            border-bottom-color: var(--gold);
+        }
+
+        .nav-center {
+            font-size: 10px;
+            color: var(--text-ghost);
+            letter-spacing: 0.06em;
+        }
+
+        /* ===========================
+           VIEW: CONTACT SHEET
+           Frames in the void. Gold = chosen.
+           =========================== */
+        .view-contact {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .view-contact.active { display: flex; }
+
+        .contact-grid {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 8px;
+            align-content: start;
+        }
+
+        .contact-grid::-webkit-scrollbar { width: 4px; }
+        .contact-grid::-webkit-scrollbar-track { background: transparent; }
+        .contact-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+        .contact-frame {
+            position: relative;
+            cursor: pointer;
+            border: 1.5px solid transparent;
+            border-radius: 1px;
+            overflow: hidden;
+            transition: border-color var(--speed);
+        }
+
+        .contact-frame:hover {
+            border-color: var(--gold);
+        }
+
+        .contact-frame:hover .contact-tc {
+            opacity: 1;
+        }
+
+        .contact-frame .thumb {
+            width: 100%;
+            aspect-ratio: 16/9;
+            display: block;
+        }
+
+        .contact-tc {
+            position: absolute;
+            bottom: 4px;
+            right: 6px;
+            font-size: 10px;
+            font-variant-numeric: tabular-nums;
+            font-family: "SF Mono", ui-monospace, monospace;
+            color: rgba(255,255,255,0.7);
+            opacity: 0;
+            transition: opacity var(--speed);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+        }
+
+        /* ===========================
+           VIEW: EDITING BAY
+           The frame is the altar.
+           =========================== */
+        .view-bay {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .view-bay.active { display: flex; }
+
+        .theater {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 0;
+            padding: 12px 20px 0;
+        }
+
+        .theater-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .theater-tc {
+            font-family: "SF Mono", ui-monospace, monospace;
+            font-size: 11px;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-dim);
+            margin-top: 8px;
+            transition: opacity 0.1s;
+        }
+
+        .theater-tc.pulse {
+            opacity: 1;
+        }
+
+        /* Filmstrip */
+        .filmstrip-area {
+            flex-shrink: 0;
+            padding: 10px 12px 6px;
+        }
+
+        .filmstrip {
+            display: flex;
+            gap: 3px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding-bottom: 4px;
+        }
+
+        .filmstrip::-webkit-scrollbar { height: 3px; }
+        .filmstrip::-webkit-scrollbar-track { background: transparent; }
+        .filmstrip::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+        .strip-frame {
+            flex-shrink: 0;
+            width: 80px;
+            cursor: pointer;
+            border: 1.5px solid transparent;
+            border-radius: 1px;
+            overflow: hidden;
+            opacity: 0.45;
+            transition: opacity var(--speed), border-color var(--speed);
+        }
+
+        .strip-frame:hover {
+            opacity: 0.75;
+        }
+
+        .strip-frame.active {
+            border-color: var(--gold);
+            opacity: 1;
+        }
+
+        .strip-frame .thumb {
+            width: 100%;
+            aspect-ratio: 16/9;
+            display: block;
+        }
+
+        .bay-hints {
+            text-align: center;
+            padding: 4px 0 8px;
+            font-size: 10px;
+            color: var(--text-ghost);
+            letter-spacing: 0.02em;
+        }
+
+        /* Refine controls - compact, below filmstrip */
+        .refine-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1px;
+            padding: 4px 0 10px;
+        }
+
+        .refine-btn {
+            font-family: "SF Mono", ui-monospace, monospace;
+            font-size: 10px;
+            padding: 4px 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-ghost);
+            cursor: pointer;
+            transition: color var(--speed);
+            border-radius: 3px;
+        }
+
+        .refine-btn:hover {
+            color: var(--text-dim);
+            background: rgba(255,255,255,0.04);
+        }
+
+        .refine-sep {
+            width: 1px;
+            height: 14px;
+            background: rgba(255,255,255,0.06);
+            margin: 0 8px;
+        }
+
+        .refine-export {
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 400;
+            padding: 4px 12px;
+            border: 1px solid var(--gold-dim);
+            background: transparent;
+            color: var(--gold);
+            cursor: pointer;
+            border-radius: 3px;
+            transition: background var(--speed), border-color var(--speed);
+        }
+
+        .refine-export:hover {
+            background: rgba(196,164,74,0.08);
+            border-color: var(--gold);
+        }
+    </style>
+</head>
+<body>
+
+<!-- ==============================
+     UPLOAD: The eye opens.
+     ============================== -->
+<div class="view-upload" id="viewUpload">
+    <div class="eye-container">
+        <svg class="eye-svg" viewBox="0 0 160 80">
+            <!-- Eye shape -->
+            <path class="eye-outline" d="M4,40 Q40,4 80,4 Q120,4 156,40 Q120,76 80,76 Q40,76 4,40 Z"/>
+            <!-- Pupil -->
+            <circle class="eye-pupil" cx="80" cy="40" r="16"/>
+            <!-- Catchlight -->
+            <circle class="eye-catch" cx="74" cy="34" r="4"/>
+            <!-- Progress ring (hidden until drag) -->
+            <circle class="eye-ring" cx="80" cy="40" r="25"/>
+        </svg>
+        <div class="eye-prompt">Show me what you saw</div>
+    </div>
+</div>
+
+<!-- ==============================
+     CONTACT SHEET: Frames in the dark.
+     ============================== -->
+<div class="view-contact" id="viewContact">
+    <div class="nav-bar">
+        <button class="nav-link" id="navBack">back</button>
+        <span class="nav-center" id="frameCountLabel">32 frames</span>
+        <button class="nav-link nav-link-gold" id="navExportAll">export all</button>
+    </div>
+    <div class="contact-grid" id="contactGrid"></div>
+</div>
+
+<!-- ==============================
+     EDITING BAY: The altar.
+     ============================== -->
+<div class="view-bay" id="viewBay">
+    <div class="nav-bar">
+        <button class="nav-link" id="navSheet">back</button>
+        <span class="nav-center" id="bayLabel">12 of 32</span>
+        <button class="nav-link nav-link-gold" id="navExportBay">export all</button>
+    </div>
+
+    <div class="theater">
+        <canvas id="theaterImage" class="theater-image"></canvas>
+        <div class="theater-tc" id="theaterTC">00:04.5</div>
+    </div>
+
+    <div class="filmstrip-area">
+        <div class="filmstrip" id="filmstrip"></div>
+    </div>
+
+    <div class="refine-bar">
+        <button class="refine-btn">10s</button>
+        <button class="refine-btn">2s</button>
+        <button class="refine-btn">&#8249;&#8249;</button>
+        <button class="refine-btn">&#8249;</button>
+        <span style="width: 12px;"></span>
+        <button class="refine-btn">&#8250;</button>
+        <button class="refine-btn">&#8250;&#8250;</button>
+        <button class="refine-btn">2s</button>
+        <button class="refine-btn">10s</button>
+        <div class="refine-sep"></div>
+        <button class="refine-export">export</button>
+    </div>
+
+    <div class="bay-hints">&larr; &rarr; nudge &nbsp;&middot;&nbsp; &uarr; &darr; frames &nbsp;&middot;&nbsp; esc back</div>
+</div>
+
+<script>
+    // ---- Data ----
+    const FRAME_COUNT = 32;
+    const INTERVAL = 1.5;
+
+    const frames = Array.from({ length: FRAME_COUNT }, (_, i) => {
+        const sec = i * INTERVAL;
+        const m = Math.floor(sec / 60);
+        const s = (sec % 60).toFixed(1);
+        return {
+            index: i,
+            timecode: `${String(m).padStart(2,'0')}:${s.padStart(4,'0')}`,
+            hue: (i * 31 + 200) % 360,
+            sat: 18 + (i % 5) * 3,
+            lum: 22 + (i % 4) * 2,
+        };
+    });
+
+    function drawThumb(canvas, frame, w, h) {
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = `hsl(${frame.hue}, ${frame.sat}%, ${frame.lum}%)`;
+        ctx.fillRect(0, 0, w, h);
+        const seed = frame.index * 7;
+        ctx.fillStyle = `hsla(${(frame.hue+30)%360}, ${frame.sat+5}%, ${frame.lum-4}%, 0.4)`;
+        ctx.fillRect(w*0.08, h*0.55, w*0.38, h*0.4);
+        ctx.fillStyle = `hsla(${(frame.hue+60)%360}, ${frame.sat}%, ${frame.lum+7}%, 0.2)`;
+        ctx.beginPath(); ctx.arc(w*0.68+(seed%30), h*0.38, h*0.2, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = `hsla(0,0%,100%,0.03)`; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, h*0.42); ctx.lineTo(w, h*0.42); ctx.stroke();
+    }
+
+    // ---- Build contact sheet ----
+    const contactGrid = document.getElementById('contactGrid');
+    frames.forEach(frame => {
+        const card = document.createElement('div');
+        card.className = 'contact-frame';
+        const canvas = document.createElement('canvas');
+        canvas.className = 'thumb';
+        drawThumb(canvas, frame, 360, 202);
+        const tc = document.createElement('div');
+        tc.className = 'contact-tc';
+        tc.textContent = frame.timecode;
+        card.appendChild(canvas);
+        card.appendChild(tc);
+        card.addEventListener('click', () => openBay(frame.index));
+        contactGrid.appendChild(card);
+    });
+
+    // ---- Build filmstrip ----
+    const filmstrip = document.getElementById('filmstrip');
+    frames.forEach(frame => {
+        const el = document.createElement('div');
+        el.className = 'strip-frame';
+        el.dataset.index = frame.index;
+        const canvas = document.createElement('canvas');
+        canvas.className = 'thumb';
+        drawThumb(canvas, frame, 160, 90);
+        el.appendChild(canvas);
+        el.addEventListener('click', () => selectFrame(frame.index));
+        filmstrip.appendChild(el);
+    });
+
+    // ---- View management ----
+    const viewUpload = document.getElementById('viewUpload');
+    const viewContact = document.getElementById('viewContact');
+    const viewBay = document.getElementById('viewBay');
+    const theaterCanvas = document.getElementById('theaterImage');
+    const theaterTC = document.getElementById('theaterTC');
+    const bayLabel = document.getElementById('bayLabel');
+    let currentIndex = 0;
+
+    function showView(view) {
+        [viewUpload, viewContact, viewBay].forEach(v => {
+            v.classList.remove('active');
+            v.classList.add('hidden');
+        });
+        view.classList.remove('hidden');
+        if (view === viewUpload) {
+            viewUpload.style.display = 'flex';
+        } else {
+            viewUpload.style.display = 'none';
+            view.classList.add('active');
+        }
+    }
+
+    function openBay(index) {
+        showView(viewBay);
+        selectFrame(index);
+    }
+
+    function selectFrame(index) {
+        currentIndex = index;
+        const frame = frames[index];
+        const rect = theaterCanvas.parentElement.getBoundingClientRect();
+        const w = Math.min(1280, rect.width - 40);
+        const h = Math.round(w * 9 / 16);
+        drawThumb(theaterCanvas, frame, w, h);
+        theaterTC.textContent = frame.timecode;
+        bayLabel.textContent = `${index + 1} of ${FRAME_COUNT}`;
+
+        // Pulse timecode
+        theaterTC.classList.add('pulse');
+        setTimeout(() => theaterTC.classList.remove('pulse'), 200);
+
+        // Filmstrip
+        document.querySelectorAll('.strip-frame').forEach(el => {
+            el.classList.toggle('active', parseInt(el.dataset.index) === index);
+        });
+        const activeStrip = filmstrip.children[index];
+        if (activeStrip) activeStrip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+
+    // ---- Navigation ----
+    viewUpload.addEventListener('click', () => showView(viewContact));
+    document.getElementById('navBack').addEventListener('click', () => showView(viewUpload));
+    document.getElementById('navSheet').addEventListener('click', () => showView(viewContact));
+
+    // ---- Drag feedback on upload ----
+    viewUpload.addEventListener('dragover', (e) => { e.preventDefault(); viewUpload.classList.add('drag-over'); });
+    viewUpload.addEventListener('dragleave', () => viewUpload.classList.remove('drag-over'));
+    viewUpload.addEventListener('drop', (e) => { e.preventDefault(); viewUpload.classList.remove('drag-over'); showView(viewContact); });
+
+    // ---- Keyboard ----
+    document.addEventListener('keydown', (e) => {
+        if (viewBay.classList.contains('active')) {
+            if (e.key === 'Escape') showView(viewContact);
+            else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); selectFrame(Math.min(currentIndex+1, FRAME_COUNT-1)); }
+            else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); selectFrame(Math.max(currentIndex-1, 0)); }
+        } else if (viewContact.classList.contains('active')) {
+            if (e.key === 'Escape') showView(viewUpload);
+        }
+    });
+</script>
+</body>
+</html>

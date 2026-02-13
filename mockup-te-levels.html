@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Still Marker – TE Level Comparison</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Instrument+Serif:ital@0;1&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+            background: #0a0a0a;
+            color: rgba(255,255,255,0.85);
+            padding: 48px 40px;
+        }
+
+        h1 {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .page-sub {
+            font-size: 13px;
+            color: rgba(255,255,255,0.25);
+            margin-bottom: 48px;
+            line-height: 1.6;
+        }
+
+        .te-section {
+            margin-bottom: 80px;
+            padding-bottom: 80px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .te-section:last-child { border-bottom: none; }
+
+        .te-header-row {
+            display: flex;
+            align-items: baseline;
+            gap: 16px;
+            margin-bottom: 6px;
+        }
+
+        .te-label {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .te-tagline {
+            font-size: 13px;
+            font-style: italic;
+            color: rgba(255,255,255,0.35);
+        }
+
+        .te-desc {
+            font-size: 13px;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 28px;
+            max-width: 720px;
+            line-height: 1.6;
+        }
+
+        .te-row {
+            display: flex;
+            gap: 32px;
+            align-items: start;
+        }
+
+        .preview-card-label {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.2);
+            margin-bottom: 8px;
+        }
+
+        /* Each preview window */
+        .preview-card {
+            border-radius: 10px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .swatch-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .swatch-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .swatch {
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .swatch-label {
+            font-size: 9px;
+            color: rgba(255,255,255,0.25);
+        }
+
+
+        /* ================================================================
+           TE2: SLIGHTLY OFF-NATIVE
+           ================================================================ */
+        .te2-card {
+            width: 440px;
+            background: #1e1e1e;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .te2-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .te2-title {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.45);
+        }
+
+        .te2-btn {
+            font-family: inherit;
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            color: rgba(255,255,255,0.5);
+            cursor: default;
+        }
+
+        .te2-btn-accent {
+            background: #5a9fcf;
+            color: white;
+            border: none;
+        }
+
+        .te2-upload {
+            padding: 52px 36px;
+            text-align: center;
+        }
+
+        .te2-drop-zone {
+            border: 1.5px dashed rgba(255,255,255,0.12);
+            border-radius: 10px;
+            padding: 44px 32px;
+        }
+
+        .te2-drop-icon {
+            font-size: 32px;
+            color: rgba(255,255,255,0.15);
+            margin-bottom: 14px;
+        }
+
+        .te2-drop-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.85);
+            margin-bottom: 6px;
+        }
+
+        .te2-drop-sub {
+            font-size: 12px;
+            color: rgba(255,255,255,0.3);
+            margin-bottom: 20px;
+        }
+
+        .te2-drop-btn {
+            font-family: inherit;
+            font-size: 12px;
+            padding: 6px 18px;
+            border-radius: 5px;
+            border: none;
+            background: #5a9fcf;
+            color: white;
+            cursor: default;
+        }
+
+        .te2-footer {
+            font-size: 10px;
+            color: rgba(255,255,255,0.15);
+            text-align: center;
+            padding: 12px;
+        }
+
+        .te2-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3px;
+            padding: 6px;
+        }
+
+        .te2-frame {
+            aspect-ratio: 16/9;
+            background: #2a2a2d;
+            border-radius: 1px;
+        }
+
+        /* ================================================================
+           TE3: THE PROJECTOR
+           Metaphor: loading film into a projector. Tactile, mechanical.
+           ================================================================ */
+        .te3-card {
+            width: 440px;
+            background: #17191c;
+            border: 1px solid rgba(120,140,160,0.08);
+        }
+
+        .te3-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 16px;
+            background: #12141a;
+            border-bottom: 1px solid rgba(120,140,160,0.06);
+        }
+
+        .te3-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            color: rgba(140,170,200,0.6);
+        }
+
+        .te3-btn-accent {
+            font-family: 'Space Mono', monospace;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            padding: 5px 12px;
+            border-radius: 3px;
+            border: none;
+            background: #5d8ab4;
+            color: #0e1015;
+            cursor: default;
+            text-transform: uppercase;
+        }
+
+        .te3-btn-nav {
+            font-family: 'Space Mono', monospace;
+            font-size: 9px;
+            padding: 5px 10px;
+            border-radius: 3px;
+            border: 1px solid rgba(120,140,160,0.12);
+            background: transparent;
+            color: rgba(140,170,200,0.5);
+            cursor: default;
+        }
+
+        .te3-upload {
+            padding: 36px 32px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Film gate / projector aperture */
+        .te3-gate {
+            width: 200px;
+            height: 140px;
+            border: 3px solid rgba(140,170,200,0.15);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        /* Sprocket holes */
+        .te3-gate::before, .te3-gate::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 80%;
+            display: flex;
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(140,170,200,0.12) 0px,
+                rgba(140,170,200,0.12) 6px,
+                transparent 6px,
+                transparent 14px
+            );
+            border-radius: 1px;
+        }
+        .te3-gate::before { left: -16px; }
+        .te3-gate::after { right: -16px; }
+
+        .te3-gate-icon {
+            font-size: 28px;
+            color: rgba(140,170,200,0.25);
+            margin-bottom: 6px;
+        }
+
+        .te3-gate-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            color: rgba(140,170,200,0.4);
+            letter-spacing: 0.05em;
+        }
+
+        .te3-load-btn {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 8px 24px;
+            border-radius: 4px;
+            border: 1.5px solid rgba(140,170,200,0.2);
+            background: rgba(93,138,180,0.1);
+            color: #5d8ab4;
+            cursor: default;
+            margin-bottom: 16px;
+        }
+
+        .te3-hint {
+            font-family: 'Space Mono', monospace;
+            font-size: 9px;
+            color: rgba(140,170,200,0.2);
+        }
+
+        .te3-footer {
+            font-family: 'Space Mono', monospace;
+            font-size: 8px;
+            color: rgba(140,170,200,0.15);
+            text-align: center;
+            padding: 10px;
+            letter-spacing: 0.05em;
+            border-top: 1px solid rgba(120,140,160,0.04);
+        }
+
+        .te3-grid-wrap {
+            padding: 4px;
+        }
+
+        .te3-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2px;
+        }
+
+        .te3-frame {
+            aspect-ratio: 16/9;
+            background: #222630;
+            border-radius: 1px;
+        }
+
+        .te3-strip-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 8px;
+            color: rgba(140,170,200,0.15);
+            text-align: right;
+            padding: 4px 8px;
+        }
+
+        /* ================================================================
+           TE4: THE DARKROOM
+           Metaphor: developing prints. Warm safelight. Tactile, analog.
+           ================================================================ */
+        .te4-card {
+            width: 440px;
+            background: #161210;
+            border: 1px solid rgba(180,140,80,0.06);
+        }
+
+        .te4-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            border-bottom: 1px solid rgba(180,140,80,0.06);
+        }
+
+        .te4-title {
+            font-family: 'Instrument Serif', serif;
+            font-size: 14px;
+            font-style: italic;
+            color: rgba(210,180,130,0.55);
+            letter-spacing: 0.04em;
+        }
+
+        .te4-btn-accent {
+            font-family: -apple-system, sans-serif;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 5px 14px;
+            border-radius: 20px;
+            border: 1.5px solid rgba(200,160,80,0.4);
+            background: rgba(200,160,80,0.12);
+            color: #c8a050;
+            cursor: default;
+        }
+
+        .te4-btn-nav {
+            font-family: -apple-system, sans-serif;
+            font-size: 10px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(180,140,80,0.1);
+            background: transparent;
+            color: rgba(210,180,130,0.35);
+            cursor: default;
+        }
+
+        .te4-upload {
+            padding: 48px 36px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: radial-gradient(ellipse at center, rgba(180,120,50,0.04) 0%, transparent 70%);
+        }
+
+        /* Enlarger / developing tray */
+        .te4-tray {
+            width: 260px;
+            padding: 32px 24px;
+            border: 1px solid rgba(180,140,80,0.1);
+            border-radius: 4px;
+            background: rgba(180,140,80,0.02);
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .te4-tray-light {
+            position: absolute;
+            top: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(200,160,80,0.3), transparent);
+        }
+
+        .te4-tray-icon {
+            font-size: 36px;
+            color: rgba(210,180,130,0.15);
+            margin-bottom: 16px;
+        }
+
+        .te4-tray-title {
+            font-family: 'Instrument Serif', serif;
+            font-size: 18px;
+            color: rgba(230,210,170,0.8);
+            margin-bottom: 6px;
+        }
+
+        .te4-tray-sub {
+            font-size: 11px;
+            color: rgba(210,180,130,0.3);
+            margin-bottom: 20px;
+        }
+
+        .te4-develop-btn {
+            font-family: 'Instrument Serif', serif;
+            font-size: 14px;
+            font-style: italic;
+            padding: 8px 28px;
+            border-radius: 24px;
+            border: 1.5px solid rgba(200,160,80,0.25);
+            background: rgba(200,160,80,0.08);
+            color: rgba(210,180,130,0.7);
+            cursor: default;
+            letter-spacing: 0.03em;
+        }
+
+        .te4-privacy {
+            font-family: 'Instrument Serif', serif;
+            font-size: 11px;
+            font-style: italic;
+            color: rgba(210,180,130,0.15);
+            text-align: center;
+            padding: 12px;
+        }
+
+        .te4-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            padding: 10px;
+        }
+
+        .te4-frame {
+            aspect-ratio: 16/9;
+            background: #221e1a;
+            border-radius: 2px;
+            border: 1px solid rgba(180,140,80,0.04);
+        }
+
+        /* ================================================================
+           TE5: THE ESSAY FILM
+           Metaphor: Chris Marker's editing table. Poetic, gallery-like.
+           ================================================================ */
+        .te5-card {
+            width: 440px;
+            background: #0d0c0e;
+            border: 1px solid rgba(255,255,255,0.03);
+            position: relative;
+        }
+
+        .te5-card-vignette {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 20%, rgba(120,100,70,0.06) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .te5-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 16px 4px;
+            position: relative;
+        }
+
+        .te5-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0.5em;
+            color: rgba(200,185,150,0.35);
+            text-transform: uppercase;
+        }
+
+        .te5-upload {
+            padding: 40px 36px 24px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* The eye */
+        .te5-eye {
+            width: 120px;
+            height: 60px;
+            position: relative;
+            margin-bottom: 28px;
+            cursor: pointer;
+        }
+
+        .te5-eye-shape {
+            width: 120px;
+            height: 60px;
+            border: 1.5px solid rgba(200,185,150,0.2);
+            border-radius: 50% / 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .te5-pupil {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(200,185,150,0.12);
+            border: 1.5px solid rgba(200,185,150,0.25);
+            position: relative;
+        }
+
+        .te5-pupil::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(200,185,150,0.35);
+        }
+
+        .te5-prompt {
+            font-family: 'Playfair Display', serif;
+            font-size: 16px;
+            font-style: italic;
+            color: rgba(220,205,170,0.6);
+            margin-bottom: 6px;
+            letter-spacing: 0.02em;
+        }
+
+        .te5-formats {
+            font-size: 10px;
+            color: rgba(200,185,150,0.2);
+            margin-bottom: 28px;
+            letter-spacing: 0.04em;
+        }
+
+        .te5-action {
+            font-family: 'Playfair Display', serif;
+            font-size: 12px;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            padding: 10px 32px;
+            border: 1px solid rgba(200,185,150,0.12);
+            background: transparent;
+            color: rgba(200,185,150,0.4);
+            cursor: default;
+        }
+
+        .te5-whisper {
+            font-family: 'Playfair Display', serif;
+            font-size: 10px;
+            font-style: italic;
+            color: rgba(200,185,150,0.12);
+            text-align: center;
+            padding: 16px;
+            letter-spacing: 0.03em;
+        }
+
+        .te5-contact-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(200,185,150,0.04);
+        }
+
+        .te5-nav {
+            font-family: 'Playfair Display', serif;
+            font-size: 10px;
+            font-style: italic;
+            color: rgba(200,185,150,0.3);
+            background: none;
+            border: none;
+            cursor: default;
+            letter-spacing: 0.02em;
+        }
+
+        .te5-export-btn {
+            font-family: 'Playfair Display', serif;
+            font-size: 9px;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            padding: 6px 16px;
+            border: 1px solid rgba(184,148,62,0.2);
+            background: rgba(184,148,62,0.06);
+            color: rgba(184,148,62,0.6);
+            cursor: default;
+        }
+
+        .te5-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding: 16px;
+        }
+
+        .te5-frame-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .te5-frame {
+            aspect-ratio: 16/9;
+            background: #18161a;
+            border: 1px solid rgba(200,185,150,0.04);
+        }
+
+        .te5-frame-tc {
+            font-family: 'Space Mono', monospace;
+            font-size: 8px;
+            color: rgba(200,185,150,0.18);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Still Marker &mdash; TE Levels</h1>
+<p class="page-sub">
+    Each level diverges in layout, metaphor, interaction, density, and color. Not just palette swaps.
+</p>
+
+
+<!-- ================================================================
+     TE2: SLIGHTLY OFF-NATIVE
+     ================================================================ -->
+<div class="te-section">
+    <div class="te-header-row">
+        <div class="te-label" style="color: #5a9fcf;">TE2</div>
+        <div class="te-tagline">"A Mac app that stayed up a little too late"</div>
+    </div>
+    <div class="te-desc">
+        System-native foundation but slightly shifted. The blue is cooler and less saturated than
+        default macOS. Spacing is a touch tighter than Apple HIG. Monospaced timecodes hint at
+        something technical underneath. It reads as a Mac app, but one with a subtle opinion.
+    </div>
+
+    <div class="te-row">
+        <div>
+            <div class="preview-card-label">Upload</div>
+            <div class="preview-card te2-card">
+                <div class="te2-header">
+                    <span></span>
+                    <span class="te2-title">STILL MARKER</span>
+                    <span></span>
+                </div>
+                <div class="te2-upload">
+                    <div class="te2-drop-zone">
+                        <div class="te2-drop-icon">&#9661;</div>
+                        <div class="te2-drop-title">Drop a video file</div>
+                        <div class="te2-drop-sub">MP4, MOV, AVI, MKV, or ProRes</div>
+                        <button class="te2-drop-btn">Browse Files</button>
+                    </div>
+                </div>
+                <div class="te2-footer">All processing happens locally on your machine.</div>
+            </div>
+            <div class="swatch-row">
+                <div class="swatch-group"><div class="swatch" style="background:#1e1e1e;"></div><div class="swatch-label">bg</div></div>
+                <div class="swatch-group"><div class="swatch" style="background:#5a9fcf;"></div><div class="swatch-label">accent</div></div>
+                <div class="swatch-group"><div class="swatch" style="background:#2a2a2d;"></div><div class="swatch-label">surface</div></div>
+            </div>
+        </div>
+
+        <div>
+            <div class="preview-card-label">Contact sheet</div>
+            <div class="preview-card te2-card">
+                <div class="te2-header">
+                    <button class="te2-btn">&#8249; New Video</button>
+                    <span class="te2-title">STILL MARKER</span>
+                    <button class="te2-btn te2-btn-accent">Export All</button>
+                </div>
+                <div class="te2-grid">
+                    <div class="te2-frame"></div><div class="te2-frame"></div><div class="te2-frame"></div><div class="te2-frame"></div>
+                    <div class="te2-frame"></div><div class="te2-frame"></div><div class="te2-frame"></div><div class="te2-frame"></div>
+                    <div class="te2-frame"></div><div class="te2-frame"></div><div class="te2-frame"></div><div class="te2-frame"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     TE3: THE PROJECTOR
+     ================================================================ -->
+<div class="te-section">
+    <div class="te-header-row">
+        <div class="te-label" style="color: #5d8ab4;">TE3</div>
+        <div class="te-tagline">"Loading film into a projector"</div>
+    </div>
+    <div class="te-desc">
+        Mechanical, precise, monospaced. The upload zone becomes a film gate with sprocket holes
+        on the sides. The grid packs tighter (5 columns) like a contact strip from a lab.
+        Buttons feel like machine controls: uppercase, squared off, technical. The whole thing
+        reads like equipment, not software. Cool blue-steel palette.
+    </div>
+
+    <div class="te-row">
+        <div>
+            <div class="preview-card-label">Upload</div>
+            <div class="preview-card te3-card">
+                <div class="te3-header">
+                    <span></span>
+                    <span class="te3-title">STILL_MARKER</span>
+                    <span></span>
+                </div>
+                <div class="te3-upload">
+                    <div class="te3-gate">
+                        <div class="te3-gate-icon">&#9654;</div>
+                        <div class="te3-gate-label">LOAD FILM</div>
+                    </div>
+                    <button class="te3-load-btn">&#9654; Thread Projector</button>
+                    <div class="te3-hint">or drag reel onto gate &mdash; mp4 mov avi mkv prores</div>
+                </div>
+                <div class="te3-footer">LOCAL PROCESSING ONLY &mdash; NOTHING LEAVES THIS MACHINE</div>
+            </div>
+            <div class="swatch-row">
+                <div class="swatch-group"><div class="swatch" style="background:#17191c;"></div><div class="swatch-label">bg</div></div>
+                <div class="swatch-group"><div class="swatch" style="background:#5d8ab4;"></div><div class="swatch-label">accent</div></div>
+                <div class="swatch-group"><div class="swatch" style="background:#222630;"></div><div class="swatch-label">surface</div></div>
+            </div>
+        </div>
+
+        <div>
+            <div class="preview-card-label">Contact sheet</div>
+            <div class="preview-card te3-card">
+                <div class="te3-header">
+                    <button class="te3-btn-nav">&#8249; EJECT</button>
+                    <span class="te3-title">STILL_MARKER</span>
+                    <button class="te3-btn-accent">&#9660; EXPORT ALL</button>
+                </div>
+                <div class="te3-grid-wrap">
+                    <div class="te3-grid">
+                        <div class="te3-frame"></div><div class="te3-frame"></div><div class="te3-frame"></div><div class="te3-frame"></div><div class="te3-frame"></div>
+                        <div class="te3-frame"></div><div class="te3-frame"></div><div class="te3-frame"></div><div class="te3-frame"></div><div class="te3-frame"></div>
+                        <div class="te3-frame"></div><div class="te3-frame"></div><div class="te3-frame"></div><div class="te3-frame"></div><div class="te3-frame"></div>
+                    </div>
+                    <div class="te3-strip-label">REEL 01 &mdash; 32 FRAMES &mdash; 00:48</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     TE4: THE DARKROOM
+     ================================================================ -->
+<div class="te-section">
+    <div class="te-header-row">
+        <div class="te-label" style="color: #c8a050;">TE4</div>
+        <div class="te-tagline">"Under the safelight, watching prints develop"</div>
+    </div>
+    <div class="te-desc">
+        Warm, analog, intimate. The background is near-black with amber undertones. The upload zone
+        becomes a developing tray with a thin safelight strip above it. Serif italic typography
+        (Instrument Serif) makes everything feel hand-lettered. Buttons are pill-shaped with
+        ghost outlines, like vintage darkroom timers. The grid breathes more: 4 columns with
+        actual spacing and subtle borders, like prints drying on a line. 3 columns in the contact
+        sheet because each frame is a precious print.
+    </div>
+
+    <div class="te-row">
+        <div>
+            <div class="preview-card-label">Upload</div>
+            <div class="preview-card te4-card">
+                <div class="te4-header">
+                    <span></span>
+                    <span class="te4-title">Still Marker</span>
+                    <span></span>
+                </div>
+                <div class="te4-upload">
+                    <div class="te4-tray">
+                        <div class="te4-tray-light"></div>
+                        <div class="te4-tray-icon">&#9678;</div>
+                        <div class="te4-tray-title">Place your film</div>
+                        <div class="te4-tray-sub">mp4 &middot; mov &middot; avi &middot; mkv &middot; prores</div>
+                        <button class="te4-develop-btn">Browse reels&hellip;</button>
+                    </div>
+                </div>
+                <div class="te4-privacy">Your footage never leaves this machine.</div>
+            </div>
+            <div class="swatch-row">
+                <div class="swatch-group"><div class="swatch" style="background:#161210;"></div><div class="swatch-label">bg</div></div>
+                <div class="swatch-group"><div class="swatch" style="background:#c8a050;"></div><div class="swatch-label">accent</div></div>
+                <div class="swatch-group"><div class="swatch" style="background:#221e1a;"></div><div class="swatch-label">surface</div></div>
+            </div>
+        </div>
+
+        <div>
+            <div class="preview-card-label">Contact sheet</div>
+            <div class="preview-card te4-card">
+                <div class="te4-header">
+                    <button class="te4-btn-nav">&larr; new reel</button>
+                    <span class="te4-title">Still Marker</span>
+                    <button class="te4-btn-accent">Export All</button>
+                </div>
+                <div class="te4-grid">
+                    <div class="te4-frame"></div><div class="te4-frame"></div><div class="te4-frame"></div><div class="te4-frame"></div>
+                    <div class="te4-frame"></div><div class="te4-frame"></div><div class="te4-frame"></div><div class="te4-frame"></div>
+                    <div class="te4-frame"></div><div class="te4-frame"></div><div class="te4-frame"></div><div class="te4-frame"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     TE5: THE ESSAY FILM
+     ================================================================ -->
+<div class="te-section">
+    <div class="te-header-row">
+        <div class="te-label" style="color: #b8943e;">TE5</div>
+        <div class="te-tagline">"Chris Marker's editing table, if it ran macOS"</div>
+    </div>
+    <div class="te-desc">
+        Gallery installation. The upload screen centers on an eye&mdash;Marker's obsession
+        with seeing and being seen. You drop your film into the eye. The title uses extreme
+        letter-spacing (Playfair Display), floating in space like gallery wall text. The contact
+        sheet switches to 3 wide columns with timecodes underneath each frame, like museum
+        placards. The "export" button is barely there&mdash;a whispered invitation, not a command.
+        A subtle warm vignette glows from the top. Every pixel is deliberate, nothing is decoration.
+    </div>
+
+    <div class="te-row">
+        <div>
+            <div class="preview-card-label">Upload</div>
+            <div class="preview-card te5-card">
+                <div class="te5-card-vignette"></div>
+                <div class="te5-header">
+                    <span class="te5-title">Still Marker</span>
+                </div>
+                <div class="te5-upload">
+                    <div class="te5-eye">
+                        <div class="te5-eye-shape">
+                            <div class="te5-pupil"></div>
+                        </div>
+                    </div>
+                    <div class="te5-prompt">Show me what you saw</div>
+                    <div class="te5-formats">mp4 &middot; mov &middot; avi &middot; mkv &middot; prores</div>
+                    <button class="te5-action">Open Film</button>
+                </div>
+                <div class="te5-whisper">everything stays here</div>
+            </div>
+            <div class="swatch-row">
+                <div class="swatch-group"><div class="swatch" style="background:#0d0c0e;"></div><div class="swatch-label">bg</div></div>
+                <div class="swatch-group"><div class="swatch" style="background:#b8943e;"></div><div class="swatch-label">accent</div></div>
+                <div class="swatch-group"><div class="swatch" style="background:#18161a;"></div><div class="swatch-label">surface</div></div>
+            </div>
+        </div>
+
+        <div>
+            <div class="preview-card-label">Contact sheet</div>
+            <div class="preview-card te5-card">
+                <div class="te5-card-vignette"></div>
+                <div class="te5-contact-header">
+                    <button class="te5-nav">&larr; return</button>
+                    <span class="te5-title" style="font-size: 9px;">Still Marker</span>
+                    <button class="te5-export-btn">Export</button>
+                </div>
+                <div class="te5-grid">
+                    <div class="te5-frame-wrap"><div class="te5-frame"></div><div class="te5-frame-tc">00:00.0</div></div>
+                    <div class="te5-frame-wrap"><div class="te5-frame"></div><div class="te5-frame-tc">00:01.5</div></div>
+                    <div class="te5-frame-wrap"><div class="te5-frame"></div><div class="te5-frame-tc">00:03.0</div></div>
+                    <div class="te5-frame-wrap"><div class="te5-frame"></div><div class="te5-frame-tc">00:04.5</div></div>
+                    <div class="te5-frame-wrap"><div class="te5-frame"></div><div class="te5-frame-tc">00:06.0</div></div>
+                    <div class="te5-frame-wrap"><div class="te5-frame"></div><div class="te5-frame-tc">00:07.5</div></div>
+                    <div class="te5-frame-wrap"><div class="te5-frame"></div><div class="te5-frame-tc">00:09.0</div></div>
+                    <div class="te5-frame-wrap"><div class="te5-frame"></div><div class="te5-frame-tc">00:10.5</div></div>
+                    <div class="te5-frame-wrap"><div class="te5-frame"></div><div class="te5-frame-tc">00:12.0</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

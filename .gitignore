@@ -25,5 +25,8 @@ build/
 *.dSYM.zip
 *.dSYM
 
+# Environment variables
+.env
+
 # Claude Code local settings
 .claude/settings.local.json
