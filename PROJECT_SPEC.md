@@ -1,14 +1,26 @@
 # PROJECT_SPEC.md
 
-⚠️ This is the **living god file** for Still Marker. Every architectural decision, design tradeoff, and project evolution must be documented here. This file is the source of truth for all collaborators.
+⚠️ This is the **detailed specification file** for Still Marker. For quick context and session start, see [CLAUDE.md](./CLAUDE.md) first.
+
+---
+
+## 📚 Documentation Structure (docs-protocol)
+
+| File | Purpose |
+|------|---------|
+| [CLAUDE.md](./CLAUDE.md) | **Hub** - Start here. Current status, action log, file map |
+| [PROJECT_SPEC.md](./PROJECT_SPEC.md) | **This file** - Full specs, architecture, design philosophy |
+| [HISTORY.md](./HISTORY.md) | Archived completed milestones (M1-M4) |
+| [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Problem → Solution pairs |
+| `_logs/` | Session logs for parallel Claude work (gitignored) |
 
 ---
 
 ## 🔰 PURPOSE OF THIS FILE
 
-- Serves as the **canonical source of truth** for the Still Marker project
+- Contains **detailed specifications, architecture decisions, and design philosophy**
 - Evolves over time, **growing with every decision**, mistake, fix, or insight
-- **Future collaborators (human or AI)** must be able to read this file and understand how the project works, why it's built the way it is, and what to do next
+- **Future collaborators (human or AI)** should read CLAUDE.md first, then this file for deep context
 
 ---
 
@@ -161,6 +173,8 @@ Think of the interface as a digital light table where a film essayist might exam
 ---
 
 ## 📒 CHANGELOG (REVERSE CHRONOLOGICAL)
+
+> **Note**: Completed milestones M1-M4 have been archived to [HISTORY.md](./HISTORY.md). This changelog contains M5+ active development.
 
 ### 2025-10-23 - ⌨️ Enhanced Keyboard Navigation in Frame Preview ✅
 
