@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AVFoundation
 
 enum AppState {
     case upload
@@ -17,7 +18,7 @@ class AppViewModel: ObservableObject {
     @Published var state: AppState = .upload
     @Published var selectedVideoURL: URL?
     @Published var extractedFrames: [Frame] = []
-    @Published var currentOffset: Int = 0
+    @Published var videoDuration: Double = 0.0
     @Published var processingProgress: Double = 0.0
     @Published var processingMessage: String = ""
     
@@ -27,7 +28,7 @@ class AppViewModel: ObservableObject {
         state = .upload
         selectedVideoURL = nil
         extractedFrames = []
-        currentOffset = 0
+        videoDuration = 0.0
         processingProgress = 0.0
         processingMessage = ""
     }
@@ -47,9 +48,13 @@ class AppViewModel: ObservableObject {
     @MainActor
     private func processVideoWithFFmpeg(videoURL: URL) async {
         do {
+            // Get video duration for UI boundary indicators
+            let asset = AVAsset(url: videoURL)
+            let duration = try await asset.load(.duration)
+            self.videoDuration = CMTimeGetSeconds(duration)
+
             let frames = try await ffmpegProcessor.extractFrames(
-                from: videoURL,
-                offset: Double(currentOffset)
+                from: videoURL
             ) { progress, message in
                 DispatchQueue.main.async {
                     self.processingProgress = progress
@@ -79,19 +84,6 @@ class AppViewModel: ObservableObject {
         }
     }
     
-    /// Re-extract frames with offset
-    func shiftOffset() {
-        guard let videoURL = selectedVideoURL else { return }
-        
-        currentOffset += 1
-        state = .processing
-        processingProgress = 0.0
-        processingMessage = "Re-extracting with +\(currentOffset)s offset..."
-        
-        Task {
-            await processVideoWithFFmpeg(videoURL: videoURL)
-        }
-    }
 }
 
 struct ContentView: View {

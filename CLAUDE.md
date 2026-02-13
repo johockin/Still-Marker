@@ -4,12 +4,12 @@
 
 ## Current Status
 
-**Phase**: M5 Complete - Visual polish and stability achieved
+**Phase**: M5 Complete - All GitHub issues resolved
 **Next**: M6 Distribution Preparation
 **Blockers**: None
 
 ### Active Priorities
-1. Address open GitHub issues (#1-#5)
+1. ~~Address open GitHub issues (#1-#5)~~ - All resolved
 2. Distribution preparation (code signing, notarization)
 3. Final QA across macOS versions
 
@@ -59,6 +59,37 @@ Still-Marker/
 
 ## Action Log
 
+### 2026-02-13 - Design Language Sprint
+- **Agent**: Claude Opus 4
+- **Action**: Applied native design language across all views
+- **Files Modified**: UploadProcessingView.swift, ResultsView.swift
+- **Files Created**: .ralph/specs/design-language.md
+- **Details**:
+  - Replaced 4-layer gradient background with `Color(nsColor: .windowBackgroundColor)`
+  - Removed `Color(hex:)` extension and all custom hex/RGB colors
+  - Replaced all `.design: .monospaced` typography with SF Pro system font
+  - Kept `.monospacedDigit()` for timecodes only (TE level 2)
+  - Simplified FilmExportButtonStyle: removed gold hex, glass morphism, `startsAsGrey` → accent color fill
+  - Simplified GreyNavigationButtonStyle: removed gradient highlights, hard light edges → clean fill + border
+  - Simplified FrameCard: removed brightness/saturation hover, luminous gradient border, multi-shadow → clean border + simple shadow
+  - Simplified toast: removed multi-layer glass, gradient border → single `.ultraThinMaterial`
+  - All colors now use `.primary/.secondary/.tertiary/.accentColor`
+- **Status**: Complete - user QA confirmed
+
+### 2026-02-13 - GitHub Issues #1-#5 Resolved
+- **Agent**: Claude Opus 4
+- **Action**: Fixed all 5 open GitHub issues + Ralph structure setup
+- **Files Modified**: ContentView.swift, UploadProcessingView.swift, ResultsView.swift
+- **Files Created**: .ralph/ structure, .ralphrc
+- **Details**:
+  - #1: Fixed vertical video thumbnails (aspectRatio fit + dark pillarbox container)
+  - #2: Added dark scrim drop overlay on grid with "Drop to load new video" text
+  - #3: Expanded drop zone to entire window on upload screen
+  - #4: End-of-file indicator: forward/backward controls dim at boundaries, "(end)" label, toast notifications
+  - #5: Frame preview now accepts video drops
+  - Also: removed dead `currentOffset`/`shiftOffset()` code, added `videoDuration` to AppViewModel, extracted `dropOverlay` to fix SwiftUI type-checker crash
+- **Status**: Complete - user QA confirmed
+
 ### 2025-02-13 - Docs-Protocol Implementation
 - **Agent**: Claude Opus 4.5
 - **Action**: Established docs-protocol compliance
@@ -70,13 +101,15 @@ Still-Marker/
 
 ## Open GitHub Issues
 
-| # | Issue | Priority |
-|---|-------|----------|
-| 1 | Vertical videos stretched in grid | High |
-| 2 | No feedback when dropping video on grid | Medium |
-| 3 | Drop zone too restrictive on opening page | Medium |
-| 4 | Need end-of-file indicator | Low |
-| 5 | Frame preview should accept video drops | Medium |
+All resolved as of 2026-02-13.
+
+| # | Issue | Status |
+|---|-------|--------|
+| 1 | Vertical videos stretched in grid | Fixed |
+| 2 | No feedback when dropping video on grid | Fixed |
+| 3 | Drop zone too restrictive on opening page | Fixed |
+| 4 | Need end-of-file indicator | Fixed |
+| 5 | Frame preview should accept video drops | Fixed |
 
 ---
 

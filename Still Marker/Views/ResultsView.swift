@@ -10,32 +10,6 @@ import AppKit
 import UniformTypeIdentifiers
 import AVFoundation
 
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (1, 1, 1, 0)
-        }
-        
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue:  Double(b) / 255,
-            opacity: Double(a) / 255
-        )
-    }
-}
 
 enum ViewMode {
     case grid
@@ -72,18 +46,14 @@ enum ExportFormat: String, CaseIterable {
 enum ToastType {
     case success
     case error
-    
+
     var accentColor: Color {
         switch self {
-        case .success: 
-            // Warm film emulsion green - like developing photo paper
-            return Color(red: 0.5, green: 0.75, blue: 0.55)
-        case .error: 
-            // Cinematic crimson - matches background spotlight
-            return Color(red: 0.8, green: 0.2, blue: 0.25)
+        case .success: return .green
+        case .error: return .red
         }
     }
-    
+
     var icon: String {
         switch self {
         case .success: return "checkmark.circle.fill"
@@ -118,37 +88,28 @@ struct RefineButton: View {
                 switch label {
                 case .text(let text):
                     Text(text)
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .font(.caption)
                 case .icon(let iconName):
                     Image(systemName: iconName)
                         .font(.system(size: 14, weight: .medium))
                         .symbolRenderingMode(.hierarchical)
                 }
             }
-            .foregroundColor(.white)
+            .foregroundStyle(.primary)
             .padding(.horizontal, label.isText ? 6 : 8)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(.thinMaterial)
+                    .fill(Color.white.opacity(0.06))
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.white.opacity(strokeOpacity), lineWidth: 1)
+                            .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
                     )
             )
         }
         .buttonStyle(PlainButtonStyle())
         .disabled(isDisabled)
         .opacity(opacity)
-    }
-
-    private var strokeOpacity: Double {
-        switch label {
-        case .text(let text):
-            return text == "10s" ? 0.4 : 0.35
-        case .icon(let icon):
-            return icon.contains("2") ? 0.3 : 0.2
-        }
     }
 }
 
@@ -163,36 +124,33 @@ struct FramePreviewHeader: View {
     var body: some View {
         HStack {
             Button(action: onBack) {
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 12, weight: .medium))
-                        .symbolRenderingMode(.hierarchical)
                     Text("Back to Grid")
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .font(.subheadline)
                 }
-                .foregroundColor(.white.opacity(0.9))
+                .foregroundStyle(.secondary)
                 .padding(.vertical, 8)
                 .padding(.horizontal, 16)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(.thinMaterial)
+                        .fill(Color.white.opacity(0.06))
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
                         )
                 )
             }
             .buttonStyle(PlainButtonStyle())
 
-            HStack {
-                Spacer()
-                Text("Frame \(currentFrameIndex + 1) of \(totalFrames)")
-                    .font(.system(size: 12, weight: .light, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.9))
-            }
+            Spacer()
+
+            Text("Frame \(currentFrameIndex + 1) of \(totalFrames)")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
         }
-        .padding(.leading, 60)
-        .padding(.trailing, 60)
+        .padding(.horizontal, 24)
         .padding(.top, 16)
         .padding(.bottom, 32)
     }
@@ -226,10 +184,13 @@ struct FrameNavigationView: View {
             Button(action: onPrevious) {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundStyle(.secondary)
                     .padding()
-                    .background(.thinMaterial)
-                    .clipShape(Circle())
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.06))
+                            .overlay(Circle().strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
+                    )
             }
             .buttonStyle(PlainButtonStyle())
             .disabled(currentFrameIndex <= 0)
@@ -264,10 +225,13 @@ struct FrameNavigationView: View {
             Button(action: onNext) {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundStyle(.secondary)
                     .padding()
-                    .background(.thinMaterial)
-                    .clipShape(Circle())
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.06))
+                            .overlay(Circle().strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
+                    )
             }
             .buttonStyle(PlainButtonStyle())
             .disabled(currentFrameIndex >= totalFrames - 1)
@@ -288,6 +252,7 @@ struct FrameControlsView: View {
     let refinedTimestamp: Double?
     let isRefining: Bool
     let isExportHovered: Bool
+    let videoDuration: Double
     let onRefineBackward10s: () -> Void
     let onRefineBackward2s: () -> Void
     let onRefineBackwardCoarse: () -> Void
@@ -303,24 +268,32 @@ struct FrameControlsView: View {
         refinedTimestamp ?? frame.timestamp
     }
 
-    private var buttonOpacity: Double {
-        isRefining ? 0.5 : 1.0
+    private var isAtStart: Bool {
+        displayTimestamp <= 0
     }
 
-    private var refineButtonOpacity: Double {
-        isRefining || displayTimestamp <= 0 ? 0.5 : 1.0
+    private var isAtEnd: Bool {
+        videoDuration > 0 && displayTimestamp >= videoDuration - 0.1
     }
 
-    private var refineButtonsDisabled: Bool {
-        isRefining || displayTimestamp <= 0
+    private var backwardButtonOpacity: Double {
+        isRefining || isAtStart ? 0.5 : 1.0
+    }
+
+    private var backwardButtonsDisabled: Bool {
+        isRefining || isAtStart
+    }
+
+    private var forwardButtonOpacity: Double {
+        isRefining || isAtEnd ? 0.5 : 1.0
+    }
+
+    private var forwardButtonsDisabled: Bool {
+        isRefining || isAtEnd
     }
 
     private var statusText: String {
         refinedTimestamp != nil ? "Refined" : "Original"
-    }
-
-    private var statusColor: Color {
-        refinedTimestamp != nil ? Color.white.opacity(0.9) : Color.white.opacity(0.7)
     }
 
     var body: some View {
@@ -331,40 +304,47 @@ struct FrameControlsView: View {
                 RefineButton(
                     label: .text("10s"),
                     action: onRefineBackward10s,
-                    isDisabled: refineButtonsDisabled,
-                    opacity: refineButtonOpacity
+                    isDisabled: backwardButtonsDisabled,
+                    opacity: backwardButtonOpacity
                 )
 
                 RefineButton(
                     label: .text("2s"),
                     action: onRefineBackward2s,
-                    isDisabled: refineButtonsDisabled,
-                    opacity: refineButtonOpacity
+                    isDisabled: backwardButtonsDisabled,
+                    opacity: backwardButtonOpacity
                 )
 
                 RefineButton(
                     label: .icon("chevron.left.2"),
                     action: onRefineBackwardCoarse,
-                    isDisabled: refineButtonsDisabled,
-                    opacity: refineButtonOpacity
+                    isDisabled: backwardButtonsDisabled,
+                    opacity: backwardButtonOpacity
                 )
 
                 RefineButton(
                     label: .icon("chevron.left"),
                     action: onRefineBackwardFine,
-                    isDisabled: refineButtonsDisabled,
-                    opacity: refineButtonOpacity
+                    isDisabled: backwardButtonsDisabled,
+                    opacity: backwardButtonOpacity
                 )
 
                 // Current timestamp display
                 VStack(spacing: 4) {
-                    Text(statusText)
-                        .font(.system(size: 11, weight: .light, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.5))
+                    HStack(spacing: 4) {
+                        Text(statusText)
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                        if isAtEnd {
+                            Text("(end)")
+                                .font(.caption)
+                                .foregroundStyle(.quaternary)
+                        }
+                    }
 
                     Text(Frame.formatTimestamp(displayTimestamp))
-                        .font(.system(size: 16, weight: .medium, design: .monospaced))
-                        .foregroundColor(statusColor)
+                        .font(.system(size: 16, weight: .medium).monospacedDigit())
+                        .foregroundStyle(refinedTimestamp != nil ? .primary : .secondary)
                         .padding(.horizontal, 12)
                 }
 
@@ -372,41 +352,40 @@ struct FrameControlsView: View {
                 RefineButton(
                     label: .icon("chevron.right"),
                     action: onRefineForwardFine,
-                    isDisabled: isRefining,
-                    opacity: buttonOpacity
+                    isDisabled: forwardButtonsDisabled,
+                    opacity: forwardButtonOpacity
                 )
 
                 RefineButton(
                     label: .icon("chevron.right.2"),
                     action: onRefineForwardCoarse,
-                    isDisabled: isRefining,
-                    opacity: buttonOpacity
+                    isDisabled: forwardButtonsDisabled,
+                    opacity: forwardButtonOpacity
                 )
 
                 RefineButton(
                     label: .text("2s"),
                     action: onRefineForward2s,
-                    isDisabled: isRefining,
-                    opacity: buttonOpacity
+                    isDisabled: forwardButtonsDisabled,
+                    opacity: forwardButtonOpacity
                 )
 
                 RefineButton(
                     label: .text("10s"),
                     action: onRefineForward10s,
-                    isDisabled: isRefining,
-                    opacity: buttonOpacity
+                    isDisabled: forwardButtonsDisabled,
+                    opacity: forwardButtonOpacity
                 )
             }
 
             // Export button
             Button("Export This Frame", action: onExport)
                 .buttonStyle(FilmExportButtonStyle(
-                    isHovered: isExportHovered && !isRefining,
-                    startsAsGrey: false
+                    isHovered: isExportHovered && !isRefining
                 ))
                 .onHover(perform: onExportHover)
                 .disabled(isRefining)
-                .opacity(buttonOpacity)
+                .opacity(isRefining ? 0.5 : 1.0)
         }
         .padding(.vertical, 16)
     }
@@ -433,6 +412,9 @@ struct ResultsView: View {
     @State private var refinedFrame: Frame? = nil
     @State private var isRefining: Bool = false
     
+    // Drag and drop state
+    @State private var isDragOverGrid: Bool = false
+
     // Toast notification state
     @State private var toastMessage: String = ""
     @State private var toastType: ToastType = .success
@@ -445,60 +427,8 @@ struct ResultsView: View {
     
     var body: some View {
         ZStack {
-            // Enhanced glassy dark mode with dot paper texture
-            ZStack {
-                // Base lifted black gradient
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.12, green: 0.12, blue: 0.13),
-                        Color(red: 0.1, green: 0.1, blue: 0.11)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+            Color(nsColor: .windowBackgroundColor)
                 .ignoresSafeArea()
-                
-                // Warmer spotlight gradient
-                RadialGradient(
-                    colors: [
-                        Color(red: 0.32, green: 0.28, blue: 0.24).opacity(1.0),
-                        Color(red: 0.24, green: 0.21, blue: 0.18).opacity(0.8),
-                        Color(red: 0.16, green: 0.14, blue: 0.13).opacity(0.5),
-                        Color.clear
-                    ],
-                    center: UnitPoint(x: 0.3, y: 0.45),
-                    startRadius: 60,
-                    endRadius: 400
-                )
-                .ignoresSafeArea()
-                
-                // Crimson spotlight
-                RadialGradient(
-                    colors: [
-                        Color(red: 0.8, green: 0.1, blue: 0.2).opacity(0.36),
-                        Color(red: 0.6, green: 0.08, blue: 0.15).opacity(0.24),
-                        Color(red: 0.4, green: 0.05, blue: 0.1).opacity(0.12),
-                        Color.clear
-                    ],
-                    center: UnitPoint(x: 0.85, y: 0.85),
-                    startRadius: 40,
-                    endRadius: 350
-                )
-                .ignoresSafeArea()
-                
-                // Glass morphism layer
-                LinearGradient(
-                    colors: [
-                        Color.white.opacity(0.02),
-                        Color.clear,
-                        Color.black.opacity(0.02)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-                
-            }
             
             switch viewMode {
             case .grid:
@@ -536,12 +466,12 @@ struct ResultsView: View {
                 if !isGridReady {
                     VStack(spacing: 16) {
                         ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .progressViewStyle(CircularProgressViewStyle())
                             .scaleEffect(1.5)
-                        
+
                         Text("Loading \(viewModel.extractedFrames.count) frames...")
-                            .font(.system(size: 14, weight: .medium, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.7))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .onAppear {
@@ -593,16 +523,16 @@ struct ResultsView: View {
                                         VStack {
                                             Image(systemName: "exclamationmark.triangle")
                                                 .font(.system(size: 24, weight: .light))
-                                                .foregroundColor(.red.opacity(0.7))
+                                                .foregroundStyle(.red.opacity(0.7))
                                                 .symbolRenderingMode(.hierarchical)
                                             Text("Invalid Frame")
-                                                .font(.system(size: 12, weight: .light, design: .monospaced))
-                                                .foregroundColor(.white.opacity(0.5))
+                                                .font(.caption)
+                                                .foregroundStyle(.tertiary)
                                         }
                                         .frame(height: 150)
                                         .background(
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .fill(.thinMaterial)
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .fill(Color.white.opacity(0.04))
                                         )
                                     }
                                 }
@@ -621,141 +551,120 @@ struct ResultsView: View {
                 visibleFrameCount = 0
             }
         }
-        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+        .onDrop(of: [.fileURL], isTargeted: $isDragOverGrid) { providers in
             handleDrop(providers: providers)
         }
+        .overlay(dropOverlay)
     }
-    
+
+    @ViewBuilder
+    private var dropOverlay: some View {
+        if isDragOverGrid {
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(Color.white.opacity(0.6), lineWidth: 2)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.black.opacity(0.6))
+                )
+                .padding(8)
+                .overlay(
+                    VStack(spacing: 12) {
+                        Image(systemName: "film")
+                            .font(.system(size: 32, weight: .light))
+                            .foregroundStyle(.primary)
+                        Text("Drop to load new video")
+                            .font(.body)
+                            .foregroundStyle(.primary)
+                    }
+                )
+                .animation(.easeInOut(duration: 0.2), value: isDragOverGrid)
+        }
+    }
+
     private var headerView: some View {
-        HStack(spacing: 12) {    // Slightly reduced spacing to help alignment
-            // New Video button - matches grid cell width
+        HStack(spacing: 12) {
+            // New Video button
             Button(action: {
                 viewModel.resetToUpload()
             }) {
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 12, weight: .medium))
-                        .symbolRenderingMode(.hierarchical)
                     Text("New Video")
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .font(.subheadline)
                 }
             }
-            .frame(width: 200)
             .buttonStyle(GreyNavigationButtonStyle(isHovered: hoveredNewVideoButton))
             .onHover { hovering in
                 withAnimation(.easeInOut(duration: 0.1)) {
                     hoveredNewVideoButton = hovering
                 }
             }
-            
+
             Spacer()
-            
+
             // Centered title and frame count
             VStack(spacing: 4) {
                 Text("\(viewModel.extractedFrames.count) frames extracted")
-                    .font(.system(size: 16, weight: .medium, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.9))
-                
+                    .font(.body)
+                    .foregroundStyle(.primary)
+
                 if let videoURL = viewModel.selectedVideoURL {
-                    Text("from \(videoURL.lastPathComponent)")
-                        .font(.system(size: 12, weight: .regular, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.5))
+                    Text(videoURL.lastPathComponent)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
             }
-            
+
             Spacer()
-            
-            // Export All button - matches grid cell width
+
+            // Export All button
             Button(action: {
                 exportAllFrames()
             }) {
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     Image(systemName: "square.and.arrow.down")
                         .font(.system(size: 12, weight: .medium))
-                        .symbolRenderingMode(.hierarchical)
                     Text("Export All")
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .font(.subheadline)
                 }
             }
-            .frame(width: 200)
-            .buttonStyle(FilmExportButtonStyle(isHovered: hoveredExportAllButton, startsAsGrey: false))
+            .buttonStyle(FilmExportButtonStyle(isHovered: hoveredExportAllButton))
             .onHover { hovering in
                 withAnimation(.easeInOut(duration: 0.1)) {
                     hoveredExportAllButton = hovering
                 }
             }
         }
-        .padding(.leading, -8)   // Move New Video button 1 final point left
-        .padding(.trailing, -5)  // Move Export All button 1 more point left
+        .padding(.horizontal, 24)
         .padding(.top, 8)
-        .padding(.bottom, 32)    // Double the previous padding for better balance
+        .padding(.bottom, 24)
     }
     
     private var toastView: some View {
-        HStack(spacing: 14) {
-            // Icon with glassy circular background
-            ZStack {
-                Circle()
-                    .fill(toastType.accentColor.opacity(0.15))
-                    .frame(width: 36, height: 36)
-                
-                Circle()
-                    .strokeBorder(toastType.accentColor.opacity(0.3), lineWidth: 1)
-                    .frame(width: 36, height: 36)
-                
-                Image(systemName: toastType.icon)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(toastType.accentColor)
-                    .symbolRenderingMode(.hierarchical)
-            }
-            
+        HStack(spacing: 12) {
+            Image(systemName: toastType.icon)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(toastType.accentColor)
+
             Text(toastMessage)
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
-                .foregroundColor(.white.opacity(0.95))
-                .multilineTextAlignment(.leading)
+                .font(.subheadline)
+                .foregroundStyle(.primary)
                 .lineLimit(2)
-            
+
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .background(
-            ZStack {
-                // Frosted glass base
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(.ultraThinMaterial)
-                
-                // Simple gradient overlay
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                toastType.accentColor.opacity(0.08),
-                                Color.clear,
-                                Color.black.opacity(0.15)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                
-                // Border with accent hint
-                RoundedRectangle(cornerRadius: 14)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [
-                                toastType.accentColor.opacity(0.4),
-                                Color.white.opacity(0.15)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.5
-                    )
-            }
+            RoundedRectangle(cornerRadius: 10)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
+                )
         )
-        .shadow(color: toastType.accentColor.opacity(0.15), radius: 12, x: 0, y: 6)
-        .shadow(color: Color.black.opacity(0.25), radius: 24, x: 0, y: 8)
+        .shadow(color: Color.black.opacity(0.2), radius: 12, x: 0, y: 4)
         .padding(.horizontal, 40)
     }
     
@@ -950,6 +859,7 @@ extension ResultsView {
                 refinedTimestamp: refinedTimestamp,
                 isRefining: isRefining,
                 isExportHovered: hoveredFramePreviewExportButton,
+                videoDuration: viewModel.videoDuration,
                 onRefineBackward10s: refineBackward10s,
                 onRefineBackward2s: refineBackward2s,
                 onRefineBackwardCoarse: refineBackwardCoarse,
@@ -970,8 +880,8 @@ extension ResultsView {
 
             // Keyboard shortcuts hint
             Text("← → frame  •  ⇧← ⇧→ 2s  •  ↑ ↓ photos  •  ESC exit")
-                .font(.system(size: 11, weight: .regular, design: .monospaced))
-                .foregroundColor(.white.opacity(0.4))
+                .font(.caption)
+                .foregroundStyle(.tertiary)
                 .padding(.bottom, 20)
         }
         .background(
@@ -986,6 +896,9 @@ extension ResultsView {
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         )
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            handleDrop(providers: providers)
+        }
     }
     
     // MARK: - Navigation Functions
@@ -1089,9 +1002,21 @@ extension ResultsView {
         
         print("🟢 Frame and video URL OK")
         let currentTimestamp = refinedTimestamp ?? frame.timestamp
-        let newTimestamp = max(0, currentTimestamp + seconds)
-        print("🟢 Timestamps calculated: current=\(currentTimestamp), new=\(newTimestamp)")
-        
+        let duration = viewModel.videoDuration
+        let unclamped = currentTimestamp + seconds
+        var newTimestamp = max(0, unclamped)
+        // Clamp to just before video end (FFmpeg can't extract at exact duration)
+        if duration > 0 {
+            newTimestamp = min(newTimestamp, max(0, duration - 0.1))
+        }
+        // Show toast when hitting a boundary
+        if seconds > 0 && duration > 0 && unclamped >= duration - 0.1 {
+            showToast(message: "End of video reached", type: .success)
+        } else if seconds < 0 && unclamped <= 0 {
+            showToast(message: "Beginning of video reached", type: .success)
+        }
+        print("🟢 Timestamps calculated: current=\(currentTimestamp), new=\(newTimestamp), duration=\(duration)")
+
         if newTimestamp != currentTimestamp {
             print("🟢 Calling refineToTimestamp")
             // Dispatch to avoid blocking main thread
@@ -1275,109 +1200,37 @@ extension ResultsView {
 
 struct GreyNavigationButtonStyle: ButtonStyle {
     let isHovered: Bool
-    
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 11, weight: .medium, design: .monospaced))
-            .foregroundColor(.white.opacity(0.9))
-            .opacity(isHovered ? 1.0 : 0.85)
-            .padding(.vertical, 6)
-            .padding(.horizontal, 12)
+            .foregroundStyle(isHovered ? .primary : .secondary)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 14)
             .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.gray.opacity(0.4))
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.white.opacity(isHovered ? 0.1 : 0.06))
                     .overlay(
-                        // Enhanced glassy hover overlay for grey buttons
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(.ultraThinMaterial)
-                            .opacity(isHovered ? 0.7 : 0.3)
-                            .overlay(
-                                // Gradient highlight + hard light combo
-                                ZStack {
-                                    // Subtle gradient background
-                                    LinearGradient(
-                                        colors: [.white.opacity(0.2), .clear],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                    .opacity(isHovered ? 1.0 : 0.0)
-                                    
-                                    // Hard light edge on top
-                                    VStack {
-                                        Rectangle()
-                                            .fill(.white.opacity(0.55))
-                                            .frame(height: 2)
-                                            .opacity(isHovered ? 1.0 : 0.0)
-                                        Spacer()
-                                    }
-                                }
-                                .clipShape(RoundedRectangle(cornerRadius: 6))
-                            )
+                        RoundedRectangle(cornerRadius: 8)
+                            .strokeBorder(Color.white.opacity(isHovered ? 0.15 : 0.08), lineWidth: 1)
                     )
             )
-            .animation(.easeInOut(duration: 0.1), value: isHovered)
+            .animation(.easeInOut(duration: 0.15), value: isHovered)
     }
 }
 
 struct FilmExportButtonStyle: ButtonStyle {
     let isHovered: Bool
-    let startsAsGrey: Bool // New parameter for grid vs main export buttons
-    
-    init(isHovered: Bool, startsAsGrey: Bool = false) {
-        self.isHovered = isHovered
-        self.startsAsGrey = startsAsGrey
-    }
-    
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 11, weight: .medium, design: .monospaced))
-            .foregroundColor(.black) // Black text works on both grey and gold
-            .opacity(isHovered ? 1.0 : 0.85) // Subtle opacity change
-            .padding(.vertical, 6)
-            .padding(.horizontal, 12)
+            .foregroundStyle(.white)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 14)
             .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(buttonBackgroundColor) // Dynamic background color
-                    .overlay(
-                        // Glassy hover overlay
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(.ultraThinMaterial) // Glass effect
-                            .opacity(isHovered ? 0.7 : (startsAsGrey ? 0.3 : 0.0)) // Always subtle glass on grey buttons
-                            .overlay(
-                                // Gradient highlight + hard light combo
-                                ZStack {
-                                    // Subtle gradient background
-                                    LinearGradient(
-                                        colors: [.white.opacity(0.2), .clear],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                    .opacity(isHovered ? 1.0 : 0.0)
-                                    
-                                    // Hard light edge on top
-                                    VStack {
-                                        Rectangle()
-                                            .fill(.white.opacity(0.55)) // Split the difference
-                                            .frame(height: 2) // Hard edge
-                                            .opacity(isHovered ? 1.0 : 0.0)
-                                        Spacer()
-                                    }
-                                }
-                                .clipShape(RoundedRectangle(cornerRadius: 6))
-                            )
-                    )
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.accentColor.opacity(isHovered ? 1.0 : 0.85))
             )
-            .animation(.easeInOut(duration: 0.1), value: isHovered) // Fast transition, no scale
-    }
-    
-    private var buttonBackgroundColor: Color {
-        if startsAsGrey {
-            // Grid buttons: Grey → Gold
-            return isHovered ? Color(hex: "#E6A532") : Color.gray.opacity(0.4)
-        } else {
-            // Export All & Preview buttons: Always Gold
-            return Color(hex: "#E6A532")
-        }
+            .animation(.easeInOut(duration: 0.15), value: isHovered)
     }
 }
 
@@ -1392,119 +1245,76 @@ struct FrameCard: View {
     let onHover: (Bool) -> Void
     let onExportHover: (Bool) -> Void
 
-    @Environment(\.accessibilityReduceMotion) var reduceMotion
-
-    private var hoverAnimation: Animation {
-        if reduceMotion {
-            return .linear(duration: 0.1)
-        } else {
-            return .spring(response: 0.35, dampingFraction: 0.78, blendDuration: 0)
-        }
-    }
-
-    private var exitAnimation: Animation {
-        if reduceMotion {
-            return .linear(duration: 0.1)
-        } else {
-            return .easeOut(duration: 0.18)
-        }
-    }
-
     var body: some View {
         VStack(spacing: 8) {
             ZStack {
+                // Dark background for pillarboxing/letterboxing non-16:9 content
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.black)
+
                 Image(nsImage: frame.thumbnail)
                     .resizable()
-                    .frame(width: 200, height: 112)
-                    .cornerRadius(8)
-                    .brightness(isHovered ? 0.08 : 0.0) // Light through film effect
-                    .saturation(isHovered ? 1.05 : 1.0) // Subtle richness boost
+                    .aspectRatio(contentMode: .fit)
 
-                // Subtle luminous border on hover - like backlit film edge
+                // Hover/default border
                 RoundedRectangle(cornerRadius: 8)
                     .strokeBorder(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 1.0, green: 0.98, blue: 0.94, opacity: isHovered ? 0.5 : 0.0),
-                                Color(red: 1.0, green: 0.98, blue: 0.94, opacity: isHovered ? 0.3 : 0.0)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        ),
+                        Color.white.opacity(isHovered ? 0.2 : 0.08),
                         lineWidth: 1
                     )
 
                 // Selection border
                 if isSelected {
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color(hex: "#E6A532"), lineWidth: 3)
+                        .stroke(Color.accentColor, lineWidth: 2)
                 }
 
-                // Thick glass eye icon badge on hover
+                // Eye icon on hover
                 if isHovered {
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .frame(width: 50, height: 50)
-                        .overlay(
+                    Image(systemName: "eye.fill")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .padding(12)
+                        .background(
                             Circle()
-                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                .fill(Color.black.opacity(0.5))
                         )
-                        .overlay(
-                            Image(systemName: "eye.fill")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.white.opacity(0.9))
-                                .symbolRenderingMode(.hierarchical)
-                        )
-                        .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
-                        .shadow(color: Color.white.opacity(0.2), radius: 4, x: 0, y: 2)
-                        .scaleEffect(isHovered ? 1.0 : 0.0)
-                        .animation(
-                            .spring(response: 0.3, dampingFraction: 0.7, blendDuration: 0)
-                                .delay(0.05),
-                            value: isHovered
-                        )
+                        .transition(.opacity)
                 }
             }
-            .scaleEffect(isHovered ? 1.02 : 1.0)
+            .frame(width: 200, height: 112)
+            .cornerRadius(8)
+            .clipped()
             .shadow(
-                color: Color.white.opacity(isHovered ? 0.12 : 0),
-                radius: 4,
+                color: Color.black.opacity(0.2),
+                radius: 8,
                 x: 0,
-                y: 2
+                y: 4
             )
-            .shadow(
-                color: isHovered ? Color(red: 0.32, green: 0.28, blue: 0.24).opacity(0.4) : Color.black.opacity(0.2),
-                radius: isHovered ? 16 : 8,
-                x: 0,
-                y: isHovered ? 8 : 4
-            )
-            .animation(
-                isHovered ? hoverAnimation : exitAnimation,
-                value: isHovered
-            )
+            .animation(.easeInOut(duration: 0.15), value: isHovered)
             .onTapGesture(count: 2) { onDoubleTap() }
             .onTapGesture { onTap() }
             .onHover { hovering in
                 onHover(hovering)
             }
-            
+
             // Align timecode left and export button right
             HStack {
                 Text(frame.formattedTimestamp)
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.7))
-                
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+
                 Spacer()
-                
+
                 Button("Export") {
                     onExport()
                 }
-                .buttonStyle(FilmExportButtonStyle(isHovered: isExportHovered, startsAsGrey: true))
+                .buttonStyle(FilmExportButtonStyle(isHovered: isExportHovered))
                 .onHover { hovering in
                     onExportHover(hovering)
                 }
             }
-            .frame(width: 200) // Match the image width
+            .frame(width: 200)
         }
     }
 }

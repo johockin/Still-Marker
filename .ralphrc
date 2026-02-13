@@ -1,0 +1,14 @@
+PROJECT_NAME="still-marker"
+PROJECT_TYPE="swift"
+
+MAX_CALLS_PER_HOUR=100
+CLAUDE_TIMEOUT_MINUTES=30
+CLAUDE_OUTPUT_FORMAT="json"
+
+ALLOWED_TOOLS="Write,Read,Edit,Bash(git *),Bash(xcodebuild *),Bash(swift *),Bash(xcrun *),Bash(open *),Bash(ls *),Bash(mkdir *),Bash(rm *),Bash(sips *)"
+
+SESSION_CONTINUITY=true
+SESSION_EXPIRY_HOURS=24
+
+CB_NO_PROGRESS_THRESHOLD=3
+CB_SAME_ERROR_THRESHOLD=5
