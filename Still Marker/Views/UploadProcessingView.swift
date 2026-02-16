@@ -8,14 +8,112 @@
 import SwiftUI
 import AppKit
 
+// MARK: - Eye View
+
+struct EyeView: View {
+    let isDragOver: Bool
+    let progress: Double?
+
+    var body: some View {
+        Canvas { context, size in
+            let w = size.width
+            let h = size.height
+            let cx = w / 2
+            let cy = h / 2
+
+            // Eye outline
+            var eyePath = Path()
+            eyePath.move(to: CGPoint(x: w * 0.025, y: cy))
+            eyePath.addQuadCurve(
+                to: CGPoint(x: cx, y: h * 0.05),
+                control: CGPoint(x: w * 0.25, y: h * 0.05)
+            )
+            eyePath.addQuadCurve(
+                to: CGPoint(x: w * 0.975, y: cy),
+                control: CGPoint(x: w * 0.75, y: h * 0.05)
+            )
+            eyePath.addQuadCurve(
+                to: CGPoint(x: cx, y: h * 0.95),
+                control: CGPoint(x: w * 0.75, y: h * 0.95)
+            )
+            eyePath.addQuadCurve(
+                to: CGPoint(x: w * 0.025, y: cy),
+                control: CGPoint(x: w * 0.25, y: h * 0.95)
+            )
+            context.stroke(
+                eyePath,
+                with: .color(.white.opacity(0.18)),
+                lineWidth: 1.5
+            )
+
+            // Pupil
+            let pupilRadius: CGFloat = isDragOver ? w * 0.15 : w * 0.1
+            let pupilRect = CGRect(
+                x: cx - pupilRadius,
+                y: cy - pupilRadius,
+                width: pupilRadius * 2,
+                height: pupilRadius * 2
+            )
+            let pupilPath = Path(ellipseIn: pupilRect)
+            context.fill(pupilPath, with: .color(.white.opacity(0.08)))
+            context.stroke(pupilPath, with: .color(.white.opacity(0.22)), lineWidth: 1.5)
+
+            // Catchlight
+            let catchR: CGFloat = w * 0.025
+            let catchPath = Path(ellipseIn: CGRect(
+                x: cx - pupilRadius * 0.4 - catchR,
+                y: cy - pupilRadius * 0.4 - catchR,
+                width: catchR * 2,
+                height: catchR * 2
+            ))
+            context.fill(catchPath, with: .color(.white.opacity(0.3)))
+        }
+        .frame(width: 160, height: 80)
+        .animation(.easeOut(duration: 0.4), value: isDragOver)
+    }
+}
+
+// MARK: - Gold Ring View
+
+struct GoldRingView: View {
+    let visible: Bool
+    let progress: Double?
+
+    @State private var trimEnd: CGFloat = 0
+
+    var body: some View {
+        Circle()
+            .trim(from: 0, to: trimEnd)
+            .stroke(Theme.gold, lineWidth: 1.5)
+            .frame(width: 50, height: 50)
+            .rotationEffect(.degrees(-90))
+            .opacity(visible ? 1 : 0)
+            .onChange(of: visible) { newValue in
+                withAnimation(.easeOut(duration: 0.6)) {
+                    trimEnd = newValue ? 1.0 : 0.0
+                }
+            }
+            .onChange(of: progress) { newValue in
+                if let p = newValue {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        trimEnd = CGFloat(p)
+                    }
+                }
+            }
+    }
+}
+
+// MARK: - Upload Processing View
+
 struct UploadProcessingView: View {
     @ObservedObject var viewModel: AppViewModel
     @State private var isDragOver = false
     @State private var showingFilePicker = false
+    @State private var pulseScale: CGFloat = 1.0
 
     var body: some View {
         ZStack {
-            Color(nsColor: .windowBackgroundColor)
+            Theme.background
                 .ignoresSafeArea()
 
             if viewModel.state == .upload {
@@ -36,77 +134,24 @@ struct UploadProcessingView: View {
     }
 
     private var uploadView: some View {
-        VStack(spacing: 0) {
-            Spacer()
-
-            // App Title
-            VStack(spacing: 12) {
-                Text("Still Marker")
-                    .font(.system(size: 34, weight: .light))
-                    .foregroundStyle(.primary)
-
-                Text("Extract moments from time")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-                .frame(height: 48)
-
-            // Drop Zone — hero action
-            dropZone
-
-            Spacer()
-
-            // Privacy Notice
-            HStack(spacing: 8) {
-                Image(systemName: "lock.shield")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-
-                Text("Videos are processed locally and never leave your Mac")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(.bottom, 40)
-        }
-        .padding(.horizontal, 60)
-    }
-
-    private var dropZone: some View {
         Button(action: { showingFilePicker = true }) {
-            VStack(spacing: 20) {
-                Image(systemName: "film")
-                    .font(.system(size: 36, weight: .ultraLight))
-                    .foregroundStyle(isDragOver ? .primary : .secondary)
-                    .scaleEffect(isDragOver ? 1.08 : 1.0)
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isDragOver)
+            VStack(spacing: 32) {
+                Spacer()
 
-                VStack(spacing: 6) {
-                    Text(isDragOver ? "Drop your video here" : "Drag or click to select video")
-                        .font(.body)
-                        .foregroundStyle(.primary)
+                ZStack {
+                    EyeView(isDragOver: isDragOver, progress: nil)
 
-                    Text("All formats supported")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                    GoldRingView(visible: isDragOver, progress: nil)
+                        .offset(y: 0)
                 }
+
+                Text("Show me what you saw")
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundStyle(Theme.textDim)
+
+                Spacer()
             }
-            .frame(maxWidth: 480)
-            .padding(.vertical, 52)
-            .padding(.horizontal, 40)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white.opacity(isDragOver ? 0.08 : 0.04))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(
-                        Color.white.opacity(isDragOver ? 0.2 : 0.08),
-                        lineWidth: 1
-                    )
-            )
-            .animation(.easeInOut(duration: 0.15), value: isDragOver)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -115,31 +160,32 @@ struct UploadProcessingView: View {
         VStack(spacing: 32) {
             Spacer()
 
-            ProgressView()
-                .progressViewStyle(CircularProgressViewStyle())
-                .scaleEffect(1.5)
+            ZStack {
+                EyeView(isDragOver: true, progress: viewModel.processingProgress)
+                    .scaleEffect(pulseScale)
+                    .onAppear {
+                        withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                            pulseScale = 1.08
+                        }
+                    }
+
+                GoldRingView(visible: true, progress: viewModel.processingProgress)
+            }
 
             VStack(spacing: 12) {
                 Text(viewModel.processingMessage)
-                    .font(.title3)
-                    .foregroundStyle(.primary)
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundStyle(Theme.textDim)
 
-                ProgressView(value: viewModel.processingProgress)
-                    .progressViewStyle(LinearProgressViewStyle())
-                    .frame(maxWidth: 360)
-                    .tint(.accentColor)
-            }
-
-            if let videoURL = viewModel.selectedVideoURL {
-                Text(videoURL.lastPathComponent)
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .padding(.top, 8)
+                if let videoURL = viewModel.selectedVideoURL {
+                    Text(videoURL.lastPathComponent)
+                        .font(.caption)
+                        .foregroundStyle(Theme.textGhost)
+                }
             }
 
             Spacer()
         }
-        .padding(.horizontal, 60)
     }
 
     private func handleDrop(providers: [NSItemProvider]) -> Bool {

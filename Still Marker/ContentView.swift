@@ -19,16 +19,18 @@ class AppViewModel: ObservableObject {
     @Published var selectedVideoURL: URL?
     @Published var extractedFrames: [Frame] = []
     @Published var videoDuration: Double = 0.0
+    @Published var extractionInterval: Double = 0.0
     @Published var processingProgress: Double = 0.0
     @Published var processingMessage: String = ""
     
-    private let ffmpegProcessor = FFmpegProcessor()
+    private let processor = AVFoundationProcessor()
     
     func resetToUpload() {
         state = .upload
         selectedVideoURL = nil
         extractedFrames = []
         videoDuration = 0.0
+        extractionInterval = 0.0
         processingProgress = 0.0
         processingMessage = ""
     }
@@ -39,21 +41,23 @@ class AppViewModel: ObservableObject {
         processingProgress = 0.0
         processingMessage = "Starting extraction..."
         
-        // Process video with FFmpeg
         Task {
-            await processVideoWithFFmpeg(videoURL: videoURL)
+            await processVideo(videoURL: videoURL)
         }
     }
-    
+
     @MainActor
-    private func processVideoWithFFmpeg(videoURL: URL) async {
+    private func processVideo(videoURL: URL) async {
         do {
             // Get video duration for UI boundary indicators
             let asset = AVAsset(url: videoURL)
             let duration = try await asset.load(.duration)
             self.videoDuration = CMTimeGetSeconds(duration)
 
-            let frames = try await ffmpegProcessor.extractFrames(
+            // Store the extraction interval for display in the header
+            self.extractionInterval = processor.calculateAdaptiveInterval(duration: self.videoDuration)
+
+            let frames = try await processor.extractFrames(
                 from: videoURL
             ) { progress, message in
                 DispatchQueue.main.async {

@@ -4,12 +4,12 @@
 
 ## Current Status
 
-**Phase**: M5 Complete - All GitHub issues resolved
-**Next**: M6 Distribution Preparation
+**Phase**: M6 - Browse-Pick-Export workflow overhaul complete
+**Next**: QA testing + Distribution Preparation
 **Blockers**: None
 
 ### Active Priorities
-1. ~~Address open GitHub issues (#1-#5)~~ - All resolved
+1. QA testing of browse-pick-export workflow
 2. Distribution preparation (code signing, notarization)
 3. Final QA across macOS versions
 
@@ -20,7 +20,7 @@
 **What is Still Marker?**
 A native Mac app for filmmakers to extract high-quality still images from video files. Named after Chris Marker, the legendary essay filmmaker.
 
-**Tech Stack**: Swift + SwiftUI, macOS 12+, bundled FFmpeg
+**Tech Stack**: Swift + SwiftUI, macOS 12+, AVFoundation (native frame extraction)
 **Philosophy**: "Would a tired cinematographer appreciate this at 3am?"
 
 ---
@@ -37,18 +37,24 @@ Still-Marker/
 ├── _logs/                    <- Session logs for parallel work (gitignored)
 │
 ├── Still Marker/             <- Source code
-│   ├── StillMarkerApp.swift      # App entry point
-│   ├── ContentView.swift         # Main view router
-│   ├── FFmpegProcessor.swift     # Video processing engine
+│   ├── StillMarkerApp.swift          # App entry point
+│   ├── ContentView.swift             # Main view router + AppViewModel
+│   ├── AVFoundationProcessor.swift   # Native video frame extraction
+│   ├── FFmpegProcessor.swift         # Legacy FFmpeg processor (retained)
 │   ├── Models/
-│   │   └── Frame.swift           # Frame data model
+│   │   └── Frame.swift               # Frame data model
 │   ├── Views/
-│   │   ├── UploadProcessingView.swift  # Drag-drop & processing UI
-│   │   ├── ResultsView.swift           # Grid & preview (main UI)
-│   │   └── DotPatternView.swift        # Background texture
+│   │   ├── UploadProcessingView.swift    # Drag-drop & processing UI
+│   │   ├── ResultsView.swift             # Grid & preview (main UI)
+│   │   ├── FrameCardView.swift           # Grid card with magnification + pick indicator
+│   │   ├── FilmstripView.swift           # Horizontal filmstrip in preview
+│   │   ├── FrameControlsView.swift       # Nudge controls, gear dial, pick/export buttons
+│   │   ├── FramePreviewComponents.swift  # Preview header + navigation
+│   │   ├── KeyEventHandling.swift        # Keyboard event capture (arrows, space, esc)
+│   │   └── DotPatternView.swift          # Background texture
 │   ├── Resources/
-│   │   └── ffmpeg                # Bundled FFmpeg binary
-│   └── Assets.xcassets/          # App icons, colors
+│   │   └── ffmpeg                    # Bundled FFmpeg binary (retained)
+│   └── Assets.xcassets/              # App icons, colors
 │
 ├── Still Marker.xcodeproj/   <- Xcode project
 ├── create-custom-icon.swift  <- Icon generation script
@@ -58,6 +64,22 @@ Still-Marker/
 ---
 
 ## Action Log
+
+### 2026-02-16 - Browse-Pick-Export Workflow Overhaul
+- **Agent**: Claude Opus 4
+- **Action**: Complete UX overhaul transforming Still Marker from "find one frame and export" to "browse-pick-export" workflow
+- **Files Created**: AVFoundationProcessor.swift, FrameCardView.swift, FilmstripView.swift, FrameControlsView.swift, FramePreviewComponents.swift, KeyEventHandling.swift
+- **Files Modified**: ResultsView.swift, ContentView.swift, FFmpegProcessor.swift, project.pbxproj
+- **Details**:
+  - Phase 0: Decomposed ResultsView.swift (1264 lines) into 5 extracted component files (~700 lines remain)
+  - Phase 1: Scaled frame extraction - up to 600 frames for long videos (was capped at 40)
+  - Phase 2: Adaptive grid sizing (80-180px minimum based on frame count) + hover magnification (1.8x scaleEffect overlay)
+  - Phase 3: Adaptive header language ("48 frames - 1 every 2s" vs "320 moments - 1 every 10s across 1h 32m")
+  - Phase 4: Pick system - Space/P to pick frame, returns to grid scrolled to pick location, gold dot indicator
+  - Phase 5: Export picks - header button toggles between "export all" and "export N picks", batch export with clear
+  - Phase 6: Preview flow polish - pick/unpick button in controls, keyboard hints updated
+  - Phase 7: AVFoundation migration - replaced FFmpeg subprocesses with native AVAssetImageGenerator (10-50x faster)
+- **Status**: Complete - awaiting user QA
 
 ### 2026-02-13 - Design Language Sprint
 - **Agent**: Claude Opus 4

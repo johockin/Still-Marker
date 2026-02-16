@@ -194,41 +194,35 @@ class FFmpegProcessor: ObservableObject {
     }
     
     /// Calculate adaptive interval based on video duration
-    /// Philosophy: ~30 frames per video for optimal coverage without overwhelming the user
-    private func calculateAdaptiveInterval(duration: Double) -> Double {
-        let targetFrames = 30.0
-        let maxFrames = 40.0
-        let minInterval = 0.33  // Don't extract more than 3 frames per second
-        
-        // Very short videos (<30s): every 1 second for granular coverage
-        if duration < 30 {
+    /// Dense grids for short videos, progressively wider intervals for longer content
+    func calculateAdaptiveInterval(duration: Double) -> Double {
+        switch duration {
+        case ..<60:         // < 1 min: every 1s → 30-60 frames
             return 1.0
+        case ..<300:        // 1-5 min: every 2s → 30-150 frames
+            return 2.0
+        case ..<1800:       // 5-30 min: every 5s → 60-360 frames
+            return 5.0
+        case ..<5400:       // 30-90 min: every 10s → 180-540 frames
+            return 10.0
+        default:            // 90+ min: every 15s → up to 600
+            return 15.0
         }
-        
-        // Medium videos (30s - 5min): aim for ~30 frames with dynamic interval
-        if duration <= 300 {  // 5 minutes
-            let calculatedInterval = duration / targetFrames
-            // Round to 1 decimal place for clean timestamps
-            return max(round(calculatedInterval * 10) / 10, minInterval)
-        }
-        
-        // Long videos (>5min): cap at 40 frames for performance
-        let calculatedInterval = duration / maxFrames
-        return max(round(calculatedInterval * 10) / 10, minInterval)
     }
     
-    /// Calculate timestamps for frame extraction
+    /// Calculate timestamps for frame extraction (hard cap: 600 frames)
     private func calculateTimestamps(duration: Double, offset: Double, interval: Double) -> [Double] {
+        let maxFrames = 600
         var timestamps: [Double] = []
         let startTime = max(0, offset)
         let endTime = duration
-        
+
         var currentTime = startTime
-        while currentTime < endTime {
+        while currentTime < endTime && timestamps.count < maxFrames {
             timestamps.append(currentTime)
             currentTime += interval
         }
-        
+
         return timestamps
     }
 }

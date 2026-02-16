@@ -8,7 +8,6 @@
 import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
-import AVFoundation
 
 
 enum ViewMode {
@@ -25,7 +24,7 @@ enum ExportFormat: String, CaseIterable {
     case png = "PNG (default)"
     case jpeg = "JPEG (100% Quality)"
     case tiff = "TIFF"
-    
+
     var fileExtension: String {
         switch self {
         case .jpeg: return "jpg"
@@ -33,7 +32,7 @@ enum ExportFormat: String, CaseIterable {
         case .tiff: return "tiff"
         }
     }
-    
+
     var contentType: UTType {
         switch self {
         case .jpeg: return .jpeg
@@ -46,372 +45,37 @@ enum ExportFormat: String, CaseIterable {
 enum ToastType {
     case success
     case error
-
-    var accentColor: Color {
-        switch self {
-        case .success: return .green
-        case .error: return .red
-        }
-    }
-
-    var icon: String {
-        switch self {
-        case .success: return "checkmark.circle.fill"
-        case .error: return "exclamationmark.triangle.fill"
-        }
-    }
 }
 
-// MARK: - Refine Button Component
-
-/// Simplified button component for frame refinement controls
-/// Reduces view complexity by encapsulating repeated button structure
-struct RefineButton: View {
-    let label: RefineButtonLabel
-    let action: () -> Void
-    let isDisabled: Bool
-    let opacity: Double
-
-    enum RefineButtonLabel {
-        case text(String)
-        case icon(String)
-
-        var isText: Bool {
-            if case .text = self { return true }
-            return false
-        }
-    }
-
-    var body: some View {
-        Button(action: action) {
-            Group {
-                switch label {
-                case .text(let text):
-                    Text(text)
-                        .font(.caption)
-                case .icon(let iconName):
-                    Image(systemName: iconName)
-                        .font(.system(size: 14, weight: .medium))
-                        .symbolRenderingMode(.hierarchical)
-                }
-            }
-            .foregroundStyle(.primary)
-            .padding(.horizontal, label.isText ? 6 : 8)
-            .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.white.opacity(0.06))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
-                    )
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
-        .disabled(isDisabled)
-        .opacity(opacity)
-    }
-}
-
-// MARK: - Frame Preview Header Component
-
-/// Header for frame preview with back button and frame counter
-struct FramePreviewHeader: View {
-    let currentFrameIndex: Int
-    let totalFrames: Int
-    let onBack: () -> Void
-
-    var body: some View {
-        HStack {
-            Button(action: onBack) {
-                HStack(spacing: 6) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 12, weight: .medium))
-                    Text("Back to Grid")
-                        .font(.subheadline)
-                }
-                .foregroundStyle(.secondary)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.white.opacity(0.06))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
-                        )
-                )
-            }
-            .buttonStyle(PlainButtonStyle())
-
-            Spacer()
-
-            Text("Frame \(currentFrameIndex + 1) of \(totalFrames)")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 24)
-        .padding(.top, 16)
-        .padding(.bottom, 32)
-    }
-}
-
-// MARK: - Frame Navigation View Component
-
-/// Frame display with previous/next navigation arrows
-struct FrameNavigationView: View {
-    let frame: Frame
-    let isRefining: Bool
-    let currentFrameIndex: Int
-    let totalFrames: Int
-    let onPrevious: () -> Void
-    let onNext: () -> Void
-
-    private var prevButtonOpacity: Double {
-        currentFrameIndex <= 0 ? 0.3 : 1.0
-    }
-
-    private var nextButtonOpacity: Double {
-        currentFrameIndex >= totalFrames - 1 ? 0.3 : 1.0
-    }
-
-    var body: some View {
-        HStack(spacing: 0) {
-            Spacer()
-                .frame(maxWidth: .infinity)
-                .layoutPriority(1)
-
-            Button(action: onPrevious) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .padding()
-                    .background(
-                        Circle()
-                            .fill(Color.white.opacity(0.06))
-                            .overlay(Circle().strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
-                    )
-            }
-            .buttonStyle(PlainButtonStyle())
-            .disabled(currentFrameIndex <= 0)
-            .opacity(prevButtonOpacity)
-
-            Spacer()
-                .frame(maxWidth: .infinity)
-                .layoutPriority(2)
-
-            ZStack {
-                Image(nsImage: frame.image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                if isRefining {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.black.opacity(0.6))
-                        .overlay(
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .scaleEffect(1.5)
-                        )
-                }
-            }
-            .layoutPriority(3)
-
-            Spacer()
-                .frame(maxWidth: .infinity)
-                .layoutPriority(2)
-
-            Button(action: onNext) {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .padding()
-                    .background(
-                        Circle()
-                            .fill(Color.white.opacity(0.06))
-                            .overlay(Circle().strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
-                    )
-            }
-            .buttonStyle(PlainButtonStyle())
-            .disabled(currentFrameIndex >= totalFrames - 1)
-            .opacity(nextButtonOpacity)
-
-            Spacer()
-                .frame(maxWidth: .infinity)
-                .layoutPriority(1)
-        }
-    }
-}
-
-// MARK: - Frame Controls View Component
-
-/// Refinement controls and export button for frame preview
-struct FrameControlsView: View {
-    let frame: Frame
-    let refinedTimestamp: Double?
-    let isRefining: Bool
-    let isExportHovered: Bool
-    let videoDuration: Double
-    let onRefineBackward10s: () -> Void
-    let onRefineBackward2s: () -> Void
-    let onRefineBackwardCoarse: () -> Void
-    let onRefineBackwardFine: () -> Void
-    let onRefineForwardFine: () -> Void
-    let onRefineForwardCoarse: () -> Void
-    let onRefineForward2s: () -> Void
-    let onRefineForward10s: () -> Void
-    let onExport: () -> Void
-    let onExportHover: (Bool) -> Void
-
-    private var displayTimestamp: Double {
-        refinedTimestamp ?? frame.timestamp
-    }
-
-    private var isAtStart: Bool {
-        displayTimestamp <= 0
-    }
-
-    private var isAtEnd: Bool {
-        videoDuration > 0 && displayTimestamp >= videoDuration - 0.1
-    }
-
-    private var backwardButtonOpacity: Double {
-        isRefining || isAtStart ? 0.5 : 1.0
-    }
-
-    private var backwardButtonsDisabled: Bool {
-        isRefining || isAtStart
-    }
-
-    private var forwardButtonOpacity: Double {
-        isRefining || isAtEnd ? 0.5 : 1.0
-    }
-
-    private var forwardButtonsDisabled: Bool {
-        isRefining || isAtEnd
-    }
-
-    private var statusText: String {
-        refinedTimestamp != nil ? "Refined" : "Original"
-    }
-
-    var body: some View {
-        VStack(spacing: 16) {
-            // Refinement controls
-            HStack(spacing: 8) {
-                // Left buttons - backward navigation
-                RefineButton(
-                    label: .text("10s"),
-                    action: onRefineBackward10s,
-                    isDisabled: backwardButtonsDisabled,
-                    opacity: backwardButtonOpacity
-                )
-
-                RefineButton(
-                    label: .text("2s"),
-                    action: onRefineBackward2s,
-                    isDisabled: backwardButtonsDisabled,
-                    opacity: backwardButtonOpacity
-                )
-
-                RefineButton(
-                    label: .icon("chevron.left.2"),
-                    action: onRefineBackwardCoarse,
-                    isDisabled: backwardButtonsDisabled,
-                    opacity: backwardButtonOpacity
-                )
-
-                RefineButton(
-                    label: .icon("chevron.left"),
-                    action: onRefineBackwardFine,
-                    isDisabled: backwardButtonsDisabled,
-                    opacity: backwardButtonOpacity
-                )
-
-                // Current timestamp display
-                VStack(spacing: 4) {
-                    HStack(spacing: 4) {
-                        Text(statusText)
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                        if isAtEnd {
-                            Text("(end)")
-                                .font(.caption)
-                                .foregroundStyle(.quaternary)
-                        }
-                    }
-
-                    Text(Frame.formatTimestamp(displayTimestamp))
-                        .font(.system(size: 16, weight: .medium).monospacedDigit())
-                        .foregroundStyle(refinedTimestamp != nil ? .primary : .secondary)
-                        .padding(.horizontal, 12)
-                }
-
-                // Right buttons - forward navigation
-                RefineButton(
-                    label: .icon("chevron.right"),
-                    action: onRefineForwardFine,
-                    isDisabled: forwardButtonsDisabled,
-                    opacity: forwardButtonOpacity
-                )
-
-                RefineButton(
-                    label: .icon("chevron.right.2"),
-                    action: onRefineForwardCoarse,
-                    isDisabled: forwardButtonsDisabled,
-                    opacity: forwardButtonOpacity
-                )
-
-                RefineButton(
-                    label: .text("2s"),
-                    action: onRefineForward2s,
-                    isDisabled: forwardButtonsDisabled,
-                    opacity: forwardButtonOpacity
-                )
-
-                RefineButton(
-                    label: .text("10s"),
-                    action: onRefineForward10s,
-                    isDisabled: forwardButtonsDisabled,
-                    opacity: forwardButtonOpacity
-                )
-            }
-
-            // Export button
-            Button("Export This Frame", action: onExport)
-                .buttonStyle(FilmExportButtonStyle(
-                    isHovered: isExportHovered && !isRefining
-                ))
-                .onHover(perform: onExportHover)
-                .disabled(isRefining)
-                .opacity(isRefining ? 0.5 : 1.0)
-        }
-        .padding(.vertical, 16)
-    }
-}
+// MARK: - Results View
 
 struct ResultsView: View {
     @ObservedObject var viewModel: AppViewModel
     @State private var selectedFrame: Frame?
     @State private var hoveredExportAllButton: Bool = false
     @State private var hoveredNewVideoButton: Bool = false
-    @State private var hoveredFramePreviewExportButton: Bool = false
     @State private var viewMode: ViewMode = .grid
     @State private var isGridReady: Bool = false
     @State private var visibleFrameCount: Int = 0
     @State private var hoveredFrameID: UUID? = nil
-    @State private var hoveredExportButtonID: UUID? = nil
     @State private var previewFrame: Frame?
     @State private var previewScaleMode: PreviewScaleMode = .fit
     @State private var selectedExportFormat: ExportFormat = .png
     @State private var currentFrameIndex: Int = 0
-    
+
     // Frame refinement state
     @State private var refinedTimestamp: Double? = nil
     @State private var refinedFrame: Frame? = nil
     @State private var isRefining: Bool = false
-    
+
+    // Nudge gear
+    @State private var currentGear: NudgeGear = .fine
+
+    // Pick system state
+    @State private var pickedFrames: [Frame] = []
+    @State private var pickedSourceIndices: Set<Int> = []
+    @State private var scrollToIndex: Int? = nil
+
     // Drag and drop state
     @State private var isDragOverGrid: Bool = false
 
@@ -419,17 +83,25 @@ struct ResultsView: View {
     @State private var toastMessage: String = ""
     @State private var toastType: ToastType = .success
     @State private var showToast: Bool = false
-    
-    
-    private let columns = [
-        GridItem(.adaptive(minimum: 200, maximum: 280), spacing: 16)
-    ]
-    
+
+
+    private var columns: [GridItem] {
+        let count = viewModel.extractedFrames.count
+        let minSize: CGFloat
+        switch count {
+        case 0..<60:    minSize = 180
+        case 60..<200:  minSize = 120
+        case 200..<400: minSize = 100
+        default:        minSize = 80
+        }
+        return [GridItem(.adaptive(minimum: minSize, maximum: max(minSize, 260)), spacing: 6)]
+    }
+
     var body: some View {
         ZStack {
-            Color(nsColor: .windowBackgroundColor)
+            Theme.background
                 .ignoresSafeArea()
-            
+
             switch viewMode {
             case .grid:
                 gridView
@@ -438,30 +110,27 @@ struct ResultsView: View {
                     framePreviewView(frame: frame)
                 }
             }
-            
+
             // Toast notification overlay
             if showToast {
                 VStack {
                     Spacer()
                     toastView
                     Spacer()
-                        .frame(height: 180) // Bottom margin - high enough to clear refinement controls
+                        .frame(height: 100)
                 }
                 .animation(.easeInOut(duration: 0.3), value: showToast)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            
+
         }
         .navigationTitle("")
     }
-    
+
     private var gridView: some View {
         VStack(spacing: 0) {
-            // Header with controls
             headerView
-            
-            
-            // Frames grid with loading state protection
+
             Group {
                 if !isGridReady {
                     VStack(spacing: 16) {
@@ -471,82 +140,83 @@ struct ResultsView: View {
 
                         Text("Loading \(viewModel.extractedFrames.count) frames...")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.textDim)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .onAppear {
-                        // Delay grid rendering to prevent crash
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                             isGridReady = true
-                            // Start progressive loading with first batch
                             loadFramesProgressively()
                         }
                     }
                 } else {
-                    ScrollView {
-                        LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(0..<min(visibleFrameCount, viewModel.extractedFrames.count), id: \.self) { index in
-                                let frame = viewModel.extractedFrames[index]
-                                Group {
-                                    if frame.thumbnail.isValid && !frame.formattedTimestamp.isEmpty {
-                                        FrameCard(
-                                            frame: frame,
-                                            isSelected: selectedFrame?.id == frame.id,
-                                            isHovered: hoveredFrameID == frame.id,
-                                            isExportHovered: hoveredExportButtonID == frame.id,
-                                            onTap: {
-                                                selectedFrame = frame
-                                                previewFrame = frame
-                                                currentFrameIndex = index
-                                                withAnimation(.easeInOut(duration: 0.3)) {
-                                                    viewMode = .framePreview
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVGrid(columns: columns, spacing: 6) {
+                                ForEach(0..<min(visibleFrameCount, viewModel.extractedFrames.count), id: \.self) { index in
+                                    let frame = viewModel.extractedFrames[index]
+                                    Group {
+                                        if frame.thumbnail.isValid && !frame.formattedTimestamp.isEmpty {
+                                            FrameCard(
+                                                frame: frame,
+                                                isSelected: selectedFrame?.id == frame.id,
+                                                isHovered: hoveredFrameID == frame.id,
+                                                isPicked: pickedSourceIndices.contains(index),
+                                                onTap: {
+                                                    selectedFrame = frame
+                                                    previewFrame = frame
+                                                    currentFrameIndex = index
+                                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                                        viewMode = .framePreview
+                                                    }
+                                                },
+                                                onDoubleTap: {
+                                                    selectedFrame = frame
+                                                    previewFrame = frame
+                                                    currentFrameIndex = index
+                                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                                        viewMode = .framePreview
+                                                    }
+                                                },
+                                                onHover: { isHovering in
+                                                    hoveredFrameID = isHovering ? frame.id : nil
                                                 }
-                                            },
-                                            onDoubleTap: {
-                                                selectedFrame = frame
-                                                previewFrame = frame
-                                                currentFrameIndex = index
-                                                withAnimation(.easeInOut(duration: 0.3)) {
-                                                    viewMode = .framePreview
-                                                }
-                                            },
-                                            onExport: { exportFrame(frame) },
-                                            onHover: { isHovering in
-                                                hoveredFrameID = isHovering ? frame.id : nil
-                                            },
-                                            onExportHover: { isHovering in
-                                                hoveredExportButtonID = isHovering ? frame.id : nil
+                                            )
+                                        } else {
+                                            VStack {
+                                                Image(systemName: "exclamationmark.triangle")
+                                                    .font(.system(size: 24, weight: .light))
+                                                    .foregroundStyle(.red.opacity(0.7))
+                                                    .symbolRenderingMode(.hierarchical)
+                                                Text("Invalid Frame")
+                                                    .font(.caption)
+                                                    .foregroundStyle(Theme.textGhost)
                                             }
-                                        )
-                                    } else {
-                                        // Error card for invalid frames
-                                        VStack {
-                                            Image(systemName: "exclamationmark.triangle")
-                                                .font(.system(size: 24, weight: .light))
-                                                .foregroundStyle(.red.opacity(0.7))
-                                                .symbolRenderingMode(.hierarchical)
-                                            Text("Invalid Frame")
-                                                .font(.caption)
-                                                .foregroundStyle(.tertiary)
+                                            .frame(height: 150)
                                         }
-                                        .frame(height: 150)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .fill(Color.white.opacity(0.04))
-                                        )
                                     }
+                                    .id(index)
+                                }
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.top, 12)
+                            .padding(.bottom, 24)
+                        }
+                        .onChange(of: viewMode) { newMode in
+                            if newMode == .grid, let target = scrollToIndex {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    withAnimation(.easeOut(duration: 0.3)) {
+                                        proxy.scrollTo(target, anchor: .center)
+                                    }
+                                    scrollToIndex = nil
                                 }
                             }
                         }
-                        .padding(.horizontal, 24)
-                        .padding(.top, 16)
-                        .padding(.bottom, 24)
                     }
                 }
             }
             .background(Color.clear)
             .onChange(of: viewModel.extractedFrames.count) { _ in
-                // Reset loading state when frames change
                 isGridReady = false
                 visibleFrameCount = 0
             }
@@ -560,124 +230,119 @@ struct ResultsView: View {
     @ViewBuilder
     private var dropOverlay: some View {
         if isDragOverGrid {
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(Color.white.opacity(0.6), lineWidth: 2)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.black.opacity(0.6))
-                )
-                .padding(8)
+            Color.black.opacity(0.7)
                 .overlay(
                     VStack(spacing: 12) {
-                        Image(systemName: "film")
-                            .font(.system(size: 32, weight: .light))
-                            .foregroundStyle(.primary)
                         Text("Drop to load new video")
                             .font(.body)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(Theme.goldDim)
                     }
                 )
                 .animation(.easeInOut(duration: 0.2), value: isDragOverGrid)
         }
     }
 
+    private var gridDescription: String {
+        let count = viewModel.extractedFrames.count
+        let interval = viewModel.extractionInterval
+
+        let intervalStr: String
+        if interval < 1 {
+            intervalStr = "1 every \(String(format: "%.1f", interval))s"
+        } else if interval == floor(interval) {
+            intervalStr = "1 every \(Int(interval))s"
+        } else {
+            intervalStr = "1 every \(String(format: "%.1f", interval))s"
+        }
+
+        let dur = viewModel.videoDuration
+        if dur > 600 {
+            let durStr = formatDurationShort(dur)
+            return "\(count) moments \u{00B7} \(intervalStr) across \(durStr)"
+        } else {
+            return "\(count) frames \u{00B7} \(intervalStr)"
+        }
+    }
+
+    private func formatDurationShort(_ seconds: Double) -> String {
+        let totalMinutes = Int(seconds / 60)
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        } else {
+            return "\(minutes)m"
+        }
+    }
+
     private var headerView: some View {
         HStack(spacing: 12) {
-            // New Video button
             Button(action: {
                 viewModel.resetToUpload()
             }) {
-                HStack(spacing: 6) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 12, weight: .medium))
-                    Text("New Video")
-                        .font(.subheadline)
-                }
+                Text("back")
+                    .font(.system(size: 12))
+                    .foregroundStyle(hoveredNewVideoButton ? Theme.text : Theme.textDim)
+                    .underline(hoveredNewVideoButton)
             }
-            .buttonStyle(GreyNavigationButtonStyle(isHovered: hoveredNewVideoButton))
+            .buttonStyle(PlainButtonStyle())
             .onHover { hovering in
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    hoveredNewVideoButton = hovering
-                }
+                hoveredNewVideoButton = hovering
             }
 
             Spacer()
 
-            // Centered title and frame count
-            VStack(spacing: 4) {
-                Text("\(viewModel.extractedFrames.count) frames extracted")
-                    .font(.body)
-                    .foregroundStyle(.primary)
-
-                if let videoURL = viewModel.selectedVideoURL {
-                    Text(videoURL.lastPathComponent)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
-            }
+            Text(gridDescription)
+                .font(.system(size: 10))
+                .foregroundStyle(Theme.textGhost)
+                .tracking(0.5)
 
             Spacer()
 
-            // Export All button
             Button(action: {
-                exportAllFrames()
+                if pickedFrames.isEmpty {
+                    exportAllFrames()
+                } else {
+                    exportPickedFrames()
+                }
             }) {
-                HStack(spacing: 6) {
-                    Image(systemName: "square.and.arrow.down")
-                        .font(.system(size: 12, weight: .medium))
-                    Text("Export All")
-                        .font(.subheadline)
-                }
+                Text(pickedFrames.isEmpty ? "export all" : "export \(pickedFrames.count) pick\(pickedFrames.count == 1 ? "" : "s")")
+                    .font(.system(size: 12))
+                    .foregroundStyle(hoveredExportAllButton ? Theme.gold : Theme.goldDim)
+                    .underline(hoveredExportAllButton)
             }
-            .buttonStyle(FilmExportButtonStyle(isHovered: hoveredExportAllButton))
+            .buttonStyle(PlainButtonStyle())
             .onHover { hovering in
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    hoveredExportAllButton = hovering
-                }
+                hoveredExportAllButton = hovering
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 8)
-        .padding(.bottom, 24)
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 12)
+        .frame(height: 44)
     }
-    
+
     private var toastView: some View {
-        HStack(spacing: 12) {
-            Image(systemName: toastType.icon)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(toastType.accentColor)
-
-            Text(toastMessage)
-                .font(.subheadline)
-                .foregroundStyle(.primary)
-                .lineLimit(2)
-
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
-                )
-        )
-        .shadow(color: Color.black.opacity(0.2), radius: 12, x: 0, y: 4)
-        .padding(.horizontal, 40)
+        Text(toastMessage)
+            .font(.system(size: 12))
+            .foregroundStyle(toastType == .success ? Theme.gold : .red)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.black.opacity(0.85))
+            )
+            .padding(.horizontal, 40)
     }
-    
+
     private func loadFramesProgressively() {
-        let batchSize = 8  // Load 8 frames at a time
+        let batchSize = 8
         let totalFrames = viewModel.extractedFrames.count
-        
-        // Start with first batch
+
         visibleFrameCount = min(batchSize, totalFrames)
-        
-        // Continue loading in batches if there are more frames
+
         guard totalFrames > batchSize else { return }
-        
+
         _ = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
             DispatchQueue.main.async {
                 self.visibleFrameCount = min(self.visibleFrameCount + batchSize, totalFrames)
@@ -687,9 +352,8 @@ struct ResultsView: View {
             }
         }
     }
-    
+
     private func exportFrame(_ frame: Frame) {
-        // Extract @State values to avoid capture issues
         let currentFormat = selectedExportFormat
         let currentFormatExtension = currentFormat.fileExtension
         let currentFormatIndex = ExportFormat.allCases.firstIndex(of: currentFormat) ?? 0
@@ -699,57 +363,53 @@ struct ResultsView: View {
         savePanel.showsResizeIndicator = true
         savePanel.showsHiddenFiles = false
         savePanel.canCreateDirectories = true
-        // Allow all content types so format selection works properly
         savePanel.allowedContentTypes = []
 
-        // Generate enhanced filename with video name prefix AND extension
         savePanel.nameFieldStringValue = "\(generateFilename(for: frame)).\(currentFormatExtension)"
 
-        // Create accessory view for format selection
         let formatSelector = NSPopUpButton()
         for format in ExportFormat.allCases {
             formatSelector.addItem(withTitle: format.rawValue)
         }
         formatSelector.selectItem(at: currentFormatIndex)
-        
+
         let accessoryView = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 30))
         let label = NSTextField(labelWithString: "Format:")
         label.frame = NSRect(x: 0, y: 5, width: 60, height: 20)
         formatSelector.frame = NSRect(x: 70, y: 0, width: 130, height: 30)
-        
+
         accessoryView.addSubview(label)
         accessoryView.addSubview(formatSelector)
         savePanel.accessoryView = accessoryView
-        
+
         savePanel.begin { response in
             if response == .OK, let url = savePanel.url {
                 let selectedFormat = ExportFormat.allCases[formatSelector.indexOfSelectedItem]
-                
-                // Create final URL with correct extension
+
                 let finalURL = url.deletingPathExtension().appendingPathExtension(selectedFormat.fileExtension)
-                
+
                 if let imageData = convertImageToData(frame.image, format: selectedFormat) {
                     do {
                         try imageData.write(to: finalURL)
                         print("Frame exported successfully to: \(finalURL.path)")
-                        showToast(message: "Frame exported: \(finalURL.lastPathComponent)", type: .success)
+                        showToastNotification(message: "Exported: \(finalURL.lastPathComponent)", type: .success)
                     } catch {
                         print("Failed to save frame: \(error)")
-                        showToast(message: "Export failed: \(error.localizedDescription)", type: .error)
+                        showToastNotification(message: "Export failed: \(error.localizedDescription)", type: .error)
                     }
                 } else {
-                    showToast(message: "Failed to convert image to \(selectedFormat.rawValue)", type: .error)
+                    showToastNotification(message: "Failed to convert image to \(selectedFormat.rawValue)", type: .error)
                 }
             }
         }
     }
-    
+
     private func exportAllFrames() {
         guard !viewModel.extractedFrames.isEmpty else {
-            showToast(message: "No frames to export", type: .error)
+            showToastNotification(message: "No frames to export", type: .error)
             return
         }
-        
+
         let openPanel = NSOpenPanel()
         openPanel.title = "Select Export Folder"
         openPanel.showsResizeIndicator = true
@@ -758,47 +418,43 @@ struct ResultsView: View {
         openPanel.canChooseFiles = false
         openPanel.canChooseDirectories = true
         openPanel.allowsMultipleSelection = false
-        
-        // Create accessory view for format selection
+
         let formatSelector = NSPopUpButton()
         for format in ExportFormat.allCases {
             formatSelector.addItem(withTitle: format.rawValue)
         }
         formatSelector.selectItem(at: ExportFormat.allCases.firstIndex(of: selectedExportFormat) ?? 0)
-        
+
         let accessoryView = NSView(frame: NSRect(x: 0, y: 0, width: 300, height: 40))
         let label = NSTextField(labelWithString: "Export Format:")
         label.frame = NSRect(x: 0, y: 10, width: 100, height: 20)
         formatSelector.frame = NSRect(x: 110, y: 5, width: 180, height: 30)
-        
+
         accessoryView.addSubview(label)
         accessoryView.addSubview(formatSelector)
         openPanel.accessoryView = accessoryView
-        
-        // Ensure options are always visible
         openPanel.isAccessoryViewDisclosed = true
-        
+
         openPanel.begin { response in
             if response == .OK, let folderURL = openPanel.url {
                 let selectedFormat = ExportFormat.allCases[formatSelector.indexOfSelectedItem]
-                self.performBatchExport(to: folderURL, format: selectedFormat)
+                self.performBatchExport(to: folderURL, format: selectedFormat, frames: self.viewModel.extractedFrames)
             }
         }
     }
-    
-    private func performBatchExport(to folderURL: URL, format: ExportFormat) {
-        // Show immediate feedback that export started
-        showToast(message: "Exporting \(viewModel.extractedFrames.count) frames...", type: .success)
-        
+
+    private func performBatchExport(to folderURL: URL, format: ExportFormat, frames: [Frame], clearPicksOnSuccess: Bool = false) {
+        let count = frames.count
+        showToastNotification(message: "Exporting \(count) frame\(count == 1 ? "" : "s")...", type: .success)
+
         DispatchQueue.global(qos: .userInitiated).async {
             var successCount = 0
             var errorCount = 0
-            
-            for frame in self.viewModel.extractedFrames {
-                // Generate enhanced filename with video name prefix
+
+            for frame in frames {
                 let filename = "\(self.generateFilename(for: frame)).\(format.fileExtension)"
                 let fileURL = folderURL.appendingPathComponent(filename)
-                
+
                 if let imageData = self.convertImageToData(frame.image, format: format) {
                     do {
                         try imageData.write(to: fileURL)
@@ -812,13 +468,56 @@ struct ResultsView: View {
                     errorCount += 1
                 }
             }
-            
+
             DispatchQueue.main.async {
                 if errorCount == 0 {
-                    self.showToastLong(message: "✅ Successfully exported \(successCount) frames to \(folderURL.lastPathComponent)", type: .success)
+                    self.showToastNotificationLong(message: "Exported \(successCount) frame\(successCount == 1 ? "" : "s") to \(folderURL.lastPathComponent)", type: .success)
+                    if clearPicksOnSuccess {
+                        self.pickedFrames = []
+                        self.pickedSourceIndices = []
+                    }
                 } else {
-                    self.showToastLong(message: "Export completed: \(successCount) successes, \(errorCount) errors", type: .error)
+                    self.showToastNotificationLong(message: "Export: \(successCount) ok, \(errorCount) failed", type: .error)
                 }
+            }
+        }
+    }
+
+    private func exportPickedFrames() {
+        guard !pickedFrames.isEmpty else {
+            showToastNotification(message: "No picks to export", type: .error)
+            return
+        }
+
+        let openPanel = NSOpenPanel()
+        openPanel.title = "Select Export Folder"
+        openPanel.showsResizeIndicator = true
+        openPanel.showsHiddenFiles = false
+        openPanel.canCreateDirectories = true
+        openPanel.canChooseFiles = false
+        openPanel.canChooseDirectories = true
+        openPanel.allowsMultipleSelection = false
+
+        let formatSelector = NSPopUpButton()
+        for format in ExportFormat.allCases {
+            formatSelector.addItem(withTitle: format.rawValue)
+        }
+        formatSelector.selectItem(at: ExportFormat.allCases.firstIndex(of: selectedExportFormat) ?? 0)
+
+        let accessoryView = NSView(frame: NSRect(x: 0, y: 0, width: 300, height: 40))
+        let label = NSTextField(labelWithString: "Export Format:")
+        label.frame = NSRect(x: 0, y: 10, width: 100, height: 20)
+        formatSelector.frame = NSRect(x: 110, y: 5, width: 180, height: 30)
+
+        accessoryView.addSubview(label)
+        accessoryView.addSubview(formatSelector)
+        openPanel.accessoryView = accessoryView
+        openPanel.isAccessoryViewDisclosed = true
+
+        openPanel.begin { response in
+            if response == .OK, let folderURL = openPanel.url {
+                let selectedFormat = ExportFormat.allCases[formatSelector.indexOfSelectedItem]
+                self.performBatchExport(to: folderURL, format: selectedFormat, frames: self.pickedFrames, clearPicksOnSuccess: true)
             }
         }
     }
@@ -831,7 +530,7 @@ extension ResultsView {
     private func framePreviewView(frame: Frame) -> some View {
         let displayFrame = refinedFrame ?? frame
 
-        return VStack {
+        return VStack(spacing: 0) {
             FramePreviewHeader(
                 currentFrameIndex: currentFrameIndex,
                 totalFrames: viewModel.extractedFrames.count,
@@ -840,6 +539,9 @@ extension ResultsView {
                         resetRefinement()
                         viewMode = .grid
                     }
+                },
+                onExportAll: {
+                    exportAllFrames()
                 }
             )
 
@@ -854,45 +556,42 @@ extension ResultsView {
                 onNext: navigateToNextFrame
             )
 
+            // Filmstrip
+            FilmstripView(
+                frames: viewModel.extractedFrames,
+                currentIndex: currentFrameIndex,
+                onSelect: { index in
+                    currentFrameIndex = index
+                    previewFrame = viewModel.extractedFrames[index]
+                    selectedFrame = previewFrame
+                    resetRefinement()
+                }
+            )
+            .padding(.top, 10)
+
             FrameControlsView(
                 frame: displayFrame,
                 refinedTimestamp: refinedTimestamp,
                 isRefining: isRefining,
-                isExportHovered: hoveredFramePreviewExportButton,
+                isPicked: pickedSourceIndices.contains(currentFrameIndex),
                 videoDuration: viewModel.videoDuration,
-                onRefineBackward10s: refineBackward10s,
-                onRefineBackward2s: refineBackward2s,
-                onRefineBackwardCoarse: refineBackwardCoarse,
-                onRefineBackwardFine: refineBackwardFine,
-                onRefineForwardFine: refineForwardFine,
-                onRefineForwardCoarse: refineForwardCoarse,
-                onRefineForward2s: refineForward2s,
-                onRefineForward10s: refineForward10s,
-                onExport: { exportFrame(displayFrame) },
-                onExportHover: { hovering in
-                    withAnimation(.easeInOut(duration: 0.1)) {
-                        hoveredFramePreviewExportButton = hovering
-                    }
-                }
+                currentGear: currentGear,
+                onNudge: { amount in refineByAmount(amount) },
+                onCycleGear: cycleGear,
+                onPick: pickCurrentFrame,
+                onExport: { exportFrame(displayFrame) }
             )
-
-            Spacer()
-
-            // Keyboard shortcuts hint
-            Text("← → frame  •  ⇧← ⇧→ 2s  •  ↑ ↓ photos  •  ESC exit")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-                .padding(.bottom, 20)
         }
         .background(
             KeyEventHandlingView(
-                onLeftArrow: refineBackwardFine,        // ← = -1 frame
-                onRightArrow: refineForwardFine,        // → = +1 frame
-                onShiftLeftArrow: refineBackward2s,     // ⇧← = -2s
-                onShiftRightArrow: refineForward2s,     // ⇧→ = +2s
-                onUpArrow: navigateToPreviousFrame,     // ↑ = prev grid frame
-                onDownArrow: navigateToNextFrame,       // ↓ = next grid frame
-                onEscape: handleEscapeKey               // ESC = close preview
+                onLeftArrow: { refineByAmount(-currentGear.tightAmount) },
+                onRightArrow: { refineByAmount(currentGear.tightAmount) },
+                onShiftLeftArrow: { refineByAmount(-currentGear.shiftTightAmount) },
+                onShiftRightArrow: { refineByAmount(currentGear.shiftTightAmount) },
+                onUpArrow: { refineByAmount(-currentGear.wideAmount) },
+                onDownArrow: { refineByAmount(currentGear.wideAmount) },
+                onEscape: handleEscapeKey,
+                onPick: pickCurrentFrame
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         )
@@ -900,32 +599,36 @@ extension ResultsView {
             handleDrop(providers: providers)
         }
     }
-    
-    // MARK: - Navigation Functions
-    
-    private func navigateToPreviousFrame() {
-        let refiningState = isRefining
-        print("⬅️ navigateToPreviousFrame called - isRefining: \(refiningState)")
-        // Don't interrupt active refinement
-        guard !isRefining else {
-            print("⛔️ Previous frame navigation blocked - refinement in progress")
-            return
+
+    // MARK: - Gear Control
+
+    private func cycleGear() {
+        currentGear = currentGear.next()
+    }
+
+    private func handleEscapeKey() {
+        guard !isRefining else { return }
+        DispatchQueue.main.async {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                resetRefinement()
+                viewMode = .grid
+            }
         }
+    }
+
+    // MARK: - Frame Navigation
+
+    private func navigateToPreviousFrame() {
+        guard !isRefining else { return }
         guard currentFrameIndex > 0 else { return }
         currentFrameIndex -= 1
         previewFrame = viewModel.extractedFrames[currentFrameIndex]
         selectedFrame = previewFrame
         resetRefinement()
     }
-    
+
     private func navigateToNextFrame() {
-        let refiningState = isRefining
-        print("➡️ navigateToNextFrame called - isRefining: \(refiningState)")
-        // Don't interrupt active refinement
-        guard !isRefining else {
-            print("⛔️ Next frame navigation blocked - refinement in progress")
-            return
-        }
+        guard !isRefining else { return }
         guard currentFrameIndex < viewModel.extractedFrames.count - 1 else { return }
         currentFrameIndex += 1
         previewFrame = viewModel.extractedFrames[currentFrameIndex]
@@ -933,228 +636,174 @@ extension ResultsView {
         resetRefinement()
     }
 
-    private func handleEscapeKey() {
-        print("⚠️ Escape handler called")
-        // Don't interrupt active refinement
-        guard !isRefining else {
-            print("⛔️ Escape blocked - refinement in progress")
-            return
-        }
-        withAnimation(.easeInOut(duration: 0.3)) {
-            resetRefinement()
-            viewMode = .grid
-        }
-    }
+    // MARK: - Frame Refinement
 
-    // MARK: - Frame Refinement Functions
-    
-    private func refineBackward10s() {
-        print("🔵 refineBackward10s() called")
-        refineByAmount(-10.0) // Back 10 seconds
-    }
-    
-    private func refineBackward2s() {
-        print("🔵🔵🔵 refineBackward2s() ENTERED 🔵🔵🔵")
-        print("🔵 refineBackward2s() called")
-        refineByAmount(-2.0) // Back 2 seconds
-        print("🔵🔵🔵 refineBackward2s() EXITED 🔵🔵🔵")
-    }
-    
-    private func refineBackwardCoarse() {
-        print("🔵 refineBackwardCoarse() called")
-        refineByAmount(-0.5) // Back 0.5 seconds
-    }
-    
-    private func refineBackwardFine() {
-        print("🔵 refineBackwardFine() called")
-        refineByAmount(-0.033) // Back 1 frame (assuming ~30fps)
-    }
-    
-    private func refineForwardFine() {
-        print("🔵 refineForwardFine() called")
-        refineByAmount(0.033) // Forward 1 frame (assuming ~30fps)
-    }
-    
-    private func refineForwardCoarse() {
-        print("🔵 refineForwardCoarse() called")
-        refineByAmount(0.5) // Forward 0.5 seconds
-    }
-    
-    private func refineForward2s() {
-        print("🔵 refineForward2s() called")
-        refineByAmount(2.0) // Forward 2 seconds
-    }
-    
-    private func refineForward10s() {
-        print("🔵 refineForward10s() called")
-        refineByAmount(10.0) // Forward 10 seconds
-    }
-    
     private func refineByAmount(_ seconds: Double) {
-        let refiningState = isRefining
-        print("🟢🟢🟢 refineByAmount ENTERED - seconds: \(seconds), isRefining: \(refiningState) 🟢🟢🟢")
-        print("🟢 refineByAmount called with \(seconds)s")
         guard let frame = previewFrame,
               let videoURL = viewModel.selectedVideoURL else {
-            print("❌ No frame or video URL")
             return
         }
-        
-        print("🟢 Frame and video URL OK")
+
         let currentTimestamp = refinedTimestamp ?? frame.timestamp
         let duration = viewModel.videoDuration
         let unclamped = currentTimestamp + seconds
         var newTimestamp = max(0, unclamped)
-        // Clamp to just before video end (FFmpeg can't extract at exact duration)
         if duration > 0 {
             newTimestamp = min(newTimestamp, max(0, duration - 0.1))
         }
-        // Show toast when hitting a boundary
         if seconds > 0 && duration > 0 && unclamped >= duration - 0.1 {
-            showToast(message: "End of video reached", type: .success)
+            showToastNotification(message: "End of video reached", type: .success)
         } else if seconds < 0 && unclamped <= 0 {
-            showToast(message: "Beginning of video reached", type: .success)
+            showToastNotification(message: "Beginning of video reached", type: .success)
         }
-        print("🟢 Timestamps calculated: current=\(currentTimestamp), new=\(newTimestamp), duration=\(duration)")
 
         if newTimestamp != currentTimestamp {
-            print("🟢 Calling refineToTimestamp")
-            // Dispatch to avoid blocking main thread
             Task { @MainActor in
                 refineToTimestamp(newTimestamp, videoURL: videoURL)
             }
-        } else {
-            print("⚠️ Timestamps are the same, skipping refinement")
         }
-        print("🟢🟢🟢 refineByAmount EXITED 🟢🟢🟢")
     }
-    
+
     private func refineToTimestamp(_ timestamp: Double, videoURL: URL) {
-        print("🟡 refineToTimestamp called with timestamp=\(timestamp)")
-        // Guard against concurrent refinement requests
-        guard !isRefining else {
-            print("⚠️ Refinement already in progress, ignoring request")
-            return
-        }
-        
-        print("🟡 Setting isRefining = true")
+        guard !isRefining else { return }
+
         isRefining = true
-        
-        print("🟡 Creating Task")
+
         Task {
-            print("🟡 Inside Task, about to extract frame")
             do {
                 let refinedImage = try await extractFrameAtTimestamp(timestamp, from: videoURL)
-                print("✅ Frame extracted successfully")
-                
+
                 await MainActor.run {
-                    print("✅✅✅ Refinement complete, updating UI ✅✅✅")
                     refinedTimestamp = timestamp
                     refinedFrame = Frame(
                         id: UUID(),
                         timestamp: timestamp,
                         image: refinedImage
                     )
-                    print("🔓 Setting isRefining = false")
                     isRefining = false
-                    print("✅✅✅ UI updated successfully ✅✅✅")
                 }
             } catch {
                 await MainActor.run {
-                    showToast(message: "Failed to refine frame: \(error.localizedDescription)", type: .error)
+                    showToastNotification(message: "Failed to refine frame: \(error.localizedDescription)", type: .error)
                     isRefining = false
                 }
             }
         }
     }
-    
+
     private func resetRefinement() {
         refinedTimestamp = nil
         refinedFrame = nil
         isRefining = false
     }
-    
-    private func extractFrameAtTimestamp(_ timestamp: Double, from videoURL: URL) async throws -> NSImage {
-        // Create temporary file for the extracted frame
-        let tempDir = FileManager.default.temporaryDirectory
-        let tempFile = tempDir.appendingPathComponent("refined_frame_\(UUID().uuidString).jpg")
-        
-        defer {
-            try? FileManager.default.removeItem(at: tempFile)
+
+    // MARK: - Pick System
+
+    private func pickCurrentFrame() {
+        guard !isRefining else { return }
+        guard let frame = previewFrame else { return }
+        let displayFrame = refinedFrame ?? frame
+
+        // Check if this source index is already picked — toggle unpick
+        if pickedSourceIndices.contains(currentFrameIndex) {
+            unpickCurrentFrame()
+            return
         }
-        
-        // Use FFmpeg to extract single frame
-        let ffmpegProcessor = FFmpegProcessor()
-        try await ffmpegProcessor.extractSingleFrame(from: videoURL, at: timestamp, outputURL: tempFile)
-        
-        // Load the image
-        guard let image = NSImage(contentsOf: tempFile) else {
-            throw NSError(domain: "FrameRefinement", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to load refined frame"])
+
+        // Avoid duplicates by timestamp proximity
+        let isDuplicate = pickedFrames.contains { abs($0.timestamp - displayFrame.timestamp) < 0.01 }
+        guard !isDuplicate else {
+            showToastNotification(message: "Already picked", type: .success)
+            return
         }
-        
-        return image
+
+        pickedFrames.append(displayFrame)
+        pickedSourceIndices.insert(currentFrameIndex)
+
+        showToastNotification(message: "Picked \u{00B7} \(pickedFrames.count) total", type: .success)
+
+        // Set scroll target before transitioning back to grid
+        scrollToIndex = currentFrameIndex
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                resetRefinement()
+                viewMode = .grid
+            }
+        }
     }
-    
+
+    private func unpickCurrentFrame() {
+        // Remove by source index
+        pickedFrames.removeAll { frame in
+            // Find the pick that corresponds to this source index
+            let sourceFrame = viewModel.extractedFrames[currentFrameIndex]
+            return abs(frame.timestamp - sourceFrame.timestamp) < 0.01 ||
+                   (refinedTimestamp != nil && abs(frame.timestamp - (refinedTimestamp ?? 0)) < 0.01)
+        }
+        pickedSourceIndices.remove(currentFrameIndex)
+        showToastNotification(message: "Unpicked", type: .success)
+    }
+
+    private let avProcessor = AVFoundationProcessor()
+
+    private func extractFrameAtTimestamp(_ timestamp: Double, from videoURL: URL) async throws -> NSImage {
+        return try await avProcessor.extractSingleFrame(from: videoURL, at: timestamp)
+    }
+
     // MARK: - Toast Notification Helpers
-    
-    private func showToast(message: String, type: ToastType) {
+
+    private func showToastNotification(message: String, type: ToastType) {
         toastMessage = message
         toastType = type
-        
+
         withAnimation(.easeInOut(duration: 0.3)) {
             showToast = true
         }
-        
-        // Auto-hide after 3 seconds
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
             withAnimation(.easeInOut(duration: 0.3)) {
                 showToast = false
             }
         }
     }
-    
-    private func showToastLong(message: String, type: ToastType) {
+
+    private func showToastNotificationLong(message: String, type: ToastType) {
         toastMessage = message
         toastType = type
-        
+
         withAnimation(.easeInOut(duration: 0.3)) {
             showToast = true
         }
-        
-        // Auto-hide after 5 seconds for batch operations
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
             withAnimation(.easeInOut(duration: 0.3)) {
                 showToast = false
             }
         }
     }
-    
+
     // MARK: - Image Export Utilities
-    
+
     private func generateFilename(for frame: Frame) -> String {
         guard let videoURL = viewModel.selectedVideoURL else {
-            // Fallback to simple filename if no video URL
             let timestampForFilename = Frame.formatTimestampForFilename(frame.timestamp)
             return "frame_\(timestampForFilename)"
         }
-        
-        // Get video filename without extension
+
         let videoName = videoURL.deletingPathExtension().lastPathComponent
-        
-        // Use the safe timestamp formatting method
         let timestampForFilename = Frame.formatTimestampForFilename(frame.timestamp)
-        
-        // Format: [video_name]_frame_[timestamp]
+
         return "\(videoName)_frame_\(timestampForFilename)"
     }
-    
+
     private func convertImageToData(_ image: NSImage, format: ExportFormat) -> Data? {
         guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
             return nil
         }
-        
+
         let bitmapRep = NSBitmapImageRep(cgImage: cgImage)
-        
+
         switch format {
         case .jpeg:
             return bitmapRep.representation(using: .jpeg, properties: [.compressionFactor: 1.0])
@@ -1164,12 +813,12 @@ extension ResultsView {
             return bitmapRep.representation(using: .tiff, properties: [:])
         }
     }
-    
+
     // MARK: - Drag and Drop in Grid View
-    
+
     private func handleDrop(providers: [NSItemProvider]) -> Bool {
         guard let provider = providers.first else { return false }
-        
+
         provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { (urlData, error) in
             DispatchQueue.main.async {
                 if let urlData = urlData as? Data,
@@ -1180,243 +829,18 @@ extension ResultsView {
         }
         return true
     }
-    
+
     private func processVideoFile(url: URL) {
-        // Basic validation
         let allowedExtensions = ["mp4", "mov", "avi", "mkv", "m4v", "wmv", "flv", "webm"]
         let fileExtension = url.pathExtension.lowercased()
-        
+
         guard allowedExtensions.contains(fileExtension) else {
-            showToast(message: "Unsupported file type: .\(fileExtension)", type: .error)
+            showToastNotification(message: "Unsupported file type: .\(fileExtension)", type: .error)
             return
         }
-        
-        // Reset to upload view and start processing new video
+
         viewModel.resetToUpload()
         viewModel.startProcessing(videoURL: url)
     }
-    
-}
 
-struct GreyNavigationButtonStyle: ButtonStyle {
-    let isHovered: Bool
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .foregroundStyle(isHovered ? .primary : .secondary)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.white.opacity(isHovered ? 0.1 : 0.06))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .strokeBorder(Color.white.opacity(isHovered ? 0.15 : 0.08), lineWidth: 1)
-                    )
-            )
-            .animation(.easeInOut(duration: 0.15), value: isHovered)
-    }
-}
-
-struct FilmExportButtonStyle: ButtonStyle {
-    let isHovered: Bool
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .foregroundStyle(.white)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.accentColor.opacity(isHovered ? 1.0 : 0.85))
-            )
-            .animation(.easeInOut(duration: 0.15), value: isHovered)
-    }
-}
-
-struct FrameCard: View {
-    let frame: Frame
-    let isSelected: Bool
-    let isHovered: Bool
-    let isExportHovered: Bool
-    let onTap: () -> Void
-    let onDoubleTap: () -> Void
-    let onExport: () -> Void
-    let onHover: (Bool) -> Void
-    let onExportHover: (Bool) -> Void
-
-    var body: some View {
-        VStack(spacing: 8) {
-            ZStack {
-                // Dark background for pillarboxing/letterboxing non-16:9 content
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.black)
-
-                Image(nsImage: frame.thumbnail)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-
-                // Hover/default border
-                RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(
-                        Color.white.opacity(isHovered ? 0.2 : 0.08),
-                        lineWidth: 1
-                    )
-
-                // Selection border
-                if isSelected {
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.accentColor, lineWidth: 2)
-                }
-
-                // Eye icon on hover
-                if isHovered {
-                    Image(systemName: "eye.fill")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .padding(12)
-                        .background(
-                            Circle()
-                                .fill(Color.black.opacity(0.5))
-                        )
-                        .transition(.opacity)
-                }
-            }
-            .frame(width: 200, height: 112)
-            .cornerRadius(8)
-            .clipped()
-            .shadow(
-                color: Color.black.opacity(0.2),
-                radius: 8,
-                x: 0,
-                y: 4
-            )
-            .animation(.easeInOut(duration: 0.15), value: isHovered)
-            .onTapGesture(count: 2) { onDoubleTap() }
-            .onTapGesture { onTap() }
-            .onHover { hovering in
-                onHover(hovering)
-            }
-
-            // Align timecode left and export button right
-            HStack {
-                Text(frame.formattedTimestamp)
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-
-                Spacer()
-
-                Button("Export") {
-                    onExport()
-                }
-                .buttonStyle(FilmExportButtonStyle(isHovered: isExportHovered))
-                .onHover { hovering in
-                    onExportHover(hovering)
-                }
-            }
-            .frame(width: 200)
-        }
-    }
-}
-
-// MARK: - Keyboard Event Handling
-
-struct KeyEventHandlingView: NSViewRepresentable {
-    let onLeftArrow: () -> Void
-    let onRightArrow: () -> Void
-    let onShiftLeftArrow: () -> Void
-    let onShiftRightArrow: () -> Void
-    let onUpArrow: () -> Void
-    let onDownArrow: () -> Void
-    let onEscape: () -> Void
-
-    func makeNSView(context: Context) -> KeyCaptureView {
-        let view = KeyCaptureView()
-        view.onLeftArrow = onLeftArrow
-        view.onRightArrow = onRightArrow
-        view.onShiftLeftArrow = onShiftLeftArrow
-        view.onShiftRightArrow = onShiftRightArrow
-        view.onUpArrow = onUpArrow
-        view.onDownArrow = onDownArrow
-        view.onEscape = onEscape
-        return view
-    }
-
-    func updateNSView(_ nsView: KeyCaptureView, context: Context) {
-        nsView.onLeftArrow = onLeftArrow
-        nsView.onRightArrow = onRightArrow
-        nsView.onShiftLeftArrow = onShiftLeftArrow
-        nsView.onShiftRightArrow = onShiftRightArrow
-        nsView.onUpArrow = onUpArrow
-        nsView.onDownArrow = onDownArrow
-        nsView.onEscape = onEscape
-    }
-}
-
-class KeyCaptureView: NSView {
-    var onLeftArrow: (() -> Void)?
-    var onRightArrow: (() -> Void)?
-    var onShiftLeftArrow: (() -> Void)?
-    var onShiftRightArrow: (() -> Void)?
-    var onUpArrow: (() -> Void)?
-    var onDownArrow: (() -> Void)?
-    var onEscape: (() -> Void)?
-
-    override var acceptsFirstResponder: Bool { true }
-    override var canBecomeKeyView: Bool { true }
-
-    override func viewDidMoveToWindow() {
-        super.viewDidMoveToWindow()
-        // Delay to ensure the view is fully set up
-        DispatchQueue.main.async { [weak self] in
-            self?.window?.makeFirstResponder(self)
-        }
-    }
-
-    override func mouseDown(with event: NSEvent) {
-        // Make this view first responder when clicked
-        window?.makeFirstResponder(self)
-        super.mouseDown(with: event)
-    }
-
-    override func keyDown(with event: NSEvent) {
-        let isShiftPressed = event.modifierFlags.contains(.shift)
-        print("🎹 Key pressed: \(event.keyCode), Shift: \(isShiftPressed)")
-
-        switch event.keyCode {
-        case 123: // Left arrow
-            if isShiftPressed {
-                print("⬅️⇧ Shift+Left arrow pressed")
-                onShiftLeftArrow?()
-            } else {
-                print("⬅️ Left arrow pressed")
-                onLeftArrow?()
-            }
-        case 124: // Right arrow
-            if isShiftPressed {
-                print("➡️⇧ Shift+Right arrow pressed")
-                onShiftRightArrow?()
-            } else {
-                print("➡️ Right arrow pressed")
-                onRightArrow?()
-            }
-        case 125: // Down arrow
-            print("⬇️ Down arrow pressed")
-            onDownArrow?()
-        case 126: // Up arrow
-            print("⬆️ Up arrow pressed")
-            onUpArrow?()
-        case 53: // Escape
-            print("🔙 Escape pressed")
-            onEscape?()
-        default:
-            print("🔤 Other key: \(event.keyCode)")
-            super.keyDown(with: event)
-        }
-    }
-
-    // Accept all key events
-    override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
-        return true
-    }
 }

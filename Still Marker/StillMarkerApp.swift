@@ -13,6 +13,7 @@ struct StillMarkerApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .background(Color.black)
                 .onAppear {
                     setDefaultWindowSize()
                 }
@@ -47,6 +48,7 @@ struct StillMarkerApp: App {
             
             // Set minimum window size to prevent it from getting too small
             window.minSize = NSSize(width: 800, height: 600)
+            window.backgroundColor = .black
             
             // Log the screen and window dimensions for debugging
             print("🖥️ Screen size: \(screenSize.width) x \(screenSize.height)")
