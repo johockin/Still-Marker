@@ -159,7 +159,14 @@ struct UploadProcessingView: View {
                     .foregroundStyle(Theme.text)
 
                 Spacer()
-                    .frame(height: 14)
+                    .frame(height: 10)
+
+                Text("Pull beautiful stills from any video.")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Theme.textSecondary)
+
+                Spacer()
+                    .frame(height: 20)
 
                 Text("Drop a video or click to browse")
                     .font(.system(size: 14))
@@ -171,7 +178,7 @@ struct UploadProcessingView: View {
                     Image(systemName: "lock.shield")
                         .font(.system(size: 13))
                         .foregroundStyle(Theme.textDim)
-                    Text("Everything stays on your Mac")
+                    Text("All processing happens locally — nothing leaves your Mac")
                         .font(.system(size: 13))
                         .foregroundStyle(Theme.textDim)
                 }
