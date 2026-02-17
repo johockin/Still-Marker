@@ -63,6 +63,19 @@ struct SettingsView: View {
         }
         .padding(20)
         .frame(width: 440, height: 320)
+        .preferredColorScheme(preferredScheme)
+        .onAppear {
+            // Ensure Settings window matches the app's appearance
+            AppAppearance.apply(selectedAppearance)
+        }
+    }
+
+    private var preferredScheme: ColorScheme? {
+        switch selectedAppearance {
+        case .light: return .light
+        case .dark: return .dark
+        case .system: return nil
+        }
     }
 
     private func aboutItem(icon: String, text: String) -> some View {

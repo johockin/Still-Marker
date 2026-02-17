@@ -169,11 +169,11 @@ struct UploadProcessingView: View {
 
                 HStack(spacing: 6) {
                     Image(systemName: "lock.shield")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Theme.textGhost)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textDim)
                     Text("Everything stays on your Mac")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Theme.textGhost)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textDim)
                 }
                 .padding(.bottom, 24)
             }
