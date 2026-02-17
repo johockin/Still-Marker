@@ -10,18 +10,11 @@ import AppKit
 
 @main
 struct StillMarkerApp: App {
-    init() {
-        // Apply saved appearance preference before first render to avoid flash
-        let stored = UserDefaults.standard.string(forKey: "appearance") ?? AppAppearance.light.rawValue
-        if let pref = AppAppearance(rawValue: stored) {
-            AppAppearance.apply(pref)
-        }
-    }
-
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .onAppear {
+                    applyStoredAppearance()
                     setDefaultWindowSize()
                 }
         }
@@ -35,6 +28,13 @@ struct StillMarkerApp: App {
 
         Settings {
             SettingsView()
+        }
+    }
+
+    private func applyStoredAppearance() {
+        let stored = UserDefaults.standard.string(forKey: "appearance") ?? AppAppearance.light.rawValue
+        if let pref = AppAppearance(rawValue: stored) {
+            AppAppearance.apply(pref)
         }
     }
 
