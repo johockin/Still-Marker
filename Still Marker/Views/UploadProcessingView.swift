@@ -135,7 +135,7 @@ struct UploadProcessingView: View {
 
     private var uploadView: some View {
         Button(action: { showingFilePicker = true }) {
-            VStack(spacing: 32) {
+            VStack(spacing: 0) {
                 Spacer()
 
                 ZStack {
@@ -145,9 +145,46 @@ struct UploadProcessingView: View {
                         .offset(y: 0)
                 }
 
+                Spacer()
+                    .frame(height: 28)
+
                 Text("Show me what you saw")
-                    .font(.system(size: 16, weight: .regular))
+                    .font(.system(size: 18, weight: .regular))
+                    .foregroundStyle(Theme.textSecondary)
+
+                Spacer()
+                    .frame(height: 10)
+
+                Text("Drop a video file here, or click to browse")
+                    .font(.system(size: 14))
                     .foregroundStyle(Theme.textDim)
+
+                Spacer()
+                    .frame(height: 32)
+
+                // Onboarding: what the app does
+                VStack(spacing: 8) {
+                    Text("Extract perfect stills from your footage.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textDim)
+
+                    Text("Browse frames \u{2192} nudge to the exact moment \u{2192} pick \u{2192} export.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textDim)
+                }
+
+                Spacer()
+                    .frame(height: 20)
+
+                // Security reassurance
+                HStack(spacing: 6) {
+                    Image(systemName: "lock.shield")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.textGhost)
+                    Text("Everything stays on your Mac. No uploads, no cloud.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.textGhost)
+                }
 
                 Spacer()
             }

@@ -4,12 +4,12 @@
 
 ## Current Status
 
-**Phase**: M6 - Browse-Pick-Export workflow overhaul complete
-**Next**: QA testing + Distribution Preparation
+**Phase**: M6 - Browse-Pick-Export workflow + QA fixes complete
+**Next**: User QA of fixes, then Distribution Preparation
 **Blockers**: None
 
 ### Active Priorities
-1. QA testing of browse-pick-export workflow
+1. User QA of accessibility/contrast/UX fixes
 2. Distribution preparation (code signing, notarization)
 3. Final QA across macOS versions
 
@@ -64,6 +64,21 @@ Still-Marker/
 ---
 
 ## Action Log
+
+### 2026-02-17 - QA Fixes: Accessibility, Contrast, UX Polish
+- **Agent**: Claude Opus 4
+- **Action**: Fixed all issues from user QA testing of browse-pick-export workflow
+- **Files Modified**: Theme.swift, StillMarkerApp.swift, FrameCardView.swift, ResultsView.swift, FramePreviewComponents.swift, FrameControlsView.swift, UploadProcessingView.swift
+- **Details**:
+  - Contrast/accessibility: Background from pure black to warm dark gray (0.10, 0.10, 0.11), raised all text opacities for WCAG AA compliance
+  - Hover z-index: Moved scaleEffect/zIndex/animation to grid item Group wrapper so LazyVGrid respects z-ordering
+  - Frame nudge flicker: Removed black overlay during refinement, current image persists until replacement loads
+  - Gear system: Reduced from 3 gears to 2 (fine/wide), each nudge button shows keyboard shortcut inline
+  - Edge magnification: Increased grid horizontal padding from 12px to 40px for edge card room
+  - Upload screen: Added onboarding copy, workflow description, security reassurance ("Everything stays on your Mac")
+  - Header: Back button now "< new video" with chevron, grid description bumped to 12pt, export button to 13pt
+  - Text sizes increased across all views for accessibility compliance
+- **Status**: Complete - awaiting user QA
 
 ### 2026-02-16 - Browse-Pick-Export Workflow Overhaul
 - **Agent**: Claude Opus 4

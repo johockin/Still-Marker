@@ -2,68 +2,61 @@
 //  FrameControlsView.swift
 //  Still Marker
 //
-//  Extracted from ResultsView.swift for maintainability.
+//  Nudge controls, gear system, pick and export buttons.
 //
 
 import SwiftUI
 
-// MARK: - Nudge Gear System
+// MARK: - Nudge Gear System (2 gears)
 
 enum NudgeGear: Int, CaseIterable {
     case fine = 0
-    case medium = 1
-    case coarse = 2
+    case wide = 1
 
     var label: String {
         switch self {
         case .fine: return "fine"
-        case .medium: return "mid"
-        case .coarse: return "wide"
+        case .wide: return "wide"
         }
     }
 
-    /// Left/Right arrow amount (tight nudge)
+    /// Left/Right arrow amount
     var tightAmount: Double {
         switch self {
         case .fine: return 0.033    // ~1 frame
-        case .medium: return 0.5    // half second
-        case .coarse: return 2.0    // 2 seconds
+        case .wide: return 2.0     // 2 seconds
         }
     }
 
-    /// Up/Down arrow amount (wide nudge)
+    /// Up/Down arrow amount
     var wideAmount: Double {
         switch self {
-        case .fine: return 0.5      // half second
-        case .medium: return 2.0    // 2 seconds
-        case .coarse: return 10.0   // 10 seconds
+        case .fine: return 0.5     // half second
+        case .wide: return 10.0   // 10 seconds
         }
     }
 
-    /// Shift multiplier: tight becomes wide, wide becomes next tier
+    /// Shift multiplier
     var shiftTightAmount: Double { wideAmount }
 
     var shiftWideAmount: Double {
         switch self {
         case .fine: return 2.0
-        case .medium: return 10.0
-        case .coarse: return 30.0
+        case .wide: return 30.0
         }
     }
 
     var tightLabel: String {
         switch self {
         case .fine: return "1 frame"
-        case .medium: return "0.5s"
-        case .coarse: return "2s"
+        case .wide: return "2s"
         }
     }
 
     var wideLabel: String {
         switch self {
         case .fine: return "0.5s"
-        case .medium: return "2s"
-        case .coarse: return "10s"
+        case .wide: return "10s"
         }
     }
 
@@ -74,32 +67,65 @@ enum NudgeGear: Int, CaseIterable {
     }
 }
 
-// MARK: - Gear Dial View
+// MARK: - Nudge Button
 
-struct GearDialView: View {
+struct NudgeButton: View {
+    let icon: String
+    let label: String
+    let action: () -> Void
+    let isDisabled: Bool
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 2) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(isHovered ? Theme.text : Theme.textSecondary)
+                    .frame(width: 36, height: 28)
+
+                Text(label)
+                    .font(.system(size: 9).monospacedDigit())
+                    .foregroundStyle(Theme.textDim)
+            }
+            .frame(width: 44)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.white.opacity(isHovered ? 0.08 : 0.03))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .strokeBorder(Color.white.opacity(isHovered ? 0.15 : 0.06), lineWidth: 1)
+                    )
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(isDisabled)
+        .opacity(isDisabled ? 0.3 : 1.0)
+        .onHover { isHovered = $0 }
+    }
+}
+
+// MARK: - Gear Toggle
+
+struct GearToggleView: View {
     let currentGear: NudgeGear
     let onCycleGear: () -> Void
 
     @State private var isHovered = false
-    @State private var rotationAngle: Double = 0
 
     var body: some View {
-        Button(action: {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                rotationAngle += 120
-            }
-            onCycleGear()
-        }) {
+        Button(action: onCycleGear) {
             HStack(spacing: 6) {
-                // Gear icon that rotates
                 Image(systemName: "gearshape")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(isHovered ? Theme.gold : Theme.textDim)
-                    .rotationEffect(.degrees(rotationAngle))
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(isHovered ? Theme.gold : Theme.textSecondary)
 
                 Text(currentGear.label)
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(isHovered ? Theme.gold : Theme.textDim)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(isHovered ? Theme.gold : Theme.textSecondary)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
@@ -114,38 +140,6 @@ struct GearDialView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
-        .onHover { isHovered = $0 }
-    }
-}
-
-// MARK: - Nudge Button
-
-struct NudgeButton: View {
-    let icon: String
-    let action: () -> Void
-    let isDisabled: Bool
-
-    @State private var isHovered = false
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(isHovered ? Theme.text : Theme.textDim)
-                .frame(width: 36, height: 36)
-                .background(
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.white.opacity(isHovered ? 0.08 : 0.03))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .strokeBorder(Color.white.opacity(isHovered ? 0.15 : 0.06), lineWidth: 1)
-                        )
-                )
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(PlainButtonStyle())
-        .disabled(isDisabled)
-        .opacity(isDisabled ? 0.3 : 1.0)
         .onHover { isHovered = $0 }
     }
 }
@@ -180,68 +174,66 @@ struct FrameControlsView: View {
     }
 
     var body: some View {
-        VStack(spacing: 10) {
-            // Nudge controls: wide back, tight back, [timecode], tight fwd, wide fwd
+        VStack(spacing: 12) {
+            // Nudge controls with inline labels
             HStack(spacing: 6) {
-                // Wide back (up arrow equivalent)
                 NudgeButton(
                     icon: "chevron.left.2",
+                    label: "\u{2191}\u{2193} \(currentGear.wideLabel)",
                     action: { onNudge(-currentGear.wideAmount) },
                     isDisabled: isRefining || isAtStart
                 )
 
-                // Tight back (left arrow equivalent)
                 NudgeButton(
                     icon: "chevron.left",
+                    label: "\u{2190}\u{2192} \(currentGear.tightLabel)",
                     action: { onNudge(-currentGear.tightAmount) },
                     isDisabled: isRefining || isAtStart
                 )
 
-                // Timecode + gear dial
+                // Timecode + gear toggle
                 VStack(spacing: 4) {
                     Text(Frame.formatTimestamp(displayTimestamp))
-                        .font(.system(size: 14, design: .monospaced).monospacedDigit())
+                        .font(.system(size: 15, design: .monospaced).monospacedDigit())
                         .foregroundStyle(Theme.text)
 
-                    GearDialView(
+                    GearToggleView(
                         currentGear: currentGear,
                         onCycleGear: onCycleGear
                     )
                 }
                 .padding(.horizontal, 8)
 
-                // Tight forward
                 NudgeButton(
                     icon: "chevron.right",
+                    label: "\u{2190}\u{2192} \(currentGear.tightLabel)",
                     action: { onNudge(currentGear.tightAmount) },
                     isDisabled: isRefining || isAtEnd
                 )
 
-                // Wide forward
                 NudgeButton(
                     icon: "chevron.right.2",
+                    label: "\u{2191}\u{2193} \(currentGear.wideLabel)",
                     action: { onNudge(currentGear.wideAmount) },
                     isDisabled: isRefining || isAtEnd
                 )
             }
 
-            // Key hints showing current gear mapping + pick/export
+            // Bottom row: hints + pick/export
             HStack(spacing: 0) {
-                Text("\u{2190}\u{2192} \(currentGear.tightLabel)  \u{00B7}  \u{2191}\u{2193} \(currentGear.wideLabel)  \u{00B7}  esc back")
-                    .font(.system(size: 10))
-                    .foregroundStyle(Theme.textGhost)
-                    .tracking(0.3)
+                Text("esc grid")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.textDim)
 
                 Spacer()
 
                 HStack(spacing: 8) {
-                    // Pick/Unpick button
                     Button(action: onPick) {
                         Text(isPicked ? "unpick" : "pick (space)")
-                            .font(.system(size: 12))
+                            .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(isPicked ? Theme.text : Theme.gold)
                             .padding(.horizontal, 14)
-                            .padding(.vertical, 6)
+                            .padding(.vertical, 7)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 4)
                                     .strokeBorder(pickHovered ? (isPicked ? Theme.text : Theme.gold) : (isPicked ? Theme.textDim : Theme.goldDim), lineWidth: 1)
@@ -256,13 +248,12 @@ struct FrameControlsView: View {
                     .disabled(isRefining)
                     .opacity(isRefining ? 0.5 : 1.0)
 
-                    // Export button
                     Button(action: onExport) {
                         Text("export")
-                            .font(.system(size: 12))
+                            .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(Theme.gold)
                             .padding(.horizontal, 14)
-                            .padding(.vertical, 6)
+                            .padding(.vertical, 7)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 4)
                                     .strokeBorder(exportHovered ? Theme.gold : Theme.goldDim, lineWidth: 1)
@@ -280,7 +271,7 @@ struct FrameControlsView: View {
             }
             .padding(.horizontal, 20)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
         .padding(.bottom, 8)
     }
 }

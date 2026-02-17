@@ -2,7 +2,7 @@
 //  FramePreviewComponents.swift
 //  Still Marker
 //
-//  Extracted from ResultsView.swift for maintainability.
+//  Preview header and frame navigation.
 //
 
 import SwiftUI
@@ -21,10 +21,13 @@ struct FramePreviewHeader: View {
     var body: some View {
         HStack {
             Button(action: onBack) {
-                Text("back")
-                    .font(.system(size: 12))
-                    .foregroundStyle(backHovered ? Theme.text : Theme.textDim)
-                    .underline(backHovered)
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 10, weight: .medium))
+                    Text("grid")
+                        .font(.system(size: 13))
+                }
+                .foregroundStyle(backHovered ? Theme.text : Theme.textSecondary)
             }
             .buttonStyle(PlainButtonStyle())
             .onHover { backHovered = $0 }
@@ -32,15 +35,14 @@ struct FramePreviewHeader: View {
             Spacer()
 
             Text("\(currentFrameIndex + 1) of \(totalFrames)")
-                .font(.system(size: 10))
-                .foregroundStyle(Theme.textGhost)
-                .tracking(0.5)
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.textDim)
 
             Spacer()
 
             Button(action: onExportAll) {
                 Text("export all")
-                    .font(.system(size: 12))
+                    .font(.system(size: 13))
                     .foregroundStyle(exportHovered ? Theme.gold : Theme.goldDim)
                     .underline(exportHovered)
             }
@@ -68,11 +70,11 @@ struct FrameNavigationView: View {
     @State private var nextHovered = false
 
     private var prevButtonOpacity: Double {
-        currentFrameIndex <= 0 ? 0.15 : (prevHovered ? 0.5 : 0.25)
+        currentFrameIndex <= 0 ? 0.15 : (prevHovered ? 0.6 : 0.3)
     }
 
     private var nextButtonOpacity: Double {
-        currentFrameIndex >= totalFrames - 1 ? 0.15 : (nextHovered ? 0.5 : 0.25)
+        currentFrameIndex >= totalFrames - 1 ? 0.15 : (nextHovered ? 0.6 : 0.3)
     }
 
     var body: some View {
@@ -83,7 +85,7 @@ struct FrameNavigationView: View {
 
             Button(action: onPrevious) {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(.white)
                     .padding()
             }
@@ -101,15 +103,6 @@ struct FrameNavigationView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                if isRefining {
-                    Color.black.opacity(0.6)
-                        .overlay(
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .scaleEffect(1.5)
-                        )
-                }
             }
             .layoutPriority(3)
 
@@ -119,7 +112,7 @@ struct FrameNavigationView: View {
 
             Button(action: onNext) {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(.white)
                     .padding()
             }

@@ -85,6 +85,8 @@ struct ResultsView: View {
     @State private var showToast: Bool = false
 
 
+    private static let sharedAVProcessor = AVFoundationProcessor()
+
     private var columns: [GridItem] {
         let count = viewModel.extractedFrames.count
         let minSize: CGFloat
@@ -155,12 +157,13 @@ struct ResultsView: View {
                             LazyVGrid(columns: columns, spacing: 6) {
                                 ForEach(0..<min(visibleFrameCount, viewModel.extractedFrames.count), id: \.self) { index in
                                     let frame = viewModel.extractedFrames[index]
+                                    let isCardHovered = hoveredFrameID == frame.id
                                     Group {
                                         if frame.thumbnail.isValid && !frame.formattedTimestamp.isEmpty {
                                             FrameCard(
                                                 frame: frame,
                                                 isSelected: selectedFrame?.id == frame.id,
-                                                isHovered: hoveredFrameID == frame.id,
+                                                isHovered: isCardHovered,
                                                 isPicked: pickedSourceIndices.contains(index),
                                                 onTap: {
                                                     selectedFrame = frame
@@ -195,11 +198,14 @@ struct ResultsView: View {
                                             .frame(height: 150)
                                         }
                                     }
+                                    .scaleEffect(isCardHovered ? 1.8 : 1.0)
+                                    .zIndex(isCardHovered ? 100 : 0)
+                                    .animation(.easeOut(duration: 0.12), value: isCardHovered)
                                     .id(index)
                                 }
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.top, 12)
+                            .padding(.horizontal, 40)
+                            .padding(.top, 20)
                             .padding(.bottom, 24)
                         }
                         .onChange(of: viewMode) { newMode in
@@ -280,10 +286,13 @@ struct ResultsView: View {
             Button(action: {
                 viewModel.resetToUpload()
             }) {
-                Text("back")
-                    .font(.system(size: 12))
-                    .foregroundStyle(hoveredNewVideoButton ? Theme.text : Theme.textDim)
-                    .underline(hoveredNewVideoButton)
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 10, weight: .medium))
+                    Text("new video")
+                        .font(.system(size: 13))
+                }
+                .foregroundStyle(hoveredNewVideoButton ? Theme.text : Theme.textSecondary)
             }
             .buttonStyle(PlainButtonStyle())
             .onHover { hovering in
@@ -293,9 +302,8 @@ struct ResultsView: View {
             Spacer()
 
             Text(gridDescription)
-                .font(.system(size: 10))
-                .foregroundStyle(Theme.textGhost)
-                .tracking(0.5)
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.textDim)
 
             Spacer()
 
@@ -307,7 +315,7 @@ struct ResultsView: View {
                 }
             }) {
                 Text(pickedFrames.isEmpty ? "export all" : "export \(pickedFrames.count) pick\(pickedFrames.count == 1 ? "" : "s")")
-                    .font(.system(size: 12))
+                    .font(.system(size: 13))
                     .foregroundStyle(hoveredExportAllButton ? Theme.gold : Theme.goldDim)
                     .underline(hoveredExportAllButton)
             }
@@ -745,10 +753,8 @@ extension ResultsView {
         showToastNotification(message: "Unpicked", type: .success)
     }
 
-    private let avProcessor = AVFoundationProcessor()
-
     private func extractFrameAtTimestamp(_ timestamp: Double, from videoURL: URL) async throws -> NSImage {
-        return try await avProcessor.extractSingleFrame(from: videoURL, at: timestamp)
+        return try await ResultsView.sharedAVProcessor.extractSingleFrame(from: videoURL, at: timestamp)
     }
 
     // MARK: - Toast Notification Helpers
