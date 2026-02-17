@@ -86,7 +86,7 @@ struct FrameNavigationView: View {
             Button(action: onPrevious) {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.text)
                     .padding()
             }
             .buttonStyle(PlainButtonStyle())
@@ -113,7 +113,7 @@ struct FrameNavigationView: View {
             Button(action: onNext) {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.text)
                     .padding()
             }
             .buttonStyle(PlainButtonStyle())

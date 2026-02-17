@@ -14,6 +14,12 @@ struct EyeView: View {
     let isDragOver: Bool
     let progress: Double?
 
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var strokeBase: Color {
+        colorScheme == .dark ? .white : .black
+    }
+
     var body: some View {
         Canvas { context, size in
             let w = size.width
@@ -42,7 +48,7 @@ struct EyeView: View {
             )
             context.stroke(
                 eyePath,
-                with: .color(.white.opacity(0.18)),
+                with: .color(strokeBase.opacity(0.18)),
                 lineWidth: 1.5
             )
 
@@ -55,8 +61,8 @@ struct EyeView: View {
                 height: pupilRadius * 2
             )
             let pupilPath = Path(ellipseIn: pupilRect)
-            context.fill(pupilPath, with: .color(.white.opacity(0.08)))
-            context.stroke(pupilPath, with: .color(.white.opacity(0.22)), lineWidth: 1.5)
+            context.fill(pupilPath, with: .color(strokeBase.opacity(0.08)))
+            context.stroke(pupilPath, with: .color(strokeBase.opacity(0.22)), lineWidth: 1.5)
 
             // Catchlight
             let catchR: CGFloat = w * 0.025
@@ -66,7 +72,7 @@ struct EyeView: View {
                 width: catchR * 2,
                 height: catchR * 2
             ))
-            context.fill(catchPath, with: .color(.white.opacity(0.3)))
+            context.fill(catchPath, with: .color(strokeBase.opacity(0.3)))
         }
         .frame(width: 160, height: 80)
         .animation(.easeOut(duration: 0.4), value: isDragOver)
@@ -146,47 +152,30 @@ struct UploadProcessingView: View {
                 }
 
                 Spacer()
-                    .frame(height: 28)
+                    .frame(height: 32)
 
                 Text("Show me what you saw")
-                    .font(.system(size: 18, weight: .regular))
-                    .foregroundStyle(Theme.textSecondary)
+                    .font(.system(size: 26, weight: .medium))
+                    .foregroundStyle(Theme.text)
 
                 Spacer()
-                    .frame(height: 10)
+                    .frame(height: 14)
 
-                Text("Drop a video file here, or click to browse")
+                Text("Drop a video or click to browse")
                     .font(.system(size: 14))
                     .foregroundStyle(Theme.textDim)
 
                 Spacer()
-                    .frame(height: 32)
 
-                // Onboarding: what the app does
-                VStack(spacing: 8) {
-                    Text("Extract perfect stills from your footage.")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.textDim)
-
-                    Text("Browse frames \u{2192} nudge to the exact moment \u{2192} pick \u{2192} export.")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.textDim)
-                }
-
-                Spacer()
-                    .frame(height: 20)
-
-                // Security reassurance
                 HStack(spacing: 6) {
                     Image(systemName: "lock.shield")
-                        .font(.system(size: 12))
+                        .font(.system(size: 11))
                         .foregroundStyle(Theme.textGhost)
-                    Text("Everything stays on your Mac. No uploads, no cloud.")
-                        .font(.system(size: 12))
+                    Text("Everything stays on your Mac")
+                        .font(.system(size: 11))
                         .foregroundStyle(Theme.textGhost)
                 }
-
-                Spacer()
+                .padding(.bottom, 24)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }

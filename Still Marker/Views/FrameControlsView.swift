@@ -93,10 +93,10 @@ struct NudgeButton: View {
             .padding(.vertical, 4)
             .background(
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.white.opacity(isHovered ? 0.08 : 0.03))
+                    .fill(isHovered ? Theme.surfaceHover : Theme.surfaceSubtle)
                     .overlay(
                         RoundedRectangle(cornerRadius: 4)
-                            .strokeBorder(Color.white.opacity(isHovered ? 0.15 : 0.06), lineWidth: 1)
+                            .strokeBorder(isHovered ? Theme.borderHover : Theme.borderSubtle, lineWidth: 1)
                     )
             )
             .contentShape(Rectangle())
@@ -131,10 +131,10 @@ struct GearToggleView: View {
             .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.white.opacity(isHovered ? 0.06 : 0.03))
+                    .fill(isHovered ? Theme.surfaceHover : Theme.surfaceSubtle)
                     .overlay(
                         RoundedRectangle(cornerRadius: 4)
-                            .strokeBorder(isHovered ? Theme.gold.opacity(0.4) : Color.white.opacity(0.08), lineWidth: 1)
+                            .strokeBorder(isHovered ? Theme.gold.opacity(0.4) : Theme.borderSubtle, lineWidth: 1)
                     )
             )
             .contentShape(Rectangle())
@@ -240,7 +240,7 @@ struct FrameControlsView: View {
                             )
                             .background(
                                 RoundedRectangle(cornerRadius: 4)
-                                    .fill(pickHovered ? (isPicked ? Color.white.opacity(0.06) : Theme.gold.opacity(0.08)) : Color.clear)
+                                    .fill(pickHovered ? (isPicked ? Theme.surfaceHover : Theme.gold.opacity(0.08)) : Color.clear)
                             )
                     }
                     .buttonStyle(PlainButtonStyle())

@@ -22,7 +22,7 @@ struct FilmstripView: View {
 
                         Button(action: { onSelect(index) }) {
                             ZStack {
-                                Color.black
+                                Theme.frameFill
 
                                 Image(nsImage: frame.thumbnail)
                                     .resizable()

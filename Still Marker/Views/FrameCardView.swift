@@ -18,8 +18,8 @@ struct FrameCard: View {
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            // Dark pillarbox container — handles any aspect ratio
-            Theme.background
+            // Pillarbox container — handles any aspect ratio
+            Theme.frameFill
 
             Image(nsImage: frame.thumbnail)
                 .resizable()

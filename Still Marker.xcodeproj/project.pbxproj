@@ -24,6 +24,7 @@
 		2A3B6FA72B5A1C2000F2E7A3 /* FramePreviewComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3B6FA62B5A1C2000F2E7A3 /* FramePreviewComponents.swift */; };
 		2A3B6FA92B5A1C3000F2E7A3 /* KeyEventHandling.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3B6FA82B5A1C3000F2E7A3 /* KeyEventHandling.swift */; };
 		2A3B6FAB2B5A1C4000F2E7A3 /* AVFoundationProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3B6FAA2B5A1C4000F2E7A3 /* AVFoundationProcessor.swift */; };
+		2A3B6FAD2B5A1C5000F2E7A3 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3B6FAC2B5A1C5000F2E7A3 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,6 +48,7 @@
 		2A3B6FA62B5A1C2000F2E7A3 /* FramePreviewComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FramePreviewComponents.swift; sourceTree = "<group>"; };
 		2A3B6FA82B5A1C3000F2E7A3 /* KeyEventHandling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyEventHandling.swift; sourceTree = "<group>"; };
 		2A3B6FAA2B5A1C4000F2E7A3 /* AVFoundationProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVFoundationProcessor.swift; sourceTree = "<group>"; };
+		2A3B6FAC2B5A1C5000F2E7A3 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,6 +116,7 @@
 				2A3B6FA42B5A1C1000F2E7A3 /* FrameControlsView.swift */,
 				2A3B6FA62B5A1C2000F2E7A3 /* FramePreviewComponents.swift */,
 				2A3B6FA82B5A1C3000F2E7A3 /* KeyEventHandling.swift */,
+				2A3B6FAC2B5A1C5000F2E7A3 /* SettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -219,6 +222,7 @@
 				2A3B6FA72B5A1C2000F2E7A3 /* FramePreviewComponents.swift in Sources */,
 				2A3B6FA92B5A1C3000F2E7A3 /* KeyEventHandling.swift in Sources */,
 				2A3B6FAB2B5A1C4000F2E7A3 /* AVFoundationProcessor.swift in Sources */,
+				2A3B6FAD2B5A1C5000F2E7A3 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

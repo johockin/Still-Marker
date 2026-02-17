@@ -10,10 +10,17 @@ import AppKit
 
 @main
 struct StillMarkerApp: App {
+    init() {
+        // Apply saved appearance preference before first render to avoid flash
+        let stored = UserDefaults.standard.string(forKey: "appearance") ?? AppAppearance.light.rawValue
+        if let pref = AppAppearance(rawValue: stored) {
+            AppAppearance.apply(pref)
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .background(Theme.background)
                 .onAppear {
                     setDefaultWindowSize()
                 }
@@ -25,18 +32,19 @@ struct StillMarkerApp: App {
                 // Remove default "New" menu item
             }
         }
+
+        Settings {
+            SettingsView()
+        }
     }
-    
+
     private func setDefaultWindowSize() {
-        // Get the main screen size
         guard let screen = NSScreen.main else { return }
         let screenSize = screen.visibleFrame.size
-        
-        // Calculate 85% of screen size
+
         let windowWidth = screenSize.width * 0.85
         let windowHeight = screenSize.height * 0.85
-        
-        // Set window size and center it
+
         if let window = NSApplication.shared.windows.first {
             let newFrame = NSRect(
                 x: (screenSize.width - windowWidth) / 2 + screen.visibleFrame.origin.x,
@@ -45,14 +53,9 @@ struct StillMarkerApp: App {
                 height: windowHeight
             )
             window.setFrame(newFrame, display: true, animate: false)
-            
-            // Set minimum window size to prevent it from getting too small
+
             window.minSize = NSSize(width: 800, height: 600)
-            window.backgroundColor = NSColor(red: 0.10, green: 0.10, blue: 0.11, alpha: 1.0)
-            
-            // Log the screen and window dimensions for debugging
-            print("🖥️ Screen size: \(screenSize.width) x \(screenSize.height)")
-            print("🪟 Window size set to: \(windowWidth) x \(windowHeight) (85% of screen)")
+            window.backgroundColor = .windowBackgroundColor
         }
     }
 }

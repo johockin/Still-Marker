@@ -236,7 +236,7 @@ struct ResultsView: View {
     @ViewBuilder
     private var dropOverlay: some View {
         if isDragOverGrid {
-            Color.black.opacity(0.7)
+            Theme.overlayScrim
                 .overlay(
                     VStack(spacing: 12) {
                         Text("Drop to load new video")
@@ -338,7 +338,7 @@ struct ResultsView: View {
             .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.black.opacity(0.85))
+                    .fill(Theme.toastBackground)
             )
             .padding(.horizontal, 40)
     }

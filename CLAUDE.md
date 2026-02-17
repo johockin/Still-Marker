@@ -4,12 +4,12 @@
 
 ## Current Status
 
-**Phase**: M6 - Browse-Pick-Export workflow + QA fixes complete
-**Next**: User QA of fixes, then Distribution Preparation
+**Phase**: M6 - Light/Dark mode + Settings panel complete
+**Next**: User QA of light mode, then Distribution Preparation
 **Blockers**: None
 
 ### Active Priorities
-1. User QA of accessibility/contrast/UX fixes
+1. User QA of light mode appearance and settings
 2. Distribution preparation (code signing, notarization)
 3. Final QA across macOS versions
 
@@ -51,6 +51,7 @@ Still-Marker/
 │   │   ├── FrameControlsView.swift       # Nudge controls, gear dial, pick/export buttons
 │   │   ├── FramePreviewComponents.swift  # Preview header + navigation
 │   │   ├── KeyEventHandling.swift        # Keyboard event capture (arrows, space, esc)
+│   │   ├── SettingsView.swift            # Preferences window (appearance, about)
 │   │   └── DotPatternView.swift          # Background texture
 │   ├── Resources/
 │   │   └── ffmpeg                    # Bundled FFmpeg binary (retained)
@@ -64,6 +65,20 @@ Still-Marker/
 ---
 
 ## Action Log
+
+### 2026-02-17 - Light/Dark Mode + Settings Panel
+- **Agent**: Claude Opus 4
+- **Action**: Dynamic appearance system with Settings window, upload screen redesign
+- **Files Created**: SettingsView.swift
+- **Files Modified**: Theme.swift (full rewrite), StillMarkerApp.swift, UploadProcessingView.swift, FrameControlsView.swift, ResultsView.swift, FrameCardView.swift, FilmstripView.swift, FramePreviewComponents.swift, project.pbxproj
+- **Details**:
+  - Theme.swift: Replaced static dark-only colors with NSColor semantic system colors (labelColor, windowBackgroundColor) and NSColor(name:dynamicProvider:) for custom colors. Added surfaceHover/surfaceSubtle/borderHover/borderSubtle/overlayScrim/toastBackground/frameFill tokens.
+  - AppAppearance enum: Light/Dark/System with NSApp.appearance control. Default: Light.
+  - Settings window (Cmd+,): Appearance tab with segmented picker, About tab with app ethos (archival stills, speed, local processing, Chris Marker tribute).
+  - Upload screen: "Show me what you saw" hero at 26pt, single instruction line, security note pushed to bottom. Removed verbose onboarding block.
+  - EyeView: Appearance-aware drawing (dark strokes on light, light strokes on dark).
+  - All hardcoded Color.white.opacity/Color.black.opacity replaced with Theme semantic tokens across all view files.
+- **Status**: Complete - awaiting user QA
 
 ### 2026-02-17 - QA Fixes: Accessibility, Contrast, UX Polish
 - **Agent**: Claude Opus 4
