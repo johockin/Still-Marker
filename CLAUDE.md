@@ -427,6 +427,16 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-03 - Session auto-resume failure fix (security-scoped bookmarks)
+- **Agent**: Claude Opus 4.7
+- **Symptom**: After quitting + relaunching, the auto-resume showed an error and the app didn't restore the previous session.
+- **Cause**: We were persisting just the file path. The TCC permission granted by NSOpenPanel (the file picker) is per-process and per-launch — it doesn't survive across app launches. So on relaunch, `getVideoDuration` failed with permission denied for files in TCC-protected folders (Movies, Documents, Downloads).
+- **Fix**: `PersistedSession` now also stores `videoBookmark: Data?` — a security-scoped bookmark generated from the URL. On launch, init resolves the bookmark first (which re-grants TCC access for this new process), and falls back to the path string if no bookmark exists or resolution fails. Bookmark is generated in `startProcessing` and reused across `persistSession` calls (so we don't regenerate on every pick).
+- **Defensive change**: restore failures no longer auto-clear the session — a transient permission glitch shouldn't cause silent state loss. The user lands on the upload screen; the session.json stays and gets refreshed on next file pick.
+- **Files Modified**: `Still Marker/ContentView.swift`, `CLAUDE.md`
+- **One-time migration**: existing session.json files (saved before this fix) have no bookmark → still fall back to path → may fail one more time. After the user re-picks the video, the new session.json includes the bookmark and subsequent restarts work.
+- **Status**: Installed (PID 75117). Awaiting verification.
+
 ### 2026-05-03 - Theater black-screen fix
 - **Agent**: Claude Opus 4.7
 - **Symptom**: Theater showed only metadata + black background; no frame visible.

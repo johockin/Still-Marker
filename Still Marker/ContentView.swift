@@ -14,8 +14,14 @@ import AppKit
 /// On-disk shape for the last-active session. Picks are stored as parallel arrays
 /// of timestamps + the source-grid indices they had at save time, so we can restore
 /// even if the extraction interval changes (timestamp wins, index is a hint).
+///
+/// `videoBookmark` is a security-scoped bookmark that re-grants file access on a
+/// new launch. Without it, files picked from TCC-protected locations (Movies,
+/// Documents, Downloads) can't be re-opened by the relaunched process.
+/// `videoPath` is kept as a fallback / display value.
 struct PersistedSession: Codable {
     var videoPath: String
+    var videoBookmark: Data?
     var pickTimestamps: [Double]
     var pickSourceIndices: [Int]
     var lastViewMode: String          // "grid" | "framePreview"
@@ -188,19 +194,55 @@ class AppViewModel: ObservableObject {
     private let processor = VideoProcessor.shared
 
     init() {
-        // Restore previous session if present and the video file still exists.
-        if let session = sessionStore.load(),
-           FileManager.default.fileExists(atPath: session.videoPath) {
-            pendingRestore = session
-            // Defer to next runloop tick so @StateObject/SwiftUI is fully wired up.
-            let url = URL(fileURLWithPath: session.videoPath)
-            DispatchQueue.main.async { [weak self] in
-                self?.startProcessing(videoURL: url)
+        guard let session = sessionStore.load() else { return }
+
+        // Try the security-scoped bookmark first — it survives across app launches
+        // and re-grants TCC permission for files in protected folders (Movies, etc.).
+        var resolvedURL: URL?
+        if let bookmark = session.videoBookmark {
+            var stale = false
+            if let url = try? URL(
+                resolvingBookmarkData: bookmark,
+                options: [.withSecurityScope],
+                relativeTo: nil,
+                bookmarkDataIsStale: &stale
+            ) {
+                _ = url.startAccessingSecurityScopedResource()
+                if FileManager.default.fileExists(atPath: url.path) {
+                    resolvedURL = url
+                }
             }
-        } else if sessionStore.load() != nil {
-            // Stale session (file moved/deleted) — drop it.
-            sessionStore.clear()
         }
+
+        // Fallback: try the bare path. Works for files in non-protected locations.
+        if resolvedURL == nil, FileManager.default.fileExists(atPath: session.videoPath) {
+            resolvedURL = URL(fileURLWithPath: session.videoPath)
+        }
+
+        guard let url = resolvedURL else {
+            // Couldn't resolve — file moved/deleted/permission lost. Don't auto-clear
+            // the session: the user may move the file back, or grant access again on
+            // next pick. Just drop the auto-restore and let them start fresh.
+            print("Session auto-resume failed for: \(session.videoPath). Starting at upload screen.")
+            return
+        }
+
+        pendingRestore = session
+        // Defer to next runloop tick so @StateObject/SwiftUI is fully wired up.
+        DispatchQueue.main.async { [weak self] in
+            self?.startProcessing(videoURL: url)
+        }
+    }
+
+    /// Build a security-scoped bookmark for a video URL. Returns nil if the URL doesn't
+    /// support bookmarking (rare). For non-sandboxed apps this still works and the
+    /// bookmark re-grants ad-hoc TCC permission across launches.
+    private func makeBookmark(for url: URL) -> Data? {
+        return try? url.bookmarkData(
+            options: [.withSecurityScope],
+            includingResourceValuesForKeys: nil,
+            relativeTo: nil
+        )
     }
 
     func resetToUpload() {
@@ -227,9 +269,10 @@ class AppViewModel: ObservableObject {
 
         // Persist the video URL immediately so a crash / kill mid-extraction can still
         // recover on next launch. Picks start empty; ResultsView will rewrite once frames
-        // are extracted and the user starts working.
+        // are extracted and the user starts working. Bookmark survives across launches.
         let emptySession = PersistedSession(
             videoPath: videoURL.path,
+            videoBookmark: makeBookmark(for: videoURL),
             pickTimestamps: [],
             pickSourceIndices: [],
             lastViewMode: "grid",
@@ -252,8 +295,12 @@ class AppViewModel: ObservableObject {
                         frameIndex: Int,
                         format: String) {
         guard let videoURL = selectedVideoURL else { return }
+        // Reuse the existing bookmark if we already have one (avoid regenerating
+        // every change). Generate one if missing.
+        let existingBookmark = sessionStore.load()?.videoBookmark
         let session = PersistedSession(
             videoPath: videoURL.path,
+            videoBookmark: existingBookmark ?? makeBookmark(for: videoURL),
             pickTimestamps: pickTimestamps,
             pickSourceIndices: pickSourceIndices,
             lastViewMode: viewMode,
@@ -288,10 +335,13 @@ class AppViewModel: ObservableObject {
         }
         theatricalPicks.append(frame)
 
-        // Best-effort persistence so quit-during-theater doesn't lose picks
+        // Best-effort persistence so quit-during-theater doesn't lose picks.
+        // (Currently dormant — picks from theater are disabled in UI.)
         guard let videoURL = selectedVideoURL else { return }
+        let existingBookmark = sessionStore.load()?.videoBookmark
         let session = PersistedSession(
             videoPath: videoURL.path,
+            videoBookmark: existingBookmark ?? makeBookmark(for: videoURL),
             pickTimestamps: theatricalPicks.map { $0.timestamp },
             pickSourceIndices: theatricalPicks.compactMap { pick in
                 extractedFrames.firstIndex(where: { abs($0.timestamp - pick.timestamp) < 0.01 })
