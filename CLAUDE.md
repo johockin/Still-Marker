@@ -427,6 +427,13 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-03 - Instant hover magnification on grid cards
+- **Agent**: Claude Opus 4.7
+- **Symptom**: User said grid card hover-magnification felt "clunky" and wanted it INSTANTANEOUS.
+- **Fix**: Removed `.animation(.easeOut(duration: 0.12), value: isCardHovered)` from the grid card stack. Scale, gold border, and timecode opacity now all change instantly on hover.
+- **Files Modified**: `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 77711).
+
 ### 2026-05-03 - Grid flicker fix when escaping theater mid-extraction
 - **Agent**: Claude Opus 4.7
 - **Symptom**: User pressed Esc to skip from theater to grid mid-extraction. Grid flickered repeatedly as background extraction continued.

@@ -314,7 +314,8 @@ struct ResultsView: View {
                                     }
                                     .scaleEffect(isCardHovered ? 1.8 : 1.0)
                                     .zIndex(isCardHovered ? 100 : 0)
-                                    .animation(.easeOut(duration: 0.12), value: isCardHovered)
+                                    // No animation: hover magnification is instantaneous,
+                                    // matches the "snappy" feel the user wanted.
                                     .id(index)
                                 }
                             }
