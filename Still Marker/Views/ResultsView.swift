@@ -78,6 +78,7 @@ struct ResultsView: View {
 
     // M9 teleprompter: auto-scroll the grid to follow streaming frames during extraction
     @State private var isAutoScrolling: Bool = false
+    @State private var lastTeleprompterScroll: Date = .distantPast
 
     // Drag and drop state
     @State private var isDragOverGrid: Bool = false
@@ -396,12 +397,16 @@ struct ResultsView: View {
                         // .onChange(of: count) for nested-conditional views.
                         .onReceive(viewModel.$extractedFrames) { newFrames in
                             guard isAutoScrolling, !newFrames.isEmpty, viewMode == .grid else { return }
+                            // Hardware video decode can extract frames at 50-200 fps.
+                            // Triggering an animated scrollTo per frame overwhelms SwiftUI
+                            // and produces stepping. Rate-limit to ~2Hz; each scroll runs
+                            // a 600ms animation so successive scrolls overlap into
+                            // continuous motion.
+                            let now = Date()
+                            guard now.timeIntervalSince(lastTeleprompterScroll) > 0.5 else { return }
+                            lastTeleprompterScroll = now
                             DispatchQueue.main.async {
-                                // interactiveSpring preserves velocity across animation
-                                // interruption. As new frames arrive, the in-flight scroll
-                                // smoothly retargets to the new last cell instead of restarting,
-                                // producing continuous motion rather than discrete jerks.
-                                withAnimation(.interactiveSpring(response: 0.9, dampingFraction: 1.0, blendDuration: 0.5)) {
+                                withAnimation(.linear(duration: 0.6)) {
                                     proxy.scrollTo(newFrames.count - 1, anchor: .bottom)
                                 }
                             }

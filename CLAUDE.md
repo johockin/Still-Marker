@@ -427,6 +427,16 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-03 - Rate-limited teleprompter for continuous motion
+- **Agent**: Claude Opus 4.7
+- **Symptom**: Spring-based scroll still felt steppy.
+- **Root cause**: AVFoundation hardware decode extracts frames at 50-200 fps. `.onReceive` fires on every published change. Even with smooth spring, 100 scrollTo calls per second overwhelms SwiftUI — what should be one fluid motion gets shredded into discrete steps.
+- **Fix**: throttle scroll triggers to once every 500ms. Each scroll runs a 600ms linear animation, so successive scrolls overlap by ~100ms — produces continuous gliding motion instead of discrete jumps.
+- **Trade-off**: bottom may lag the latest extracted frame by up to 500ms. Acceptable for teleprompter feel.
+- **If still not enough**: next step is wrapping ScrollView in NSScrollView via NSViewRepresentable for true pixel-level continuous control.
+- **Files Modified**: `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 86706).
+
 ### 2026-05-03 - Spring-smoothed teleprompter scroll
 - **Agent**: Claude Opus 4.7
 - **Symptom**: User said auto-scroll wasn't completely smoothed out — still felt jerky.
