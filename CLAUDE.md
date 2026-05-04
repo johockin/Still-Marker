@@ -427,6 +427,21 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-03 - Teleprompter auto-scroll + opacity-gated grid landing
+- **Agent**: Claude Opus 4.7
+- **User vision**: pressing Esc during extraction should drop into a teleprompter-style auto-scrolling grid that vaguely keeps up with arriving frames. Clicking any still pauses it (and goes to preview as normal). Scrolling back down to the bottom re-engages.
+- **Also**: previous Esc-fix had a "starts at top, then scrolls down" flash. Should land directly on the right scroll position with no flash.
+- **Implementation**:
+  - `@State isAutoScrolling` + `@State gridReadyToShow` added to ResultsView.
+  - `handleEscapeKey`: only sets `scrollToIndex = currentFrameIndex` if extraction is complete. During extraction, leaves it nil — `.onAppear` then takes the auto-scroll path.
+  - New `handleGridLanding(proxy:)` on the ScrollView's `.onAppear`. Three branches: (a) explicit target → smooth land + reveal; (b) extraction in progress, no target → land at bottom + engage auto-scroll + reveal; (c) no target, extraction done → reveal at top.
+  - Grid stays at opacity 0 until scroll has settled (`gridReadyToShow` flips after a 50ms layout settle + 50ms scroll execution + 180ms fade-in). Eliminates the top-then-scroll flash.
+  - `FrameCard.onTap` / `onDoubleTap` now also set `isAutoScrolling = false` so user interaction disengages teleprompter.
+  - Last-cell `.onAppear` / `.onDisappear` track whether the last extracted frame is on screen. While extraction is running, this drives `isAutoScrolling` automatically — engaging when user is at the bottom, disengaging when they scroll up.
+  - `.onChange(of: extractedFrames.count)` inside ScrollViewReader: while `isAutoScrolling`, scrollTo(newCount-1, anchor: .bottom) on each new frame.
+- **Files Modified**: `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 81872).
+
 ### 2026-05-03 - Esc-scroll fix + disable hover-magnify during extraction
 - **Agent**: Claude Opus 4.7
 - **Symptom 1**: Pressing Esc from preview during extraction landed at top of grid instead of the frame the user was on. (Earlier "scroll back" change wasn't actually working in the preview→grid flow.)

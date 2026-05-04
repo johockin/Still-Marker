@@ -76,6 +76,12 @@ struct ResultsView: View {
     @State private var pickedSourceIndices: Set<Int> = []
     @State private var scrollToIndex: Int? = nil
 
+    // M9 teleprompter: auto-scroll the grid to follow streaming frames during extraction
+    @State private var isAutoScrolling: Bool = false
+    // Hide the grid contents until we've landed on the right scroll position (avoids
+    // the "starts at top, then scrolls down" flash when returning from preview).
+    @State private var gridReadyToShow: Bool = false
+
     // Drag and drop state
     @State private var isDragOverGrid: Bool = false
 
@@ -201,6 +207,50 @@ struct ResultsView: View {
         }
     }
 
+    // MARK: - Grid Landing (smooth scroll-to-target on appear)
+
+    /// Called from the ScrollView's .onAppear. Decides where to land:
+    /// - If scrollToIndex is set (Esc-from-preview-after-extraction, or pick-return),
+    ///   scroll to that frame and reveal.
+    /// - If extraction is in progress and no specific target, land at the bottom
+    ///   (latest extracted frame) and engage teleprompter auto-scroll.
+    /// - Otherwise (extraction done, no target), reveal at the natural top.
+    /// In all cases, the grid stays at opacity 0 until the scroll has settled, so
+    /// the user never sees a "starts at top, then scrolls" flash.
+    private func handleGridLanding(proxy: ScrollViewProxy) {
+        let frames = viewModel.extractedFrames
+
+        if let target = scrollToIndex {
+            if target >= visibleFrameCount {
+                visibleFrameCount = min(target + 1, frames.count)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                proxy.scrollTo(target, anchor: .center)
+                scrollToIndex = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    withAnimation(.easeOut(duration: 0.18)) { gridReadyToShow = true }
+                }
+            }
+            return
+        }
+
+        if !viewModel.isExtractionComplete && !frames.isEmpty {
+            let lastIdx = frames.count - 1
+            visibleFrameCount = max(visibleFrameCount, frames.count)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                proxy.scrollTo(lastIdx, anchor: .bottom)
+                isAutoScrolling = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    withAnimation(.easeOut(duration: 0.18)) { gridReadyToShow = true }
+                }
+            }
+            return
+        }
+
+        // No specific target, no auto-scroll case (e.g., extraction completed normally).
+        withAnimation(.easeOut(duration: 0.18)) { gridReadyToShow = true }
+    }
+
     // MARK: - Grid Zoom
 
     private var currentZoom: Double {
@@ -280,6 +330,7 @@ struct ResultsView: View {
                                                 isHovered: isCardHovered,
                                                 isPicked: pickedSourceIndices.contains(index),
                                                 onTap: {
+                                                    isAutoScrolling = false  // user took control
                                                     selectedFrame = frame
                                                     previewFrame = frame
                                                     currentFrameIndex = index
@@ -288,6 +339,7 @@ struct ResultsView: View {
                                                     }
                                                 },
                                                 onDoubleTap: {
+                                                    isAutoScrolling = false
                                                     selectedFrame = frame
                                                     previewFrame = frame
                                                     currentFrameIndex = index
@@ -299,6 +351,22 @@ struct ResultsView: View {
                                                     hoveredFrameID = isHovering ? frame.id : nil
                                                 }
                                             )
+                                            // Last-cell visibility = teleprompter engage signal.
+                                            // While extraction is running, when the LAST extracted
+                                            // frame's card scrolls into view → auto-scroll on.
+                                            // When it scrolls out (user moved up) → off.
+                                            .onAppear {
+                                                if !viewModel.isExtractionComplete,
+                                                   index == viewModel.extractedFrames.count - 1 {
+                                                    isAutoScrolling = true
+                                                }
+                                            }
+                                            .onDisappear {
+                                                if !viewModel.isExtractionComplete,
+                                                   index == viewModel.extractedFrames.count - 1 {
+                                                    isAutoScrolling = false
+                                                }
+                                            }
                                         } else {
                                             VStack {
                                                 Image(systemName: "exclamationmark.triangle")
@@ -324,22 +392,20 @@ struct ResultsView: View {
                             .padding(.top, 20)
                             .padding(.bottom, 24)
                         }
+                        .opacity(gridReadyToShow ? 1 : 0)
                         .onAppear {
-                            // Scroll to a pending target (set by Esc / pick-return).
-                            // .onAppear (not .onChange) because the gridView mounts fresh
-                            // when viewMode flips back from preview, and .onChange only
-                            // fires for changes AFTER the view mounts — missing the one
-                            // that just happened.
-                            guard let target = scrollToIndex else { return }
-                            // Make sure the target frame is rendered before scrolling.
-                            if target >= visibleFrameCount {
-                                visibleFrameCount = min(target + 1, viewModel.extractedFrames.count)
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                                withAnimation(.easeOut(duration: 0.3)) {
-                                    proxy.scrollTo(target, anchor: .center)
-                                }
-                                scrollToIndex = nil
+                            handleGridLanding(proxy: proxy)
+                        }
+                        .onDisappear {
+                            // Reset so next mount fades in cleanly
+                            gridReadyToShow = false
+                        }
+                        .onChange(of: viewModel.extractedFrames.count) { newCount in
+                            // Teleprompter: keep the bottom in view as new frames arrive
+                            guard isAutoScrolling, newCount > 0, viewMode == .grid else { return }
+                            // visibleFrameCount catches up via the outer .onChange already
+                            withAnimation(.easeOut(duration: 0.4)) {
+                                proxy.scrollTo(newCount - 1, anchor: .bottom)
                             }
                         }
                     }
@@ -790,8 +856,14 @@ extension ResultsView {
 
     private func handleEscapeKey() {
         guard !isRefining else { return }
-        // Scroll the grid back to the frame we were just looking at, not the top.
-        scrollToIndex = currentFrameIndex
+        // After extraction: land on the frame the user was looking at.
+        // During extraction: leave the target nil so the grid lands at the latest frame
+        // and engages teleprompter auto-scroll (matches user's "follow new stills" model).
+        if viewModel.isExtractionComplete {
+            scrollToIndex = currentFrameIndex
+        } else {
+            scrollToIndex = nil
+        }
         DispatchQueue.main.async {
             withAnimation(.easeInOut(duration: 0.3)) {
                 resetRefinement()
