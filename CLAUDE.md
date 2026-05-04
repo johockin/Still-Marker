@@ -427,6 +427,19 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-03 - Hover-preview as floating overlay (fix z-index clipping)
+- **Agent**: Claude Opus 4.7
+- **Symptom**: User screenshot showed hover-magnified frame card getting clipped behind cells in adjacent rows. The 1.8x scaled card spilled into other rows but `.zIndex(100)` couldn't lift it above them.
+- **Cause**: SwiftUI's LazyVGrid doesn't respect `zIndex` across rows — each row is its own stacking context. Inline `.scaleEffect` will always be clipped by neighbouring cells.
+- **Fix**: refactored hover preview to render as a **floating overlay above the entire LazyVGrid**:
+  - New `CellFramePreference` (PreferenceKey) for cells to report their position in a shared `gridContent` coordinate space.
+  - Each FrameCard `.background(GeometryReader { ... })` writes its frame into the preference dictionary keyed by `frame.id`.
+  - `.onPreferenceChange` on the ScrollView captures the dictionary into `cellFrames: [UUID: CGRect]` state.
+  - Inside the ScrollView ZStack, when `hoveredFrameID` is set, render an enlarged `Image(nsImage:)` at the captured position with `.offset(x:y:)`. Has gold border + drop shadow for affordance. `.allowsHitTesting(false)` so it doesn't steal hover from the next cell.
+  - Original cards no longer use `.scaleEffect` — they stay at native size. The overlay is the magnified preview.
+- **Files Modified**: `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 87670).
+
 ### 2026-05-03 - Rate-limited teleprompter for continuous motion
 - **Agent**: Claude Opus 4.7
 - **Symptom**: Spring-based scroll still felt steppy.

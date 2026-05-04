@@ -47,6 +47,16 @@ enum ToastType {
     case error
 }
 
+/// Tracks each grid cell's position in a shared coordinate space so the hover-preview
+/// overlay can render at the right spot. SwiftUI's LazyVGrid doesn't respect zIndex
+/// across rows; an inline scaleEffect gets clipped by neighbouring cells.
+struct CellFramePreference: PreferenceKey {
+    static var defaultValue: [UUID: CGRect] = [:]
+    static func reduce(value: inout [UUID: CGRect], nextValue: () -> [UUID: CGRect]) {
+        value.merge(nextValue()) { _, new in new }
+    }
+}
+
 // MARK: - Results View
 
 struct ResultsView: View {
@@ -79,6 +89,11 @@ struct ResultsView: View {
     // M9 teleprompter: auto-scroll the grid to follow streaming frames during extraction
     @State private var isAutoScrolling: Bool = false
     @State private var lastTeleprompterScroll: Date = .distantPast
+
+    // Hover-preview overlay: track each cell's position so we can render the magnified
+    // preview as a top-level overlay (LazyVGrid doesn't respect zIndex across rows,
+    // so inline scaleEffect gets clipped by neighbours).
+    @State private var cellFrames: [UUID: CGRect] = [:]
 
     // Drag and drop state
     @State private var isDragOverGrid: Bool = false
@@ -316,6 +331,7 @@ struct ResultsView: View {
                 } else {
                     ScrollViewReader { proxy in
                         ScrollView {
+                            ZStack(alignment: .topLeading) {
                             LazyVGrid(columns: columns, spacing: 6) {
                                 ForEach(0..<min(visibleFrameCount, viewModel.extractedFrames.count), id: \.self) { index in
                                     let frame = viewModel.extractedFrames[index]
@@ -378,17 +394,51 @@ struct ResultsView: View {
                                             .frame(height: 150)
                                         }
                                     }
-                                    // Disable hover magnification while extraction is still
-                                    // running — keeps the grid layout cheap so streaming
-                                    // frames don't fight with rendering an oversized hover.
-                                    .scaleEffect(isCardHovered && viewModel.isExtractionComplete ? 1.8 : 1.0)
-                                    .zIndex(isCardHovered && viewModel.isExtractionComplete ? 100 : 0)
+                                    // Track this cell's position so the hover-preview overlay
+                                    // can render at the right spot. (Inline scaleEffect was
+                                    // getting clipped by other rows — LazyVGrid doesn't
+                                    // respect zIndex across rows.)
+                                    .background(GeometryReader { geo in
+                                        Color.clear.preference(
+                                            key: CellFramePreference.self,
+                                            value: [frame.id: geo.frame(in: .named("gridContent"))]
+                                        )
+                                    })
                                     .id(index)
                                 }
                             }
                             .padding(.horizontal, 40)
                             .padding(.top, 20)
                             .padding(.bottom, 24)
+
+                            // Floating hover-preview overlay. Renders ABOVE the LazyVGrid
+                            // (in same ZStack) so it isn't clipped by sibling rows.
+                            // Position is read from the cell's reported frame.
+                            if viewModel.isExtractionComplete,
+                               let hoveredID = hoveredFrameID,
+                               let cellRect = cellFrames[hoveredID],
+                               let hoveredFrame = viewModel.extractedFrames.first(where: { $0.id == hoveredID }) {
+                                Image(nsImage: hoveredFrame.thumbnail)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: cellRect.width * 1.8, height: cellRect.height * 1.8)
+                                    .clipShape(RoundedRectangle(cornerRadius: 2))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .strokeBorder(Theme.gold, lineWidth: 1.5)
+                                    )
+                                    .shadow(color: .black.opacity(0.4), radius: 8, x: 0, y: 4)
+                                    .offset(
+                                        x: cellRect.midX - cellRect.width * 0.9,
+                                        y: cellRect.midY - cellRect.height * 0.9
+                                    )
+                                    .allowsHitTesting(false)
+                            }
+                            }
+                            .coordinateSpace(name: "gridContent")
+                        }
+                        .onPreferenceChange(CellFramePreference.self) { newFrames in
+                            cellFrames = newFrames
                         }
                         .onAppear {
                             handleGridLanding(proxy: proxy)
