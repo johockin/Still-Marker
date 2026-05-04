@@ -178,20 +178,6 @@ struct UploadProcessingView: View {
                     .foregroundStyle(Theme.text)
 
                 Spacer()
-                    .frame(height: 10)
-
-                Text("Pull beautiful stills from any video.")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Theme.textSecondary)
-
-                Spacer()
-                    .frame(height: 20)
-
-                Text("Drop a video or click to browse")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Theme.textDim)
-
-                Spacer()
 
                 HStack(spacing: 6) {
                     Image(systemName: "lock.shield")

@@ -38,8 +38,13 @@ enum AppAppearance: String, CaseIterable {
 // MARK: - Theme Colors
 
 enum Theme {
-    // Background
-    static let background = Color(nsColor: .windowBackgroundColor)
+    // Background — warm off-white in light mode (system white was too clinical),
+    // warm dark gray in dark mode (matches the "rainforest lushness" ethos).
+    static let background = Color(nsColor: NSColor(name: nil, dynamicProvider: { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(red: 0.10, green: 0.10, blue: 0.11, alpha: 1.0)
+            : NSColor(red: 0.96, green: 0.95, blue: 0.93, alpha: 1.0)  // warm off-white
+    }))
 
     // Text hierarchy — macOS semantic labels auto-adapt to appearance
     static let text = Color(nsColor: .labelColor)
@@ -105,4 +110,28 @@ enum Theme {
             ? NSColor(red: 0.10, green: 0.10, blue: 0.11, alpha: 1.0)
             : NSColor(red: 0.92, green: 0.92, blue: 0.93, alpha: 1.0)
     }))
+}
+
+// MARK: - Liquid Glass Helpers
+
+extension View {
+    /// Glass treatment for controls: Liquid Glass on macOS 26+, ultraThinMaterial fallback.
+    /// Use `isActive: true` for selected/toggled states (e.g. picked frames).
+    @ViewBuilder
+    func glassButton(isActive: Bool = false, cornerRadius: CGFloat = 10) -> some View {
+        if #available(macOS 26, *) {
+            if isActive {
+                self
+                    .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
+                    .glassEffect(.regular.interactive())
+            } else {
+                self
+                    .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
+                    .glassEffect(.regular)
+            }
+        } else {
+            self
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
+        }
+    }
 }

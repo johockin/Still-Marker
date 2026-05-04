@@ -429,6 +429,25 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-04 - Six UX/visual fixes from live use
+- **Agent**: Claude Opus 4.7
+- **User feedback batch**:
+  1. Light mode white was too white — clinical/blank.
+  2. Frame preview button text didn't fit in their pill widths.
+  3. Yellow border on grid cell hover wasn't nice.
+  4. Press pick / space on a frame booted you back to grid — annoying.
+  5. After return to grid, picked frame wasn't clearly distinguishable.
+  6. Upload screen had three text lines + bottom line = visual fatigue.
+- **Fixes**:
+  1. `Theme.background` light variant is now a warm off-white (`RGB 0.96, 0.95, 0.93`) instead of system `windowBackgroundColor`. Dark variant still warm dark gray.
+  2. Nudge button labels stripped of `↑↓` / `←→` keyboard arrow chars — now just the duration (`1f`, `0.5s`, `2s`, `10s`). Pick button shows just "pick" / "unpick" without `(space)`.
+  3. Removed gold strokeBorder from `FrameCardView` on hover — the floating overlay above the grid IS the hover affordance. Also removed gold border from the floating overlay itself; lifted by stronger drop shadow only.
+  4. `pickCurrentFrame` no longer transitions back to grid after picking. Stays in preview so user can keep navigating + picking. Esc when done.
+  5. Picked-frame indicator on grid card is now a 2pt full-opacity gold border + checkmark badge (`checkmark.circle.fill`, 16pt gold on dark background) top-left. Reads from a glance.
+  6. Upload screen: dropped "Pull beautiful stills from any video." and "Drop a video or click to browse". Just the hero "Show me what you saw" + bottom security note. Less to read, vibe intact.
+- **Files Modified**: `Still Marker/Theme.swift`, `Still Marker/Views/UploadProcessingView.swift`, `Still Marker/Views/FrameCardView.swift`, `Still Marker/Views/FrameControlsView.swift`, `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 4884).
+
 ### 2026-05-04 - Removed hover grow animation (snappy > janky)
 - **Agent**: Claude Opus 4.7
 - **Symptom**: Even after fixing slide-in-from-side, hover grow had "too much movement" / felt jittery.

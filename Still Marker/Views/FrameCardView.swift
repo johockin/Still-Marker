@@ -26,25 +26,20 @@ struct FrameCard: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            // Hover or selected: gold border
-            if isHovered || isSelected {
-                RoundedRectangle(cornerRadius: 2)
-                    .strokeBorder(Theme.gold, lineWidth: 1.5)
-            }
+            // Hover affordance is the floating overlay (rendered above the entire grid),
+            // not a border on the cell itself. The cell stays clean.
 
-            // Picked indicator: gold dot top-left + subtle border
+            // Picked: bold gold border + checkmark badge top-left so it reads from a glance.
             if isPicked {
-                ZStack(alignment: .topLeading) {
-                    if !isHovered && !isSelected {
-                        RoundedRectangle(cornerRadius: 2)
-                            .strokeBorder(Theme.gold.opacity(0.4), lineWidth: 1)
-                    }
-                    Circle()
-                        .fill(Theme.gold)
-                        .frame(width: 8, height: 8)
-                        .padding(5)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                RoundedRectangle(cornerRadius: 2)
+                    .strokeBorder(Theme.gold, lineWidth: 2)
+
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(Theme.gold)
+                    .background(Circle().fill(.black.opacity(0.5)))
+                    .padding(6)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
 
             // Timecode overlay, bottom-right, visible on hover

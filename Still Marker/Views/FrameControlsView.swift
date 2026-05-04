@@ -79,27 +79,19 @@ struct NudgeButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 2) {
+            VStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 20, weight: .medium))
                     .foregroundStyle(isHovered ? Theme.text : Theme.textSecondary)
-                    .frame(width: 36, height: 28)
+                    .frame(width: 48, height: 32)
 
                 Text(label)
-                    .font(.system(size: 9).monospacedDigit())
+                    .font(.system(size: 11).monospacedDigit())
                     .foregroundStyle(Theme.textDim)
             }
-            .frame(width: 44)
-            .padding(.vertical, 4)
-            .background(
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(isHovered ? Theme.surfaceHover : Theme.surfaceSubtle)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 4)
-                            .strokeBorder(isHovered ? Theme.borderHover : Theme.borderSubtle, lineWidth: 1)
-                    )
-            )
-            .contentShape(Rectangle())
+            .frame(width: 64)
+            .padding(.vertical, 6)
+            .glassButton(cornerRadius: 8)
         }
         .buttonStyle(PlainButtonStyle())
         .disabled(isDisabled)
@@ -118,26 +110,18 @@ struct GearToggleView: View {
 
     var body: some View {
         Button(action: onCycleGear) {
-            HStack(spacing: 6) {
+            HStack(spacing: 8) {
                 Image(systemName: "gearshape")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(isHovered ? Theme.gold : Theme.textSecondary)
 
                 Text(currentGear.label)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(isHovered ? Theme.gold : Theme.textSecondary)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(isHovered ? Theme.surfaceHover : Theme.surfaceSubtle)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 4)
-                            .strokeBorder(isHovered ? Theme.gold.opacity(0.4) : Theme.borderSubtle, lineWidth: 1)
-                    )
-            )
-            .contentShape(Rectangle())
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .glassButton(cornerRadius: 8)
         }
         .buttonStyle(PlainButtonStyle())
         .onHover { isHovered = $0 }
@@ -174,27 +158,27 @@ struct FrameControlsView: View {
     }
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             // Nudge controls with inline labels
-            HStack(spacing: 6) {
+            HStack(spacing: 8) {
                 NudgeButton(
                     icon: "chevron.left.2",
-                    label: "\u{2191}\u{2193} \(currentGear.wideLabel)",
+                    label: currentGear.wideLabel,
                     action: { onNudge(-currentGear.wideAmount) },
                     isDisabled: isRefining || isAtStart
                 )
 
                 NudgeButton(
                     icon: "chevron.left",
-                    label: "\u{2190}\u{2192} \(currentGear.tightLabel)",
+                    label: currentGear.tightLabel,
                     action: { onNudge(-currentGear.tightAmount) },
                     isDisabled: isRefining || isAtStart
                 )
 
                 // Timecode + gear toggle
-                VStack(spacing: 4) {
+                VStack(spacing: 6) {
                     Text(Frame.formatTimestamp(displayTimestamp))
-                        .font(.system(size: 15, design: .monospaced).monospacedDigit())
+                        .font(.system(size: 22, design: .monospaced).monospacedDigit())
                         .foregroundStyle(Theme.text)
 
                     GearToggleView(
@@ -202,18 +186,18 @@ struct FrameControlsView: View {
                         onCycleGear: onCycleGear
                     )
                 }
-                .padding(.horizontal, 8)
+                .padding(.horizontal, 12)
 
                 NudgeButton(
                     icon: "chevron.right",
-                    label: "\u{2190}\u{2192} \(currentGear.tightLabel)",
+                    label: currentGear.tightLabel,
                     action: { onNudge(currentGear.tightAmount) },
                     isDisabled: isRefining || isAtEnd
                 )
 
                 NudgeButton(
                     icon: "chevron.right.2",
-                    label: "\u{2191}\u{2193} \(currentGear.wideLabel)",
+                    label: currentGear.wideLabel,
                     action: { onNudge(currentGear.wideAmount) },
                     isDisabled: isRefining || isAtEnd
                 )
@@ -222,26 +206,19 @@ struct FrameControlsView: View {
             // Bottom row: hints + pick/export
             HStack(spacing: 0) {
                 Text("esc grid")
-                    .font(.system(size: 11))
+                    .font(.system(size: 13))
                     .foregroundStyle(Theme.textDim)
 
                 Spacer()
 
-                HStack(spacing: 8) {
+                HStack(spacing: 10) {
                     Button(action: onPick) {
-                        Text(isPicked ? "unpick" : "pick (space)")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(isPicked ? Theme.text : Theme.gold)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 7)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .strokeBorder(pickHovered ? (isPicked ? Theme.text : Theme.gold) : (isPicked ? Theme.textDim : Theme.goldDim), lineWidth: 1)
-                            )
-                            .background(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(pickHovered ? (isPicked ? Theme.surfaceHover : Theme.gold.opacity(0.08)) : Color.clear)
-                            )
+                        Text(isPicked ? "unpick" : "pick")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(pickHovered ? (isPicked ? Theme.text : Theme.gold) : (isPicked ? Theme.textSecondary : Theme.goldDim))
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 10)
+                            .glassButton(isActive: isPicked, cornerRadius: 8)
                     }
                     .buttonStyle(PlainButtonStyle())
                     .onHover { pickHovered = $0 }
@@ -250,18 +227,11 @@ struct FrameControlsView: View {
 
                     Button(action: onExport) {
                         Text("export")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(Theme.gold)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 7)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .strokeBorder(exportHovered ? Theme.gold : Theme.goldDim, lineWidth: 1)
-                            )
-                            .background(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(exportHovered ? Theme.gold.opacity(0.08) : Color.clear)
-                            )
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(exportHovered ? Theme.gold : Theme.goldDim)
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 10)
+                            .glassButton(cornerRadius: 8)
                     }
                     .buttonStyle(PlainButtonStyle())
                     .onHover { exportHovered = $0 }
@@ -269,9 +239,9 @@ struct FrameControlsView: View {
                     .opacity(isRefining ? 0.5 : 1.0)
                 }
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 24)
         }
-        .padding(.vertical, 10)
-        .padding(.bottom, 8)
+        .padding(.vertical, 12)
+        .padding(.bottom, 10)
     }
 }

@@ -408,11 +408,7 @@ struct ResultsView: View {
                                     .aspectRatio(contentMode: .fit)
                                     .frame(width: cellRect.width * 1.8, height: cellRect.height * 1.8)
                                     .clipShape(RoundedRectangle(cornerRadius: 2))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 2)
-                                            .strokeBorder(Theme.gold, lineWidth: 1.5)
-                                    )
-                                    .shadow(color: .black.opacity(0.4), radius: 8, x: 0, y: 4)
+                                    .shadow(color: .black.opacity(0.45), radius: 12, x: 0, y: 6)
                                     .offset(
                                         x: cellRect.midX - cellRect.width * 0.9,
                                         y: cellRect.midY - cellRect.height * 0.9
@@ -997,15 +993,8 @@ extension ResultsView {
 
         showToastNotification(message: "Picked \u{00B7} \(pickedFrames.count) total", type: .success)
 
-        // Set scroll target before transitioning back to grid
-        scrollToIndex = currentFrameIndex
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                resetRefinement()
-                viewMode = .grid
-            }
-        }
+        // Stay in preview after picking — user can keep navigating frames and picking
+        // more without round-tripping through the grid. They press Esc when done.
     }
 
     private func unpickCurrentFrame() {
