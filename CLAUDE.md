@@ -427,6 +427,14 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-03 - Theater black-screen fix
+- **Agent**: Claude Opus 4.7
+- **Symptom**: Theater showed only metadata + black background; no frame visible.
+- **Cause**: Two issues compounded: (1) `Timer.publish(...).autoconnect()` was declared as a `let` property on the View struct, so SwiftUI recreated it on every body re-evaluation. The `.onReceive` re-subscribed each time, resetting the publisher's countdown — net effect: the timer rarely or never fired, so `advance()` never ran. (2) `displayedFrame` was @State, set in `.onAppear` from `extractedFrames.first`. If the .onAppear fired before extractedFrames had anything (or fired in a weird order), displayedFrame stayed nil → black screen.
+- **Fix**: Replaced the Timer publisher with a `.task(id: "theater-pacing")` async loop that's pinned to the view lifecycle and properly cancelled when the view goes away. Removed the @State displayedFrame; now derived purely from `displayedIndex` and `viewModel.extractedFrames` in a computed property — never nil if extractedFrames has anything. Reduced padding (48h / 64v vs 64 / 80) so frame area doesn't collapse on smaller windows.
+- **Files Modified**: `Still Marker/ContentView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 74143). Awaiting user re-test.
+
 ### 2026-05-03 - M9 pacing + grid zoom (live-use feedback)
 - **Agent**: Claude Opus 4.7
 - **User feedback after first real use**: theater was "insanely fast flashing" because frames displayed as fast as extraction produced them; user couldn't pick anything during it. Grid was "not snappy" and frames "need to be larger or zoomable."

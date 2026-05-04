@@ -397,13 +397,18 @@ struct ContentView_Previews: PreviewProvider {
 struct TheaterView: View {
     @ObservedObject var viewModel: AppViewModel
     @State private var displayedIndex: Int = 0
-    @State private var displayedFrame: Frame?
 
     /// Seconds per frame in theater. ~1.5s feels contemplative, not flickery.
     /// Independent of how fast extraction is actually running.
     private static let secondsPerFrame: Double = 1.5
 
-    private let tick = Timer.publish(every: secondsPerFrame, on: .main, in: .common).autoconnect()
+    /// Always derive from state — never store displayed frame separately. Avoids
+    /// race between .onAppear and view-body evaluation.
+    private var displayedFrame: Frame? {
+        let frames = viewModel.extractedFrames
+        guard !frames.isEmpty else { return nil }
+        return frames[min(displayedIndex, frames.count - 1)]
+    }
 
     var body: some View {
         ZStack {
@@ -414,10 +419,11 @@ struct TheaterView: View {
                 Image(nsImage: frame.image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .padding(.horizontal, 64)
-                    .padding(.vertical, 80)
+                    .padding(.horizontal, 48)
+                    .padding(.vertical, 64)
                     .id(frame.id)
                     .transition(.opacity)
+                    .animation(.easeInOut(duration: 0.5), value: frame.id)
             }
 
             // Top row: filename + frame counter
@@ -503,33 +509,32 @@ struct TheaterView: View {
             .frame(width: 0, height: 0)
             .allowsHitTesting(false)
         }
-        .onAppear {
-            // Start at the first available frame
-            displayedIndex = 0
-            displayedFrame = viewModel.extractedFrames.first
+        .task(id: "theater-pacing") {
+            // Drive paced advancement. .task is cancelled automatically when view goes
+            // away (e.g., transition to .results). The id pins the task to this view's
+            // lifecycle so it doesn't get recreated on every body evaluation.
+            await runPacingLoop()
         }
-        .onReceive(tick) { _ in
-            advance()
+    }
+
+    private func runPacingLoop() async {
+        while !Task.isCancelled {
+            try? await Task.sleep(nanoseconds: UInt64(Self.secondsPerFrame * 1_000_000_000))
+            guard !Task.isCancelled else { return }
+            await MainActor.run { advance() }
         }
     }
 
     private func advance() {
-        let frames = viewModel.extractedFrames
-        // Has another frame become available since we last advanced?
-        if displayedIndex + 1 < frames.count {
+        let count = viewModel.extractedFrames.count
+        if displayedIndex + 1 < count {
             displayedIndex += 1
-            withAnimation(.easeInOut(duration: 0.5)) {
-                displayedFrame = frames[displayedIndex]
-            }
-            return
-        }
-        // No more frames available right now. If extraction is complete, we're done —
-        // hand off to the grid.
-        if viewModel.isExtractionComplete && displayedIndex >= frames.count - 1 {
+        } else if viewModel.isExtractionComplete {
+            // Caught up + extraction done. Hand off to grid.
             withAnimation(.easeInOut(duration: 0.4)) {
                 viewModel.state = .results
             }
         }
-        // Otherwise: hold on the current frame, wait for more to be extracted.
+        // Else: hold on current frame, wait for more to be extracted.
     }
 }
