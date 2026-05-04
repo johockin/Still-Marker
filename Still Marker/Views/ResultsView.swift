@@ -87,16 +87,29 @@ struct ResultsView: View {
 
     // Use VideoProcessor.shared (AVFoundation primary, FFmpeg fallback) directly at call sites.
 
-    private var columns: [GridItem] {
+    /// User-controlled grid thumbnail size, persisted in UserDefaults. Adaptive default
+    /// based on frame count if no user preference yet.
+    @AppStorage("gridZoom") private var gridZoom: Double = 0  // 0 = auto / not set
+
+    private static let zoomMin: Double = 100
+    private static let zoomMax: Double = 320
+    private static let zoomStep: Double = 40
+
+    private var effectiveMinSize: CGFloat {
+        if gridZoom > 0 { return CGFloat(gridZoom) }
+        // Auto mode: bigger defaults than before — user feedback was "too small"
         let count = viewModel.extractedFrames.count
-        let minSize: CGFloat
         switch count {
-        case 0..<60:    minSize = 180
-        case 60..<200:  minSize = 120
-        case 200..<400: minSize = 100
-        default:        minSize = 80
+        case 0..<60:    return 220
+        case 60..<200:  return 180
+        case 200..<400: return 140
+        default:        return 120
         }
-        return [GridItem(.adaptive(minimum: minSize, maximum: max(minSize, 260)), spacing: 6)]
+    }
+
+    private var columns: [GridItem] {
+        let minSize = effectiveMinSize
+        return [GridItem(.adaptive(minimum: minSize, maximum: max(minSize, 360)), spacing: 6)]
     }
 
     var body: some View {
@@ -186,6 +199,23 @@ struct ResultsView: View {
         if !restoredPicks.isEmpty {
             showToastNotification(message: "Restored \(restoredPicks.count) pick\(restoredPicks.count == 1 ? "" : "s") from last session", type: .success)
         }
+    }
+
+    // MARK: - Grid Zoom
+
+    private var currentZoom: Double {
+        gridZoom > 0 ? gridZoom : Double(effectiveMinSize)
+    }
+    private var canZoomIn: Bool { currentZoom < Self.zoomMax - 0.5 }
+    private var canZoomOut: Bool { currentZoom > Self.zoomMin + 0.5 }
+
+    private func zoomIn() {
+        let target = min(Self.zoomMax, currentZoom + Self.zoomStep)
+        gridZoom = target
+    }
+    private func zoomOut() {
+        let target = max(Self.zoomMin, currentZoom - Self.zoomStep)
+        gridZoom = target
     }
 
     /// Carry picks made during theatrical extraction into the grid's pickedFrames state.
@@ -390,6 +420,32 @@ struct ResultsView: View {
                 .foregroundStyle(Theme.textDim)
 
             Spacer()
+
+            // Zoom controls. Click - / + to step thumbnail size; persists.
+            HStack(spacing: 4) {
+                Button(action: zoomOut) {
+                    Image(systemName: "minus")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(canZoomOut ? Theme.textSecondary : Theme.textDim.opacity(0.3))
+                        .frame(width: 22, height: 22)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(PlainButtonStyle())
+                .disabled(!canZoomOut)
+                .help("Smaller thumbnails")
+
+                Button(action: zoomIn) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(canZoomIn ? Theme.textSecondary : Theme.textDim.opacity(0.3))
+                        .frame(width: 22, height: 22)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(PlainButtonStyle())
+                .disabled(!canZoomIn)
+                .help("Larger thumbnails")
+            }
+            .padding(.trailing, 12)
 
             Button(action: {
                 if pickedFrames.isEmpty {

@@ -427,6 +427,15 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-03 - M9 pacing + grid zoom (live-use feedback)
+- **Agent**: Claude Opus 4.7
+- **User feedback after first real use**: theater was "insanely fast flashing" because frames displayed as fast as extraction produced them; user couldn't pick anything during it. Grid was "not snappy" and frames "need to be larger or zoomable."
+- **Theater pacing fix**: Decoupled display rate from extraction rate. TheaterView now uses a `Timer.publish(every: 1.5s)` and advances through extracted frames at a contemplative pace regardless of how fast extraction is. Picking from theater removed (key handler is no-op; hint reduced to "Esc to grid"). Hand-off to grid now happens when display catches up to last extracted frame AND `isExtractionComplete` is true — so the user sees the full slideshow even if extraction finishes instantly.
+- **AppViewModel**: added `isExtractionComplete` flag. `processVideo` no longer auto-transitions to `.results`; instead sets the flag and lets TheaterView trigger the transition when ready. Edge case: if 0 frames extracted (failure), still falls through to `.results` after 0.3s so the user isn't stranded.
+- **Grid zoom**: added `−` / `+` buttons to grid header. Backed by `@AppStorage("gridZoom")` so size persists across launches. Range 100–320px in 40px steps. Bumped auto-mode default sizes (220 / 180 / 140 / 120 — was 180 / 120 / 100 / 80).
+- **Files Modified**: `Still Marker/ContentView.swift`, `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 73125). Snappiness fix (lazy full-image loading on preview entry) deferred to next iteration.
+
 ### 2026-05-03 - M9 Phase 1+2: Theatrical extraction (full-bleed view + active picking)
 - **Agent**: Claude Opus 4.7
 - **Action**: Implemented the first two phases of the M9 Theatrical brief.
