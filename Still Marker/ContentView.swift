@@ -176,9 +176,9 @@ class AppViewModel: ObservableObject {
 
     let sessionStore = SessionStore()
 
-    /// One-shot: set on launch if a previous session exists and its video file is still
-    /// accessible. ResultsView reads this once after extraction completes, restores the
-    /// picks, then nils it out.
+    /// One-shot: set in startProcessing if we have persisted picks for the URL the user
+    /// just opened. ResultsView reads this once after extraction completes, restores
+    /// the picks, then nils it out.
     var pendingRestore: PersistedSession?
 
     /// Picks made during theatrical extraction (state == .processing). One-shot:
@@ -191,47 +191,15 @@ class AppViewModel: ObservableObject {
     /// off to the grid. Resets on new video / reset.
     @Published var isExtractionComplete: Bool = false
 
+    /// Tracks the in-flight processing Task so a new startProcessing can cancel it.
+    private var processingTask: Task<Void, Never>?
+
     private let processor = VideoProcessor.shared
 
     init() {
-        guard let session = sessionStore.load() else { return }
-
-        // Try the security-scoped bookmark first — it survives across app launches
-        // and re-grants TCC permission for files in protected folders (Movies, etc.).
-        var resolvedURL: URL?
-        if let bookmark = session.videoBookmark {
-            var stale = false
-            if let url = try? URL(
-                resolvingBookmarkData: bookmark,
-                options: [.withSecurityScope],
-                relativeTo: nil,
-                bookmarkDataIsStale: &stale
-            ) {
-                _ = url.startAccessingSecurityScopedResource()
-                if FileManager.default.fileExists(atPath: url.path) {
-                    resolvedURL = url
-                }
-            }
-        }
-
-        // Fallback: try the bare path. Works for files in non-protected locations.
-        if resolvedURL == nil, FileManager.default.fileExists(atPath: session.videoPath) {
-            resolvedURL = URL(fileURLWithPath: session.videoPath)
-        }
-
-        guard let url = resolvedURL else {
-            // Couldn't resolve — file moved/deleted/permission lost. Don't auto-clear
-            // the session: the user may move the file back, or grant access again on
-            // next pick. Just drop the auto-restore and let them start fresh.
-            print("Session auto-resume failed for: \(session.videoPath). Starting at upload screen.")
-            return
-        }
-
-        pendingRestore = session
-        // Defer to next runloop tick so @StateObject/SwiftUI is fully wired up.
-        DispatchQueue.main.async { [weak self] in
-            self?.startProcessing(videoURL: url)
-        }
+        // No auto-resume on launch. Persisted picks are restored only when the user
+        // explicitly re-opens the same video (drag-drop, file picker, or Finder
+        // Open With). See startProcessing for the per-URL restore check.
     }
 
     /// Build a security-scoped bookmark for a video URL. Returns nil if the URL doesn't
@@ -260,29 +228,40 @@ class AppViewModel: ObservableObject {
     }
 
     func startProcessing(videoURL: URL) {
+        // Cancel any in-flight extraction so two videos can't process in parallel
+        // (e.g., user opens a new file via Finder Open With while one is loading).
+        processingTask?.cancel()
+        processingTask = nil
+
         selectedVideoURL = videoURL
         state = .processing
         processingProgress = 0.0
         processingMessage = "Starting extraction..."
         isExtractionComplete = false
         theatricalPicks = []
+        extractedFrames = []
 
-        // Persist the video URL immediately so a crash / kill mid-extraction can still
-        // recover on next launch. Picks start empty; ResultsView will rewrite once frames
-        // are extracted and the user starts working. Bookmark survives across launches.
-        let emptySession = PersistedSession(
-            videoPath: videoURL.path,
-            videoBookmark: makeBookmark(for: videoURL),
-            pickTimestamps: [],
-            pickSourceIndices: [],
-            lastViewMode: "grid",
-            lastFrameIndex: 0,
-            selectedExportFormat: "PNG (default)",
-            savedAt: Date()
-        )
-        sessionStore.save(emptySession)
+        // If we have a persisted session for THIS exact video, queue its picks for
+        // ResultsView to restore. Otherwise, start fresh and overwrite session.json
+        // with an empty record for this video.
+        if let saved = sessionStore.load(), saved.videoPath == videoURL.path {
+            pendingRestore = saved
+        } else {
+            pendingRestore = nil
+            let session = PersistedSession(
+                videoPath: videoURL.path,
+                videoBookmark: makeBookmark(for: videoURL),
+                pickTimestamps: [],
+                pickSourceIndices: [],
+                lastViewMode: "grid",
+                lastFrameIndex: 0,
+                selectedExportFormat: "PNG (default)",
+                savedAt: Date()
+            )
+            sessionStore.save(session)
+        }
 
-        Task {
+        processingTask = Task {
             await processVideo(videoURL: videoURL)
         }
     }
@@ -412,7 +391,7 @@ class AppViewModel: ObservableObject {
 }
 
 struct ContentView: View {
-    @StateObject private var viewModel = AppViewModel()
+    @ObservedObject var viewModel: AppViewModel
 
     var body: some View {
         switch viewModel.state {
@@ -434,7 +413,7 @@ struct ContentView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        ContentView(viewModel: AppViewModel())
     }
 }
 

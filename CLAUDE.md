@@ -430,6 +430,18 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-04 - Removed auto-resume on launch; wired Open With; cancel in-flight on new video
+- **Agent**: Claude Opus 4.7
+- **Symptom**: User opened a new video via Finder's Open With and the app continued the *previous* video on load AND started loading the new one — both videos processing simultaneously.
+- **Diagnosis**: `AppViewModel.init` auto-restored the last session (calling `startProcessing` for the previous video), AND something in the system delivered the new file URL too. No coordination between the two; both processVideo Tasks ran in parallel. Also no Finder Open With handler explicitly wired.
+- **Fix (three parts)**:
+  1. **No auto-resume on launch.** `AppViewModel.init` is now empty. The user explicitly opens a video each session.
+  2. **Per-video pick restore in startProcessing.** When the user opens a video, if `session.json`'s videoPath matches the URL being opened, queue picks for restore. Otherwise, save a fresh empty session. So picks persist for the most-recently-opened video; open a different video and the previous video's picks are forgotten (single-session model).
+  3. **Cancel in-flight processing.** `startProcessing` now cancels any existing `processingTask` before starting a new one. Tracked via `private var processingTask: Task<Void, Never>?`.
+  4. **Wire `.onOpenURL`.** Hoisted `@StateObject AppViewModel` from ContentView up to StillMarkerApp. Added `.onOpenURL { url in viewModel.startProcessing(videoURL: url) }` on the WindowGroup so Finder Open With (and any URL-based file opens) route through the same controlled path.
+- **Files Modified**: `Still Marker/ContentView.swift`, `Still Marker/StillMarkerApp.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 12515). Persistence now means "picks for the most recent video survive crashes/restarts" — not "auto-load the previous video on launch."
+
 ### 2026-05-04 - Six UX/visual fixes from live use
 - **Agent**: Claude Opus 4.7
 - **User feedback batch**:

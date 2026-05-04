@@ -10,12 +10,20 @@ import AppKit
 
 @main
 struct StillMarkerApp: App {
+    @StateObject private var viewModel = AppViewModel()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(viewModel: viewModel)
                 .onAppear {
                     applyStoredAppearance()
                     setDefaultWindowSize()
+                }
+                // Finder "Open With" -> Still Marker delivers the URL here. Routes
+                // through startProcessing which cancels any in-flight extraction so
+                // we don't end up loading two videos in parallel.
+                .onOpenURL { url in
+                    viewModel.startProcessing(videoURL: url)
                 }
         }
         .windowStyle(.hiddenTitleBar)
