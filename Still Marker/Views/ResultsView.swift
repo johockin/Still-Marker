@@ -393,22 +393,30 @@ struct ResultsView: View {
         savePanel.begin { response in
             if response == .OK, let url = savePanel.url {
                 let selectedFormat = ExportFormat.allCases[formatSelector.indexOfSelectedItem]
-
                 let finalURL = url.deletingPathExtension().appendingPathExtension(selectedFormat.fileExtension)
 
-                if let imageData = convertImageToData(frame.image, format: selectedFormat) {
-                    do {
-                        try imageData.write(to: finalURL)
-                        print("Frame exported successfully to: \(finalURL.path)")
-                        showToastNotification(message: "Exported: \(finalURL.lastPathComponent)", type: .success)
-                    } catch {
-                        print("Failed to save frame: \(error)")
-                        showToastNotification(message: "Export failed: \(error.localizedDescription)", type: .error)
-                    }
-                } else {
-                    showToastNotification(message: "Failed to convert image to \(selectedFormat.rawValue)", type: .error)
-                }
+                Task { await self.exportSingleFrameAtSourceResolution(frame: frame, format: selectedFormat, to: finalURL) }
             }
+        }
+    }
+
+    /// Re-extracts the frame from the source video at native resolution and encodes
+    /// directly to the chosen format. Bypasses the lossy 1080p JPEG preview cache.
+    private func exportSingleFrameAtSourceResolution(frame: Frame, format: ExportFormat, to url: URL) async {
+        guard let videoURL = viewModel.selectedVideoURL else {
+            await MainActor.run { showToastNotification(message: "No source video", type: .error) }
+            return
+        }
+        do {
+            let image = try await ResultsView.sharedAVProcessor.extractSingleFrame(from: videoURL, at: frame.timestamp)
+            guard let data = convertImageToData(image, format: format) else {
+                await MainActor.run { showToastNotification(message: "Failed to encode \(format.rawValue)", type: .error) }
+                return
+            }
+            try data.write(to: url)
+            await MainActor.run { showToastNotification(message: "Exported: \(url.lastPathComponent)", type: .success) }
+        } catch {
+            await MainActor.run { showToastNotification(message: "Export failed: \(error.localizedDescription)", type: .error) }
         }
     }
 
@@ -455,7 +463,12 @@ struct ResultsView: View {
         let count = frames.count
         showToastNotification(message: "Exporting \(count) frame\(count == 1 ? "" : "s")...", type: .success)
 
-        DispatchQueue.global(qos: .userInitiated).async {
+        guard let videoURL = viewModel.selectedVideoURL else {
+            showToastNotification(message: "No source video", type: .error)
+            return
+        }
+
+        Task {
             var successCount = 0
             var errorCount = 0
 
@@ -463,21 +476,23 @@ struct ResultsView: View {
                 let filename = "\(self.generateFilename(for: frame)).\(format.fileExtension)"
                 let fileURL = folderURL.appendingPathComponent(filename)
 
-                if let imageData = self.convertImageToData(frame.image, format: format) {
-                    do {
+                do {
+                    // Re-extract from source at native resolution for true lossless export.
+                    let image = try await ResultsView.sharedAVProcessor.extractSingleFrame(from: videoURL, at: frame.timestamp)
+                    if let imageData = self.convertImageToData(image, format: format) {
                         try imageData.write(to: fileURL)
                         successCount += 1
-                    } catch {
-                        print("Failed to save frame \(frame.formattedTimestamp): \(error)")
+                    } else {
+                        print("Failed to convert frame \(frame.formattedTimestamp) to \(format.rawValue)")
                         errorCount += 1
                     }
-                } else {
-                    print("Failed to convert frame \(frame.formattedTimestamp) to \(format.rawValue)")
+                } catch {
+                    print("Failed to extract/save frame \(frame.formattedTimestamp): \(error)")
                     errorCount += 1
                 }
             }
 
-            DispatchQueue.main.async {
+            await MainActor.run {
                 if errorCount == 0 {
                     self.showToastNotificationLong(message: "Exported \(successCount) frame\(successCount == 1 ? "" : "s") to \(folderURL.lastPathComponent)", type: .success)
                     if clearPicksOnSuccess {

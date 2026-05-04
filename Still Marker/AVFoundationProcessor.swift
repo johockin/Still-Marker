@@ -117,7 +117,9 @@ class AVFoundationProcessor: ObservableObject {
         let asset = AVAsset(url: videoURL)
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
-        generator.maximumSize = CGSize(width: 1920, height: 1080)
+        // .zero = use source resolution. Required for export fidelity (Issue #1).
+        // Nudge previews also benefit from full-res; trade tiny extra decode time for accuracy.
+        generator.maximumSize = .zero
 
         cachedAsset = asset
         cachedGenerator = generator
