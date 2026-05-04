@@ -250,9 +250,10 @@ Severity-ranked. #1 and #2 fixed in this session; the rest are open.
 ### Resolved
 - ✅ **#1 Output capped at 1080p** — Fixed by removing `maximumSize` cap on the cached `AVAssetImageGenerator`. Exports now use source resolution (4K, 6K, 8K — whatever the video has). `AVFoundationProcessor.swift:120`. Batch-extraction generator (thumbnail path) still caps at 1920x1080 for performance — this only affects the on-disk preview cache, not exports.
 - ✅ **#2 PNG/TIFF exports were re-encoded JPEGs** — Fixed by re-extracting from the source video at export time and encoding directly to the chosen format. The lossy 1080p JPEG cache is now used only for in-app preview, never for export. Slight cost: each exported frame triggers one extra decode (a few hundred ms via the cached generator). `ResultsView.swift` `exportSingleFrameAtSourceResolution` + `performBatchExport`.
+- ✅ **#3 Session persistence** — Added `PersistedSession` + `SessionStore` (in `ContentView.swift`). On launch, if `~/Library/Application Support/Still Marker/session.json` exists and the referenced video file is still on disk, the app auto-reloads the video and restores picks (matched by saved index → fallback to closest-by-timestamp within 1.5s). Persists on every change to picks / view mode / frame index / export format via SwiftUI `.onChange` hooks in `ResultsView`. "new video" button explicitly clears the session. Picks are matched by timestamp on restore so a changed extraction interval doesn't lose them.
+- ✅ **#9 (partial) Finder Open With** — Confirmed `Info.plist` already declares `CFBundleDocumentTypes` for the video extensions. Works for the formats AVFoundation actually supports; the broader codec gap is a separate issue.
 
 ### Open — Significant
-- **#3 No persistence across launches.** `AppViewModel.resetToUpload()` blows away picks, refined timestamps, and the loaded video. Quit (or crash) = lost work. No recents list, no auto-save. Highest-impact unfixed issue.
 - **#4 Half-finished M7 redesign.** Only `Theme.swift`, `FrameControlsView`, and `FramePreviewComponents` got the "bigger + glassy" treatment. Upload screen, grid header, filmstrip, frame card, settings still old. Visual inconsistency is more jarring than the original was.
 - **#5 Silent error states.** Unsupported file dropped on the upload screen → `print` only, no toast. (Note: drag onto the *grid* does show a toast — `ResultsView.swift:844`. Upload screen path doesn't.) Frames that fail to extract → silently skipped, leaving gaps. `AVFoundationProcessor.swift:85`, `UploadProcessingView.swift:252`.
 - **#6 Ad-hoc signed only, not notarized.** Cannot be shared with another user without Gatekeeper friction (right-click → Open dance). Unshippable as a product.
@@ -306,6 +307,15 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 ---
 
 ## Action Log
+
+### 2026-05-03 - Session persistence (Issue #3)
+- **Agent**: Claude Opus 4.7
+- **Action**: Added `PersistedSession` (Codable) + `SessionStore` to `ContentView.swift`. `AppViewModel.init` now restores the last session on launch if the referenced video is still accessible. `ResultsView` saves on every pick / view-mode / frame-index / export-format change via `.onChange`. `resetToUpload` clears persisted state so "new video" is a clean slate.
+- **Files Modified**: `Still Marker/ContentView.swift`, `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Storage**: `~/Library/Application Support/Still Marker/session.json` (atomic writes, JSON)
+- **Restore strategy**: timestamps are the source of truth; saved indices are a fast-path hint. Falls back to closest-frame-by-timestamp within 1.5s tolerance. Refined picks whose timestamps don't fall on a grid frame snap to the nearest grid frame on restore (acceptable v1 — user can re-nudge).
+- **Not restored**: view mode + frame index are persisted but landing on grid is enforced for safer "where am I" UX.
+- **Status**: Installed (PID 61139). After this point, reinstalls don't destroy work.
 
 ### 2026-05-03 - Fix #1 (1080p cap) and #2 (lossy export); document remaining issues + codec gap
 - **Agent**: Claude Opus 4.7

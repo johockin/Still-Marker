@@ -127,6 +127,60 @@ struct ResultsView: View {
 
         }
         .navigationTitle("")
+        .onAppear {
+            // Restore picks from a previous session, if one is pending. Runs once per
+            // ResultsView lifetime; consumePendingRestore nils the value out.
+            if let restore = viewModel.consumePendingRestore() {
+                applyRestore(restore)
+            }
+        }
+        .onChange(of: pickedFrames.count) { _ in persistCurrentState() }
+        .onChange(of: viewMode) { _ in persistCurrentState() }
+        .onChange(of: currentFrameIndex) { _ in persistCurrentState() }
+        .onChange(of: selectedExportFormat) { _ in persistCurrentState() }
+    }
+
+    /// Write current view state to disk. Cheap, atomic. Called on every meaningful change.
+    private func persistCurrentState() {
+        let viewModeStr: String = (viewMode == .grid) ? "grid" : "framePreview"
+        viewModel.persistSession(
+            pickTimestamps: pickedFrames.map { $0.timestamp },
+            pickSourceIndices: Array(pickedSourceIndices).sorted(),
+            viewMode: viewModeStr,
+            frameIndex: currentFrameIndex,
+            format: selectedExportFormat.rawValue
+        )
+    }
+
+    /// Re-attach the picks from a restored session by matching timestamps against the
+    /// freshly-extracted frames. Saved index is the fast path; fallback is closest-by-timestamp
+    /// within 1.5s tolerance (covers cases where the extraction interval changed).
+    private func applyRestore(_ restore: PersistedSession) {
+        if let format = ExportFormat.allCases.first(where: { $0.rawValue == restore.selectedExportFormat }) {
+            selectedExportFormat = format
+        }
+        let frames = viewModel.extractedFrames
+        var restoredPicks: [Frame] = []
+        var restoredIndices: Set<Int> = []
+        for (i, ts) in restore.pickTimestamps.enumerated() {
+            let savedIdx = i < restore.pickSourceIndices.count ? restore.pickSourceIndices[i] : -1
+            if savedIdx >= 0, savedIdx < frames.count, abs(frames[savedIdx].timestamp - ts) < 0.5 {
+                restoredPicks.append(frames[savedIdx])
+                restoredIndices.insert(savedIdx)
+                continue
+            }
+            if let (closestIdx, frame) = frames.enumerated().min(by: { abs($0.element.timestamp - ts) < abs($1.element.timestamp - ts) }),
+               abs(frame.timestamp - ts) < 1.5 {
+                restoredPicks.append(frame)
+                restoredIndices.insert(closestIdx)
+            }
+        }
+        pickedFrames = restoredPicks
+        pickedSourceIndices = restoredIndices
+
+        if !restoredPicks.isEmpty {
+            showToastNotification(message: "Restored \(restoredPicks.count) pick\(restoredPicks.count == 1 ? "" : "s") from last session", type: .success)
+        }
     }
 
     private var gridView: some View {

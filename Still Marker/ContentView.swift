@@ -7,6 +7,55 @@
 
 import SwiftUI
 import AVFoundation
+import AppKit
+
+// MARK: - Session Persistence
+
+/// On-disk shape for the last-active session. Picks are stored as parallel arrays
+/// of timestamps + the source-grid indices they had at save time, so we can restore
+/// even if the extraction interval changes (timestamp wins, index is a hint).
+struct PersistedSession: Codable {
+    var videoPath: String
+    var pickTimestamps: [Double]
+    var pickSourceIndices: [Int]
+    var lastViewMode: String          // "grid" | "framePreview"
+    var lastFrameIndex: Int
+    var selectedExportFormat: String  // ExportFormat raw value
+    var savedAt: Date
+}
+
+final class SessionStore {
+    private let fileURL: URL
+
+    init() {
+        let appSupport = FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask)
+            .first!
+        let dir = appSupport.appendingPathComponent("Still Marker", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        self.fileURL = dir.appendingPathComponent("session.json")
+    }
+
+    func save(_ session: PersistedSession) {
+        do {
+            let data = try JSONEncoder().encode(session)
+            try data.write(to: fileURL, options: [.atomic])
+        } catch {
+            print("Session save failed: \(error)")
+        }
+    }
+
+    func load() -> PersistedSession? {
+        guard let data = try? Data(contentsOf: fileURL) else { return nil }
+        return try? JSONDecoder().decode(PersistedSession.self, from: data)
+    }
+
+    func clear() {
+        try? FileManager.default.removeItem(at: fileURL)
+    }
+}
+
+// MARK: - App State
 
 enum AppState {
     case upload
@@ -22,9 +71,32 @@ class AppViewModel: ObservableObject {
     @Published var extractionInterval: Double = 0.0
     @Published var processingProgress: Double = 0.0
     @Published var processingMessage: String = ""
-    
+
+    let sessionStore = SessionStore()
+
+    /// One-shot: set on launch if a previous session exists and its video file is still
+    /// accessible. ResultsView reads this once after extraction completes, restores the
+    /// picks, then nils it out.
+    var pendingRestore: PersistedSession?
+
     private let processor = AVFoundationProcessor()
-    
+
+    init() {
+        // Restore previous session if present and the video file still exists.
+        if let session = sessionStore.load(),
+           FileManager.default.fileExists(atPath: session.videoPath) {
+            pendingRestore = session
+            // Defer to next runloop tick so @StateObject/SwiftUI is fully wired up.
+            let url = URL(fileURLWithPath: session.videoPath)
+            DispatchQueue.main.async { [weak self] in
+                self?.startProcessing(videoURL: url)
+            }
+        } else if sessionStore.load() != nil {
+            // Stale session (file moved/deleted) — drop it.
+            sessionStore.clear()
+        }
+    }
+
     func resetToUpload() {
         state = .upload
         selectedVideoURL = nil
@@ -33,17 +105,47 @@ class AppViewModel: ObservableObject {
         extractionInterval = 0.0
         processingProgress = 0.0
         processingMessage = ""
+        pendingRestore = nil
+        sessionStore.clear()  // intentional reset by user
     }
-    
+
     func startProcessing(videoURL: URL) {
         selectedVideoURL = videoURL
         state = .processing
         processingProgress = 0.0
         processingMessage = "Starting extraction..."
-        
+
         Task {
             await processVideo(videoURL: videoURL)
         }
+    }
+
+    /// Persist the current pick + view state. Called by ResultsView whenever picks,
+    /// view mode, frame index, or export format change. Cheap (small JSON, atomic write).
+    func persistSession(pickTimestamps: [Double],
+                        pickSourceIndices: [Int],
+                        viewMode: String,
+                        frameIndex: Int,
+                        format: String) {
+        guard let videoURL = selectedVideoURL else { return }
+        let session = PersistedSession(
+            videoPath: videoURL.path,
+            pickTimestamps: pickTimestamps,
+            pickSourceIndices: pickSourceIndices,
+            lastViewMode: viewMode,
+            lastFrameIndex: frameIndex,
+            selectedExportFormat: format,
+            savedAt: Date()
+        )
+        sessionStore.save(session)
+    }
+
+    /// Read-and-clear the pending restore. ResultsView calls this exactly once after
+    /// the new video's frames have finished extracting.
+    func consumePendingRestore() -> PersistedSession? {
+        let restore = pendingRestore
+        pendingRestore = nil
+        return restore
     }
 
     @MainActor
