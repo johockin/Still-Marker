@@ -257,6 +257,12 @@ struct UploadProcessingView: View {
     private func handleFileSelection(result: Result<URL, Error>) {
         switch result {
         case .success(let url):
+            // SwiftUI's fileImporter returns a security-scoped URL (it does this even for
+            // non-sandboxed apps for sandbox-compatibility). In-process AVFoundation handles
+            // this transparently, but spawned processes (FFmpeg) can't inherit the scope.
+            // We claim the scope here and intentionally never release it for the lifetime
+            // of the session — small leak, cleared on app quit.
+            _ = url.startAccessingSecurityScopedResource()
             processVideoFile(url: url)
         case .failure(let error):
             print("File selection failed: \(error)")

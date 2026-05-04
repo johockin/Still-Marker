@@ -144,13 +144,14 @@ class FFmpegProcessor: ObservableObject {
                         return
                     }
                 }
-                continuation.resume(throwing: FFmpegError.invalidDuration)
+                print("FFmpeg duration probe failed for \(videoURL.path)\nstderr:\n\(errStr)")
+                continuation.resume(throwing: FFmpegError.invalidDuration(detail: errStr))
             }
 
             DispatchQueue.global().asyncAfter(deadline: .now() + 5.0) {
                 guard state.attemptResume() else { return }
                 process.terminate()
-                continuation.resume(throwing: FFmpegError.invalidDuration)
+                continuation.resume(throwing: FFmpegError.invalidDuration(detail: "ffmpeg timed out after 5s on \(videoURL.lastPathComponent)"))
             }
 
             do {
@@ -272,15 +273,21 @@ class FFmpegProcessor: ObservableObject {
 
 enum FFmpegError: Error, LocalizedError {
     case binaryNotFound
-    case invalidDuration
+    case invalidDuration(detail: String)
     case frameExtractionFailed
-    
+
     var errorDescription: String? {
         switch self {
         case .binaryNotFound:
             return "FFmpeg binary not found in app bundle"
-        case .invalidDuration:
-            return "Could not determine video duration"
+        case .invalidDuration(let detail):
+            // Surface the last bit of FFmpeg stderr — usually the actual reason
+            // (Permission denied, Invalid data, Unknown codec, etc.)
+            let trimmed = detail.trimmingCharacters(in: .whitespacesAndNewlines)
+            let tail = trimmed.suffix(280)
+            return tail.isEmpty
+                ? "Could not determine video duration"
+                : "Could not determine video duration. FFmpeg: \(tail)"
         case .frameExtractionFailed:
             return "Failed to extract frame from video"
         }

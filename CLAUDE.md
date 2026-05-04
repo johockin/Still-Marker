@@ -315,6 +315,14 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-03 - File picker MKV failure: scope claim + better error surfacing
+- **Agent**: Claude Opus 4.7
+- **Symptom**: User reported MKV worked via drag-drop but failed via browse button with "Could not determine video duration."
+- **Diagnosis**: SwiftUI `fileImporter` returns security-scoped URLs (even for non-sandboxed apps). In-process AVFoundation handles scope transparently; spawned FFmpeg subprocess does NOT inherit it. Drag-drop URLs come from `provider.loadItem` and aren't scoped, hence the asymmetry.
+- **Fixes**: (1) `handleFileSelection` now calls `url.startAccessingSecurityScopedResource()` before processing — claim is intentionally never released for the session lifetime (small leak, fine). (2) `FFmpegError.invalidDuration` now carries the FFmpeg stderr as an associated value and surfaces the last 280 chars in the UI message, so future "could not determine duration" failures self-diagnose. (3) Console log of failing path + stderr for terminal debugging.
+- **Files Modified**: `Still Marker/FFmpegProcessor.swift`, `Still Marker/Views/UploadProcessingView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 66304). Awaiting user retest.
+
 ### 2026-05-03 - FFmpeg fallback + file picker fix + early session save (Issue #5 + bug)
 - **Agent**: Claude Opus 4.7
 - **Action**: Restored bundled `ffmpeg` (78MB binary already present at `Still Marker/Resources/ffmpeg`, version 6.1.1 from evermeet.cx) as automatic fallback for formats AVFoundation can't read. Added `VideoProcessor` singleton (in `ContentView.swift`) that probes AVFoundation first and routes to FFmpeg on failure, caching the choice per video URL. Refactored `FFmpegProcessor`: added `getDurationViaFFmpeg` (parses `ffmpeg -i` stderr — no AVFoundation dependency), made `extractSingleFrame` PNG-by-default for lossless export. Wired `AppViewModel` and `ResultsView` to use `VideoProcessor.shared`. Broadened file extension allowlist + `Info.plist` `CFBundleDocumentTypes` to match what FFmpeg actually supports.
