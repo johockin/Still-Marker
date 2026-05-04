@@ -427,6 +427,16 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-03 - Smooth teleprompter + manual override + Esc-disengage
+- **Agent**: Claude Opus 4.7
+- **User feedback after auto-scroll started working**: it's jerky, can't be overridden by scrolling up, and clicking-then-Esc gets re-grabbed to the bottom.
+- **Fixes**:
+  - **Smoother**: streaming scroll changed from `easeOut(0.4s)` to `linear(0.2s)`. Eliminates overlapping easing curves when many frames arrive in quick succession.
+  - **Override via scroll**: brought back FrameCard's last-cell `.onAppear`/`.onDisappear` that toggles `isAutoScrolling` based on whether the latest extracted frame is on screen. Now reliable since opacity gate is gone — cells lay out and fire their lifecycle events properly.
+  - **Esc disengages**: `handleEscapeKey` always sets `scrollToIndex = currentFrameIndex` AND `isAutoScrolling = false`. User explicitly chose to look at this frame; respect that and don't yank them back. They can scroll down to the bottom to re-engage if they want.
+- **Files Modified**: `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 84822).
+
 ### 2026-05-03 - onReceive-based auto-scroll, longer Esc-scroll settle
 - **Agent**: Claude Opus 4.7
 - **Symptom**: Even after stripping opacity gate, both broken — no auto-scroll during extraction, Esc lands "in a different place in the grid" not where the user expects.

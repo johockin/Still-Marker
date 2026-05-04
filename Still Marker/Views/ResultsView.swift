@@ -348,10 +348,22 @@ struct ResultsView: View {
                                                     hoveredFrameID = isHovering ? frame.id : nil
                                                 }
                                             )
-                                            // Cell-level appear/disappear hooks for last-cell-driven
-                                            // auto-scroll engagement removed — was unreliable on LazyVGrid.
-                                            // Auto-scroll is now driven solely by handleGridLanding +
-                                            // .onReceive on the publisher (see below).
+                                            // Last-cell visibility is the override mechanism for
+                                            // teleprompter mode. While extraction is running:
+                                            //   last-cell visible (user at bottom)  → auto-scroll ON
+                                            //   last-cell off-screen (user scrolled up) → auto-scroll OFF
+                                            .onAppear {
+                                                if !viewModel.isExtractionComplete,
+                                                   index == viewModel.extractedFrames.count - 1 {
+                                                    isAutoScrolling = true
+                                                }
+                                            }
+                                            .onDisappear {
+                                                if !viewModel.isExtractionComplete,
+                                                   index == viewModel.extractedFrames.count - 1 {
+                                                    isAutoScrolling = false
+                                                }
+                                            }
                                         } else {
                                             VStack {
                                                 Image(systemName: "exclamationmark.triangle")
@@ -387,7 +399,9 @@ struct ResultsView: View {
                             // Defer one tick so visibleFrameCount has caught up via the outer
                             // .onChange before we try to scroll to the new last cell.
                             DispatchQueue.main.async {
-                                withAnimation(.easeOut(duration: 0.4)) {
+                                // Short linear animation — keeps frames flowing smoothly even
+                                // when many arrive in quick succession (no overlapping easing).
+                                withAnimation(.linear(duration: 0.2)) {
                                     proxy.scrollTo(newFrames.count - 1, anchor: .bottom)
                                 }
                             }
@@ -840,14 +854,11 @@ extension ResultsView {
 
     private func handleEscapeKey() {
         guard !isRefining else { return }
-        // After extraction: land on the frame the user was looking at.
-        // During extraction: leave the target nil so the grid lands at the latest frame
-        // and engages teleprompter auto-scroll (matches user's "follow new stills" model).
-        if viewModel.isExtractionComplete {
-            scrollToIndex = currentFrameIndex
-        } else {
-            scrollToIndex = nil
-        }
+        // Esc from preview ALWAYS lands on the frame the user was looking at, and
+        // disengages teleprompter mode. They explicitly chose to look at this frame;
+        // don't yank them back to the bottom. They can scroll down to re-engage.
+        scrollToIndex = currentFrameIndex
+        isAutoScrolling = false
         DispatchQueue.main.async {
             withAnimation(.easeInOut(duration: 0.3)) {
                 resetRefinement()
