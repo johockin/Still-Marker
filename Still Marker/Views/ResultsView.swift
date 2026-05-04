@@ -86,9 +86,9 @@ struct ResultsView: View {
     @State private var pickedSourceIndices: Set<Int> = []
     @State private var scrollToIndex: Int? = nil
 
-    // M9 teleprompter: auto-scroll the grid to follow streaming frames during extraction
-    @State private var isAutoScrolling: Bool = false
-    @State private var lastTeleprompterScroll: Date = .distantPast
+    // M9 teleprompter auto-scroll removed pending NSScrollView refactor — see CLAUDE.md.
+    // Esc-during-extraction scrolls to the latest extracted frame ONCE and stops there;
+    // user scrolls down to see further new frames.
 
     // Hover-preview overlay: track each cell's position so we can render the magnified
     // preview as a top-level overlay (LazyVGrid doesn't respect zIndex across rows,
@@ -248,9 +248,9 @@ struct ResultsView: View {
         }
 
         if !viewModel.isExtractionComplete && !frames.isEmpty {
-            // Engage auto-scroll synchronously so the .onReceive subscriber will fire
-            // for subsequent frames. Also do an initial scroll to bottom.
-            isAutoScrolling = true
+            // One-shot scroll to the latest extracted frame on entry. Continuous auto-scroll
+            // is deferred (needs NSScrollView). New frames after this point will append below
+            // the viewport and the user scrolls down to follow.
             visibleFrameCount = max(visibleFrameCount, frames.count)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 let lastIdx = max(0, viewModel.extractedFrames.count - 1)
@@ -344,7 +344,6 @@ struct ResultsView: View {
                                                 isHovered: isCardHovered,
                                                 isPicked: pickedSourceIndices.contains(index),
                                                 onTap: {
-                                                    isAutoScrolling = false  // user took control
                                                     selectedFrame = frame
                                                     previewFrame = frame
                                                     currentFrameIndex = index
@@ -353,7 +352,6 @@ struct ResultsView: View {
                                                     }
                                                 },
                                                 onDoubleTap: {
-                                                    isAutoScrolling = false
                                                     selectedFrame = frame
                                                     previewFrame = frame
                                                     currentFrameIndex = index
@@ -365,22 +363,9 @@ struct ResultsView: View {
                                                     hoveredFrameID = isHovering ? frame.id : nil
                                                 }
                                             )
-                                            // Last-cell visibility is the override mechanism for
-                                            // teleprompter mode. While extraction is running:
-                                            //   last-cell visible (user at bottom)  → auto-scroll ON
-                                            //   last-cell off-screen (user scrolled up) → auto-scroll OFF
-                                            .onAppear {
-                                                if !viewModel.isExtractionComplete,
-                                                   index == viewModel.extractedFrames.count - 1 {
-                                                    isAutoScrolling = true
-                                                }
-                                            }
-                                            .onDisappear {
-                                                if !viewModel.isExtractionComplete,
-                                                   index == viewModel.extractedFrames.count - 1 {
-                                                    isAutoScrolling = false
-                                                }
-                                            }
+                                            // Last-cell visibility hooks for auto-scroll engagement removed —
+                                            // continuous teleprompter motion is deferred to a proper NSScrollView
+                                            // refactor (logged in CLAUDE.md roadmap).
                                         } else {
                                             VStack {
                                                 Image(systemName: "exclamationmark.triangle")
@@ -443,24 +428,9 @@ struct ResultsView: View {
                         .onAppear {
                             handleGridLanding(proxy: proxy)
                         }
-                        // Subscribe directly to the @Published value — more reliable than
-                        // .onChange(of: count) for nested-conditional views.
-                        .onReceive(viewModel.$extractedFrames) { newFrames in
-                            guard isAutoScrolling, !newFrames.isEmpty, viewMode == .grid else { return }
-                            // Hardware video decode can extract frames at 50-200 fps.
-                            // Triggering an animated scrollTo per frame overwhelms SwiftUI
-                            // and produces stepping. Rate-limit to ~2Hz; each scroll runs
-                            // a 600ms animation so successive scrolls overlap into
-                            // continuous motion.
-                            let now = Date()
-                            guard now.timeIntervalSince(lastTeleprompterScroll) > 0.5 else { return }
-                            lastTeleprompterScroll = now
-                            DispatchQueue.main.async {
-                                withAnimation(.linear(duration: 0.6)) {
-                                    proxy.scrollTo(newFrames.count - 1, anchor: .bottom)
-                                }
-                            }
-                        }
+                        // Continuous auto-scroll on streaming frames removed pending NSScrollView
+                        // refactor — see roadmap. New frames during extraction simply append at
+                        // the bottom; the user scrolls down to see them.
                     }
                 }
             }
@@ -909,11 +879,7 @@ extension ResultsView {
 
     private func handleEscapeKey() {
         guard !isRefining else { return }
-        // Esc from preview ALWAYS lands on the frame the user was looking at, and
-        // disengages teleprompter mode. They explicitly chose to look at this frame;
-        // don't yank them back to the bottom. They can scroll down to re-engage.
         scrollToIndex = currentFrameIndex
-        isAutoScrolling = false
         DispatchQueue.main.async {
             withAnimation(.easeInOut(duration: 0.3)) {
                 resetRefinement()

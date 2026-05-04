@@ -9,6 +9,7 @@
 **Blockers**: None
 
 ### Roadmap (next up)
+- **NSScrollView-based grid (M9 deferred)** — Replace SwiftUI ScrollView wrapping the LazyVGrid with an NSViewRepresentable around NSScrollView. Required for: (a) truly continuous teleprompter auto-scroll during extraction, (b) bigger fixes for snappiness/responsiveness in the grid. SwiftUI ScrollView's `scrollTo` is anchor-based and produces visible stepping when called repeatedly during streaming updates — multiple SwiftUI-only attempts (linear animation, spring, throttling) all retained the steppy feel. NSScrollView gives pixel-level scroll position control + continuous animation via NSAnimationContext / display-link.
 - **M9 Theatrical extraction experience** — Full brief below. Turns extraction wait into the opening act: frames appear full-bleed as they come through, user can pick them as they pass. See "M9 — Theatrical Extraction Brief" section.
 - **Resume M7 redesign batch 2** — UploadProcessingView, ResultsView header, FilmstripView, FrameCardView, SettingsView, StillMarkerApp (M7 brief lower in this file).
 - **Window size/position persistence** (Issue #10).
@@ -426,6 +427,18 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 ---
 
 ## Action Log
+
+### 2026-05-04 - Auto-scroll teleprompter removed pending NSScrollView refactor
+- **Agent**: Claude Opus 4.7
+- **User feedback**: rate-limited spring scroll still felt steppy. User said "I'd rather not have it at all. Get it right please."
+- **Root realization**: SwiftUI ScrollView's `scrollTo(_:anchor:)` is anchor-based and gives discrete jumps when called repeatedly during streaming updates. Multiple SwiftUI-only attempts — linear animation, interactiveSpring, rate-limited (500ms throttle + 600ms overlap) — all retained the stepping. The fundamental fix needs pixel-level scroll position control, which means wrapping NSScrollView via NSViewRepresentable.
+- **Decision**: removed continuous auto-scroll for now. Logged NSScrollView refactor as a top roadmap item to do properly when there's a focused session for it.
+- **What remains**:
+  - `handleEscapeKey` always sets `scrollToIndex = currentFrameIndex` (works for Esc-from-preview)
+  - `handleGridLanding` still does a one-shot scroll to the latest extracted frame on Esc-during-extraction entry, so user lands where the action is. New frames after that simply append below the viewport — user scrolls down to see them.
+  - Removed: `isAutoScrolling` state, `lastTeleprompterScroll`, `.onReceive` on `viewModel.$extractedFrames` for streaming scroll, cell-level `.onAppear`/`.onDisappear` for last-cell tracking.
+- **Files Modified**: `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 89482). Roadmap entry added.
 
 ### 2026-05-03 - Hover-preview as floating overlay (fix z-index clipping)
 - **Agent**: Claude Opus 4.7
