@@ -427,6 +427,16 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-03 - Filmstrip windowing + Esc scrolls grid back to current frame
+- **Agent**: Claude Opus 4.7
+- **Symptom 1**: Filmstrip in preview view "never changes" — user expected it to show neighbors of the currently-viewed frame.
+- **Cause 1**: Old filmstrip showed all frames in a horizontal scroll view + auto-scrolled to center on currentIndex change. Worked in theory but felt static (long videos = imperceptible scroll, and arrow keys nudge timestamps not navigate frames, so currentIndex didn't change in many user actions).
+- **Fix 1**: Replaced with a windowed filmstrip showing ±4 frames around the current. Always shows neighbors, updates instantly when currentFrameIndex changes. Click any to jump. Lost: scroll-to-far-frames within filmstrip (use grid for that).
+- **Symptom 2**: Pressing Esc from frame preview returned to grid scrolled to the top, losing context of which frame the user was just looking at.
+- **Fix 2**: `handleEscapeKey` now sets `scrollToIndex = currentFrameIndex` before transitioning, mirroring what pick-and-return-to-grid already did.
+- **Files Modified**: `Still Marker/Views/FilmstripView.swift`, `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 78961).
+
 ### 2026-05-03 - Instant hover magnification on grid cards
 - **Agent**: Claude Opus 4.7
 - **Symptom**: User said grid card hover-magnification felt "clunky" and wanted it INSTANTANEOUS.

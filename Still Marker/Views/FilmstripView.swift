@@ -12,42 +12,47 @@ struct FilmstripView: View {
     let currentIndex: Int
     let onSelect: (Int) -> Void
 
+    /// How many neighbors to show on each side of the current frame.
+    private static let neighborsPerSide: Int = 4
+
+    /// Slice of indices to show: a window centered on currentIndex, clamped at edges.
+    private var visibleIndices: [Int] {
+        guard !frames.isEmpty else { return [] }
+        let total = frames.count
+        let windowSize = (Self.neighborsPerSide * 2) + 1
+        let half = Self.neighborsPerSide
+        // Try to center on currentIndex, but clamp at the start/end so the window
+        // doesn't shrink (still shows N frames if there are enough).
+        let rawStart = currentIndex - half
+        let start = max(0, min(rawStart, total - windowSize))
+        let safeStart = max(0, start)
+        let end = min(total, safeStart + windowSize)
+        return Array(safeStart..<end)
+    }
+
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 3) {
-                    ForEach(0..<frames.count, id: \.self) { index in
-                        let frame = frames[index]
-                        let isActive = index == currentIndex
-
-                        Button(action: { onSelect(index) }) {
-                            ZStack {
-                                Theme.frameFill
-
-                                Image(nsImage: frame.thumbnail)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                            }
-                            .frame(width: 80, height: 45)
-                            .clipShape(RoundedRectangle(cornerRadius: 1))
-                            .border(isActive ? Theme.gold : Color.clear, width: 1.5)
-                            .opacity(isActive ? 1.0 : 0.45)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .onHover { hovering in
-                            // hover opacity handled below
-                        }
-                        .id(index)
+        HStack(spacing: 4) {
+            ForEach(visibleIndices, id: \.self) { index in
+                let frame = frames[index]
+                let isActive = index == currentIndex
+                Button(action: { onSelect(index) }) {
+                    ZStack {
+                        Theme.frameFill
+                        Image(nsImage: frame.thumbnail)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
                     }
+                    .frame(width: 80, height: 45)
+                    .clipShape(RoundedRectangle(cornerRadius: 2))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 2)
+                            .strokeBorder(isActive ? Theme.gold : Color.clear, lineWidth: 1.5)
+                    )
+                    .opacity(isActive ? 1.0 : 0.5)
                 }
-                .padding(.horizontal, 12)
-            }
-            .frame(height: 55)
-            .onChange(of: currentIndex) { newIndex in
-                withAnimation(.easeOut(duration: 0.2)) {
-                    proxy.scrollTo(newIndex, anchor: .center)
-                }
+                .buttonStyle(PlainButtonStyle())
             }
         }
+        .frame(height: 55)
     }
 }

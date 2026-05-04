@@ -781,6 +781,8 @@ extension ResultsView {
 
     private func handleEscapeKey() {
         guard !isRefining else { return }
+        // Scroll the grid back to the frame we were just looking at, not the top.
+        scrollToIndex = currentFrameIndex
         DispatchQueue.main.async {
             withAnimation(.easeInOut(duration: 0.3)) {
                 resetRefinement()
