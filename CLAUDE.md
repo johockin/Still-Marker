@@ -321,7 +321,7 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 - **Diagnosis**: SwiftUI `fileImporter` returns security-scoped URLs (even for non-sandboxed apps). In-process AVFoundation handles scope transparently; spawned FFmpeg subprocess does NOT inherit it. Drag-drop URLs come from `provider.loadItem` and aren't scoped, hence the asymmetry.
 - **Fixes**: (1) `handleFileSelection` now calls `url.startAccessingSecurityScopedResource()` before processing — claim is intentionally never released for the session lifetime (small leak, fine). (2) `FFmpegError.invalidDuration` now carries the FFmpeg stderr as an associated value and surfaces the last 280 chars in the UI message, so future "could not determine duration" failures self-diagnose. (3) Console log of failing path + stderr for terminal debugging.
 - **Files Modified**: `Still Marker/FFmpegProcessor.swift`, `Still Marker/Views/UploadProcessingView.swift`, `CLAUDE.md`
-- **Status**: Installed (PID 66304). Awaiting user retest.
+- **Status**: ✅ Confirmed working — user verified MKV browse-button flow.
 
 ### 2026-05-03 - FFmpeg fallback + file picker fix + early session save (Issue #5 + bug)
 - **Agent**: Claude Opus 4.7
