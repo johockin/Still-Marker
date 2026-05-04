@@ -78,9 +78,6 @@ struct ResultsView: View {
 
     // M9 teleprompter: auto-scroll the grid to follow streaming frames during extraction
     @State private var isAutoScrolling: Bool = false
-    // Hide the grid contents until we've landed on the right scroll position (avoids
-    // the "starts at top, then scrolls down" flash when returning from preview).
-    @State private var gridReadyToShow: Bool = false
 
     // Drag and drop state
     @State private var isDragOverGrid: Bool = false
@@ -211,44 +208,51 @@ struct ResultsView: View {
 
     /// Called from the ScrollView's .onAppear. Decides where to land:
     /// - If scrollToIndex is set (Esc-from-preview-after-extraction, or pick-return),
-    ///   scroll to that frame and reveal.
+    ///   scroll to that frame.
     /// - If extraction is in progress and no specific target, land at the bottom
     ///   (latest extracted frame) and engage teleprompter auto-scroll.
-    /// - Otherwise (extraction done, no target), reveal at the natural top.
-    /// In all cases, the grid stays at opacity 0 until the scroll has settled, so
-    /// the user never sees a "starts at top, then scrolls" flash.
+    /// - Otherwise (extraction done, no target), let the grid show naturally.
     private func handleGridLanding(proxy: ScrollViewProxy) {
         let frames = viewModel.extractedFrames
 
         if let target = scrollToIndex {
+            scrollToIndex = nil
+            // Make sure the target frame is included in the ForEach range.
             if target >= visibleFrameCount {
                 visibleFrameCount = min(target + 1, frames.count)
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                proxy.scrollTo(target, anchor: .center)
-                scrollToIndex = nil
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                    withAnimation(.easeOut(duration: 0.18)) { gridReadyToShow = true }
+            // Engage teleprompter mode upfront if extraction is in progress so the
+            // .onChange-driven streaming scroll can fire immediately.
+            // Defer the scroll past two runloop ticks so SwiftUI has time to lay out
+            // the LazyVGrid with the bumped visibleFrameCount.
+            DispatchQueue.main.async {
+                DispatchQueue.main.async {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        proxy.scrollTo(target, anchor: .center)
+                    }
                 }
             }
             return
         }
 
         if !viewModel.isExtractionComplete && !frames.isEmpty {
-            let lastIdx = frames.count - 1
+            // Engage auto-scroll IMMEDIATELY (synchronously). Any new frame extracted
+            // from this point on will trigger the inner .onChange and keep the bottom
+            // in view. We also do an initial scroll to last extracted frame.
+            isAutoScrolling = true
             visibleFrameCount = max(visibleFrameCount, frames.count)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                proxy.scrollTo(lastIdx, anchor: .bottom)
-                isAutoScrolling = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                    withAnimation(.easeOut(duration: 0.18)) { gridReadyToShow = true }
+            DispatchQueue.main.async {
+                DispatchQueue.main.async {
+                    let lastIdx = max(0, viewModel.extractedFrames.count - 1)
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        proxy.scrollTo(lastIdx, anchor: .bottom)
+                    }
                 }
             }
             return
         }
 
-        // No specific target, no auto-scroll case (e.g., extraction completed normally).
-        withAnimation(.easeOut(duration: 0.18)) { gridReadyToShow = true }
+        // No specific target, no auto-scroll case — natural top is fine.
     }
 
     // MARK: - Grid Zoom
@@ -392,18 +396,12 @@ struct ResultsView: View {
                             .padding(.top, 20)
                             .padding(.bottom, 24)
                         }
-                        .opacity(gridReadyToShow ? 1 : 0)
                         .onAppear {
                             handleGridLanding(proxy: proxy)
-                        }
-                        .onDisappear {
-                            // Reset so next mount fades in cleanly
-                            gridReadyToShow = false
                         }
                         .onChange(of: viewModel.extractedFrames.count) { newCount in
                             // Teleprompter: keep the bottom in view as new frames arrive
                             guard isAutoScrolling, newCount > 0, viewMode == .grid else { return }
-                            // visibleFrameCount catches up via the outer .onChange already
                             withAnimation(.easeOut(duration: 0.4)) {
                                 proxy.scrollTo(newCount - 1, anchor: .bottom)
                             }

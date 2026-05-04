@@ -427,6 +427,15 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-03 - Strip opacity gate, fix Esc/auto-scroll actually working
+- **Agent**: Claude Opus 4.7
+- **Symptom**: Both Esc-from-preview and Esc-from-theater landings broken. Esc from preview landed in "highly unclear" position. No auto-scroll engagement during extraction.
+- **Cause**: Opacity gate (`gridReadyToShow`) was masking a real failure: scrollTo on the LazyVGrid was firing before the layout had a chance to incorporate the bumped `visibleFrameCount`, so the target cell wasn't laid out yet, scrollTo silently did nothing, and then opacity flipped to 1 anyway leaving the user at an arbitrary scroll position. The opacity gate hid the symptom and produced confused "where am I" UX.
+- **Fix**: Removed `gridReadyToShow` entirely. Use animated `scrollTo` with a double `DispatchQueue.main.async` (lets SwiftUI process the visibleFrameCount bump and re-render the LazyVGrid before we ask it to scroll). Engage `isAutoScrolling = true` SYNCHRONOUSLY in handleGridLanding so subsequent .onChange triggers fire immediately on streaming frames.
+- **Trade-off**: User briefly sees the grid scrolling from top to target — animated, so it reads as intentional motion rather than a stutter. Less jarring than a misleading silent failure.
+- **Files Modified**: `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 83129).
+
 ### 2026-05-03 - Teleprompter auto-scroll + opacity-gated grid landing
 - **Agent**: Claude Opus 4.7
 - **User vision**: pressing Esc during extraction should drop into a teleprompter-style auto-scrolling grid that vaguely keeps up with arriving frames. Clicking any still pauses it (and goes to preview as normal). Scrolling back down to the bottom re-engages.
