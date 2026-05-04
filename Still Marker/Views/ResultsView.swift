@@ -217,36 +217,29 @@ struct ResultsView: View {
 
         if let target = scrollToIndex {
             scrollToIndex = nil
-            // Make sure the target frame is included in the ForEach range.
             if target >= visibleFrameCount {
                 visibleFrameCount = min(target + 1, frames.count)
             }
-            // Engage teleprompter mode upfront if extraction is in progress so the
-            // .onChange-driven streaming scroll can fire immediately.
-            // Defer the scroll past two runloop ticks so SwiftUI has time to lay out
-            // the LazyVGrid with the bumped visibleFrameCount.
-            DispatchQueue.main.async {
-                DispatchQueue.main.async {
-                    withAnimation(.easeOut(duration: 0.3)) {
-                        proxy.scrollTo(target, anchor: .center)
-                    }
+            // Use a real delay (200ms) so SwiftUI has time to lay out the LazyVGrid
+            // with the bumped visibleFrameCount before scrollTo runs. Animated so
+            // the user reads it as intentional motion.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                withAnimation(.easeInOut(duration: 0.4)) {
+                    proxy.scrollTo(target, anchor: .center)
                 }
             }
             return
         }
 
         if !viewModel.isExtractionComplete && !frames.isEmpty {
-            // Engage auto-scroll IMMEDIATELY (synchronously). Any new frame extracted
-            // from this point on will trigger the inner .onChange and keep the bottom
-            // in view. We also do an initial scroll to last extracted frame.
+            // Engage auto-scroll synchronously so the .onReceive subscriber will fire
+            // for subsequent frames. Also do an initial scroll to bottom.
             isAutoScrolling = true
             visibleFrameCount = max(visibleFrameCount, frames.count)
-            DispatchQueue.main.async {
-                DispatchQueue.main.async {
-                    let lastIdx = max(0, viewModel.extractedFrames.count - 1)
-                    withAnimation(.easeOut(duration: 0.3)) {
-                        proxy.scrollTo(lastIdx, anchor: .bottom)
-                    }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                let lastIdx = max(0, viewModel.extractedFrames.count - 1)
+                withAnimation(.easeInOut(duration: 0.4)) {
+                    proxy.scrollTo(lastIdx, anchor: .bottom)
                 }
             }
             return
@@ -355,22 +348,10 @@ struct ResultsView: View {
                                                     hoveredFrameID = isHovering ? frame.id : nil
                                                 }
                                             )
-                                            // Last-cell visibility = teleprompter engage signal.
-                                            // While extraction is running, when the LAST extracted
-                                            // frame's card scrolls into view → auto-scroll on.
-                                            // When it scrolls out (user moved up) → off.
-                                            .onAppear {
-                                                if !viewModel.isExtractionComplete,
-                                                   index == viewModel.extractedFrames.count - 1 {
-                                                    isAutoScrolling = true
-                                                }
-                                            }
-                                            .onDisappear {
-                                                if !viewModel.isExtractionComplete,
-                                                   index == viewModel.extractedFrames.count - 1 {
-                                                    isAutoScrolling = false
-                                                }
-                                            }
+                                            // Cell-level appear/disappear hooks for last-cell-driven
+                                            // auto-scroll engagement removed — was unreliable on LazyVGrid.
+                                            // Auto-scroll is now driven solely by handleGridLanding +
+                                            // .onReceive on the publisher (see below).
                                         } else {
                                             VStack {
                                                 Image(systemName: "exclamationmark.triangle")
@@ -399,11 +380,16 @@ struct ResultsView: View {
                         .onAppear {
                             handleGridLanding(proxy: proxy)
                         }
-                        .onChange(of: viewModel.extractedFrames.count) { newCount in
-                            // Teleprompter: keep the bottom in view as new frames arrive
-                            guard isAutoScrolling, newCount > 0, viewMode == .grid else { return }
-                            withAnimation(.easeOut(duration: 0.4)) {
-                                proxy.scrollTo(newCount - 1, anchor: .bottom)
+                        // Subscribe directly to the @Published value — more reliable than
+                        // .onChange(of: count) for nested-conditional views.
+                        .onReceive(viewModel.$extractedFrames) { newFrames in
+                            guard isAutoScrolling, !newFrames.isEmpty, viewMode == .grid else { return }
+                            // Defer one tick so visibleFrameCount has caught up via the outer
+                            // .onChange before we try to scroll to the new last cell.
+                            DispatchQueue.main.async {
+                                withAnimation(.easeOut(duration: 0.4)) {
+                                    proxy.scrollTo(newFrames.count - 1, anchor: .bottom)
+                                }
                             }
                         }
                     }

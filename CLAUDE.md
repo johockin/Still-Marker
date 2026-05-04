@@ -427,6 +427,17 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-03 - onReceive-based auto-scroll, longer Esc-scroll settle
+- **Agent**: Claude Opus 4.7
+- **Symptom**: Even after stripping opacity gate, both broken — no auto-scroll during extraction, Esc lands "in a different place in the grid" not where the user expects.
+- **Diagnosis**: `.onChange(of: viewModel.extractedFrames.count)` on a nested-conditional view (LazyVGrid inside isGridReady's else branch) appears unreliable — fires inconsistently during streaming. Also the double-async-defer wasn't enough time for SwiftUI's LazyVGrid layout to settle before scrollTo.
+- **Fix**:
+  - Replaced `.onChange(of: extractedFrames.count)` with `.onReceive(viewModel.$extractedFrames)` — subscribes directly to the @Published publisher. More robust.
+  - Increased Esc-scroll layout-settle delay from ~0ms (double-async) to 200ms. Plenty of time for the LazyVGrid to lay out the bumped visibleFrameCount range.
+  - Removed the unreliable cell-level `.onAppear`/`.onDisappear` that toggled `isAutoScrolling` based on last-cell visibility. Auto-scroll is now engaged only by `handleGridLanding` (initial entry during extraction) and disengaged only by clicking a frame. The "scroll-to-bottom-to-resume" feature is dropped for this iteration — too fragile on LazyVGrid.
+- **Files Modified**: `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 84025).
+
 ### 2026-05-03 - Strip opacity gate, fix Esc/auto-scroll actually working
 - **Agent**: Claude Opus 4.7
 - **Symptom**: Both Esc-from-preview and Esc-from-theater landings broken. Esc from preview landed in "highly unclear" position. No auto-scroll engagement during extraction.
