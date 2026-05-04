@@ -336,9 +336,18 @@ struct ResultsView: View {
                 }
             }
             .background(Color.clear)
-            .onChange(of: viewModel.extractedFrames.count) { _ in
-                isGridReady = false
-                visibleFrameCount = 0
+            .onChange(of: viewModel.extractedFrames.count) { newCount in
+                if newCount == 0 {
+                    // Genuine reset (new video loaded). Restart progressive load.
+                    isGridReady = false
+                    visibleFrameCount = 0
+                } else if isGridReady {
+                    // Background extraction added more frames after we already entered
+                    // the grid (e.g., user pressed Esc to skip the theater). Just keep
+                    // visibleFrameCount in sync — don't reset, don't restart progressive
+                    // load, don't show the spinner. LazyVGrid handles incremental adds.
+                    visibleFrameCount = newCount
+                }
             }
         }
         .onDrop(of: [.fileURL], isTargeted: $isDragOverGrid) { providers in

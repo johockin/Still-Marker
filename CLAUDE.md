@@ -427,6 +427,14 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-03 - Grid flicker fix when escaping theater mid-extraction
+- **Agent**: Claude Opus 4.7
+- **Symptom**: User pressed Esc to skip from theater to grid mid-extraction. Grid flickered repeatedly as background extraction continued.
+- **Cause**: `.onChange(of: extractedFrames.count)` in ResultsView reset `isGridReady = false` and `visibleFrameCount = 0` on every count change. Background extraction adds frames one by one → reset → spinner → progressive load restart → repeat. A flicker storm.
+- **Fix**: `.onChange` now distinguishes a true reset (count → 0, e.g., new video loaded) from incremental growth. On growth (when grid is already ready), just bump `visibleFrameCount` to match — no reset, no spinner, no progressive-load restart. LazyVGrid handles the incremental adds gracefully.
+- **Files Modified**: `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 76453).
+
 ### 2026-05-03 - Session auto-resume failure fix (security-scoped bookmarks)
 - **Agent**: Claude Opus 4.7
 - **Symptom**: After quitting + relaunching, the auto-resume showed an error and the app didn't restore the previous session.
