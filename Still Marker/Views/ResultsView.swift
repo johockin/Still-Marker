@@ -312,10 +312,11 @@ struct ResultsView: View {
                                             .frame(height: 150)
                                         }
                                     }
-                                    .scaleEffect(isCardHovered ? 1.8 : 1.0)
-                                    .zIndex(isCardHovered ? 100 : 0)
-                                    // No animation: hover magnification is instantaneous,
-                                    // matches the "snappy" feel the user wanted.
+                                    // Disable hover magnification while extraction is still
+                                    // running — keeps the grid layout cheap so streaming
+                                    // frames don't fight with rendering an oversized hover.
+                                    .scaleEffect(isCardHovered && viewModel.isExtractionComplete ? 1.8 : 1.0)
+                                    .zIndex(isCardHovered && viewModel.isExtractionComplete ? 100 : 0)
                                     .id(index)
                                 }
                             }
@@ -323,14 +324,22 @@ struct ResultsView: View {
                             .padding(.top, 20)
                             .padding(.bottom, 24)
                         }
-                        .onChange(of: viewMode) { newMode in
-                            if newMode == .grid, let target = scrollToIndex {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                    withAnimation(.easeOut(duration: 0.3)) {
-                                        proxy.scrollTo(target, anchor: .center)
-                                    }
-                                    scrollToIndex = nil
+                        .onAppear {
+                            // Scroll to a pending target (set by Esc / pick-return).
+                            // .onAppear (not .onChange) because the gridView mounts fresh
+                            // when viewMode flips back from preview, and .onChange only
+                            // fires for changes AFTER the view mounts — missing the one
+                            // that just happened.
+                            guard let target = scrollToIndex else { return }
+                            // Make sure the target frame is rendered before scrolling.
+                            if target >= visibleFrameCount {
+                                visibleFrameCount = min(target + 1, viewModel.extractedFrames.count)
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                withAnimation(.easeOut(duration: 0.3)) {
+                                    proxy.scrollTo(target, anchor: .center)
                                 }
+                                scrollToIndex = nil
                             }
                         }
                     }

@@ -427,6 +427,16 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-03 - Esc-scroll fix + disable hover-magnify during extraction
+- **Agent**: Claude Opus 4.7
+- **Symptom 1**: Pressing Esc from preview during extraction landed at top of grid instead of the frame the user was on. (Earlier "scroll back" change wasn't actually working in the preview→grid flow.)
+- **Cause 1**: The scroll-to-target logic was wired via `.onChange(of: viewMode)` *inside* the LazyVGrid. But when viewMode flips back to .grid from preview, the LazyVGrid mounts fresh and `.onChange` only fires for changes *after* mount — silently missing the one that just happened. ALSO during background extraction the visibleFrameCount might not include the target frame, so even a working scrollTo would have nothing to land on.
+- **Fix 1**: Replaced `.onChange` with `.onAppear` on the ScrollView. Fires on every fresh mount of the gridView. Also bumps `visibleFrameCount` to ensure the target is rendered before scrolling.
+- **Symptom 2 / user request**: Hover magnification during extraction made the app feel sluggish.
+- **Fix 2**: `scaleEffect` and `zIndex` for hover now also gate on `viewModel.isExtractionComplete`. While extraction is running, hover does nothing extra (no 1.8x scale). Once extraction finishes, hover-to-magnify works as before.
+- **Files Modified**: `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 80353).
+
 ### 2026-05-03 - Filmstrip windowing + Esc scrolls grid back to current frame
 - **Agent**: Claude Opus 4.7
 - **Symptom 1**: Filmstrip in preview view "never changes" — user expected it to show neighbors of the currently-viewed frame.
