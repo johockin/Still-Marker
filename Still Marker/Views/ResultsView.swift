@@ -418,9 +418,16 @@ struct ResultsView: View {
                                         y: cellRect.midY - cellRect.height * 0.9
                                     )
                                     .allowsHitTesting(false)
+                                    // .id ties the view's identity to the hovered frame.
+                                    // When hover moves cell-to-cell, old view scales out + new
+                                    // view scales in (instead of jumping). When hover starts,
+                                    // grows from 1.0x → 1.8x. When ends, shrinks back.
+                                    .id(hoveredID)
+                                    .transition(.scale(scale: 1.0 / 1.8, anchor: .center).combined(with: .opacity))
                             }
                             }
                             .coordinateSpace(name: "gridContent")
+                            .animation(.easeOut(duration: 0.18), value: hoveredFrameID)
                         }
                         .onPreferenceChange(CellFramePreference.self) { newFrames in
                             cellFrames = newFrames

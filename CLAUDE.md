@@ -428,6 +428,13 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-04 - Smooth grow animation for hover preview overlay
+- **Agent**: Claude Opus 4.7
+- **Symptom**: hover preview overlay popped into existence at full size — felt jittery, especially when moving between cells.
+- **Fix**: added `.id(hoveredID)` + `.transition(.scale(scale: 1/1.8, anchor: .center).combined(with: .opacity))` to the overlay, plus `.animation(.easeOut(duration: 0.18), value: hoveredFrameID)` on the parent ZStack. Now: first hover grows from cell size → 1.8x; cell-to-cell hover transitions out the old preview while transitioning in the new one (no jump); leaving the grid shrinks the preview back into the cell.
+- **Files Modified**: `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 97871).
+
 ### 2026-05-04 - Auto-scroll teleprompter removed pending NSScrollView refactor
 - **Agent**: Claude Opus 4.7
 - **User feedback**: rate-limited spring scroll still felt steppy. User said "I'd rather not have it at all. Get it right please."
