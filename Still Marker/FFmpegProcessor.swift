@@ -38,14 +38,15 @@ class FFmpegProcessor: ObservableObject {
     }
     
     /// Extract frames from video using adaptive interval selection
-    func extractFrames(from videoURL: URL, 
+    func extractFrames(from videoURL: URL,
                       offset: Double = 0.0,
                       progressCallback: @escaping (Double, String) -> Void) async throws -> [Frame] {
-        
+
         progressCallback(0.1, "Analyzing video...")
-        
-        // Get video duration first
-        let duration = try await getVideoDuration(videoURL: videoURL)
+
+        // Get video duration via FFmpeg (no AVFoundation dependency — this matters
+        // when we're the fallback for formats AVFoundation can't read at all).
+        let duration = try await getDurationViaFFmpeg(videoURL: videoURL)
         progressCallback(0.2, "Video duration: \(Int(duration))s")
         
         // Calculate intelligent interval based on video duration
@@ -76,7 +77,8 @@ class FFmpegProcessor: ObservableObject {
                 try await extractSingleFrame(
                     from: videoURL,
                     at: timestamp,
-                    outputURL: frameURL
+                    outputURL: frameURL,
+                    lossless: false   // batch thumbnail intermediate; export uses PNG re-extract path
                 )
                 
                 // Load the extracted frame ONLY to create thumbnail
@@ -111,20 +113,55 @@ class FFmpegProcessor: ObservableObject {
         return frames
     }
     
-    /// Get video duration using AVFoundation (fast!)
-    private func getVideoDuration(videoURL: URL) async throws -> Double {
-        let asset = AVAsset(url: videoURL)
-        
-        do {
-            let duration = try await asset.load(.duration)
-            let durationSeconds = CMTimeGetSeconds(duration)
-            return durationSeconds
-        } catch {
-            print("❌ Failed to get duration via AVFoundation: \(error)")
-            throw FFmpegError.invalidDuration
+    /// Get video duration via FFmpeg by parsing stderr from `ffmpeg -i file`.
+    /// Always works for any container FFmpeg recognizes — does not depend on AVFoundation.
+    /// FFmpeg exits with status 1 when no output is specified; that's expected.
+    func getDurationViaFFmpeg(videoURL: URL) async throws -> Double {
+        let process = Process()
+        let stderrPipe = Pipe()
+
+        process.executableURL = URL(fileURLWithPath: ffmpegPath)
+        process.arguments = ["-i", videoURL.path]
+        process.standardOutput = Pipe()
+        process.standardError = stderrPipe
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let state = ResumeState()
+
+            process.terminationHandler = { _ in
+                guard state.attemptResume() else { return }
+
+                let errData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+                let errStr = String(data: errData, encoding: .utf8) ?? ""
+
+                // Look for "Duration: HH:MM:SS.cc"
+                if let range = errStr.range(of: #"Duration:\s+(\d+):(\d+):(\d+\.\d+)"#, options: .regularExpression) {
+                    let match = String(errStr[range])
+                        .replacingOccurrences(of: "Duration:", with: "")
+                        .trimmingCharacters(in: .whitespaces)
+                    if let duration = self.parseDurationString(match) {
+                        continuation.resume(returning: duration)
+                        return
+                    }
+                }
+                continuation.resume(throwing: FFmpegError.invalidDuration)
+            }
+
+            DispatchQueue.global().asyncAfter(deadline: .now() + 5.0) {
+                guard state.attemptResume() else { return }
+                process.terminate()
+                continuation.resume(throwing: FFmpegError.invalidDuration)
+            }
+
+            do {
+                try process.run()
+            } catch {
+                guard state.attemptResume() else { return }
+                continuation.resume(throwing: error)
+            }
         }
     }
-    
+
     /// Parse duration string in format HH:MM:SS.ss to seconds
     private func parseDurationString(_ durationString: String) -> Double? {
         let components = durationString.split(separator: ":")
@@ -139,18 +176,24 @@ class FFmpegProcessor: ObservableObject {
         return hours * 3600 + minutes * 60 + seconds
     }
     
-    /// Extract a single frame at specified timestamp
-    func extractSingleFrame(from videoURL: URL, at timestamp: Double, outputURL: URL) async throws {
+    /// Extract a single frame at specified timestamp.
+    /// `lossless: true` writes PNG (used for export). `lossless: false` writes high-quality
+    /// JPEG (used for the in-batch thumbnail intermediate, where the JPEG is decoded to a
+    /// thumbnail and then deleted).
+    func extractSingleFrame(from videoURL: URL, at timestamp: Double, outputURL: URL, lossless: Bool = true) async throws {
         let process = Process()
         let errorPipe = Pipe()
-        
+
         process.executableURL = URL(fileURLWithPath: ffmpegPath)
+        let codecArgs: [String] = lossless
+            ? ["-c:v", "png"]              // lossless PNG; matches output URL ending in .png
+            : ["-q:v", "2"]                // high-quality JPEG (scale 2-31, lower is better)
         process.arguments = [
-            "-ss", String(timestamp),  // FAST SEEK: Move -ss BEFORE -i for direct seeking
+            "-ss", String(timestamp),       // FAST SEEK: -ss before -i = direct seek
             "-i", videoURL.path,
-            "-vframes", "1",
-            "-q:v", "2", // High quality JPEG (scale 2-31, lower is better)
-            "-y", // Overwrite output file
+            "-vframes", "1"
+        ] + codecArgs + [
+            "-y",                           // Overwrite output file
             outputURL.path
         ]
         process.standardOutput = Pipe() // Suppress output

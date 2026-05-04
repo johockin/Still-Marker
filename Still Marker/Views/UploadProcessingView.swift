@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 
 // MARK: - Eye View
 
@@ -134,10 +135,28 @@ struct UploadProcessingView: View {
         .animation(.easeInOut(duration: 0.3), value: viewModel.state)
         .fileImporter(
             isPresented: $showingFilePicker,
-            allowedContentTypes: [.movie, .video],
+            allowedContentTypes: Self.pickerContentTypes,
             onCompletion: handleFileSelection
         )
     }
+
+    /// File-picker UTType list. `.audiovisualContent` covers AVFoundation-native types;
+    /// the explicit extensions add formats Apple doesn't have a registered UTI for
+    /// (MKV, MXF, WebM, etc.) so they're not greyed out in the picker.
+    private static let pickerContentTypes: [UTType] = {
+        var types: [UTType] = [.audiovisualContent, .movie, .video]
+        let extraExtensions = [
+            "mkv", "webm", "mxf", "mts", "m2ts",
+            "ts", "vob", "ogv", "ogg", "asf", "flv", "wmv", "avi",
+            "mpg", "mpeg", "3gp", "3g2"
+        ]
+        for ext in extraExtensions {
+            if let t = UTType(filenameExtension: ext) {
+                types.append(t)
+            }
+        }
+        return types
+    }()
 
     private var uploadView: some View {
         Button(action: { showingFilePicker = true }) {
@@ -245,11 +264,23 @@ struct UploadProcessingView: View {
     }
 
     private func processVideoFile(url: URL) {
-        let allowedExtensions = ["mp4", "mov", "avi", "mkv", "m4v", "wmv", "flv", "webm"]
+        // VideoProcessor handles AVFoundation (mov/mp4/m4v native) + FFmpeg fallback for the rest.
+        // Camera RAW formats (r3d/ari/braw/crm) need vendor SDKs; we don't pretend to support them.
+        let supportedExtensions: Set<String> = [
+            "mp4", "mov", "m4v",                 // AVFoundation native
+            "mkv", "webm",                        // Matroska (FFmpeg)
+            "avi", "wmv", "flv", "asf",          // older containers (FFmpeg)
+            "mts", "m2ts",                        // AVCHD (FFmpeg/AVFoundation)
+            "mxf",                                // broadcast (FFmpeg)
+            "ts", "mpg", "mpeg", "vob",          // MPEG-TS / DVD (FFmpeg)
+            "ogv", "ogg",                         // Theora (FFmpeg)
+            "3gp", "3g2"                          // mobile (FFmpeg/AVFoundation)
+        ]
         let fileExtension = url.pathExtension.lowercased()
 
-        guard allowedExtensions.contains(fileExtension) else {
-            print("Unsupported file type")
+        guard supportedExtensions.contains(fileExtension) else {
+            print("Unsupported file type: .\(fileExtension)")
+            // TODO: surface a toast here once the upload screen has a toast surface
             return
         }
 

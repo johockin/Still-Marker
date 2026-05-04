@@ -31,12 +31,23 @@
             <array>
                 <string>mp4</string>
                 <string>mov</string>
-                <string>avi</string>
-                <string>mkv</string>
                 <string>m4v</string>
+                <string>mkv</string>
+                <string>webm</string>
+                <string>avi</string>
                 <string>wmv</string>
                 <string>flv</string>
-                <string>webm</string>
+                <string>asf</string>
+                <string>mts</string>
+                <string>m2ts</string>
+                <string>mxf</string>
+                <string>ts</string>
+                <string>mpg</string>
+                <string>mpeg</string>
+                <string>vob</string>
+                <string>ogv</string>
+                <string>3gp</string>
+                <string>3g2</string>
             </array>
             <key>CFBundleTypeName</key>
             <string>Video Files</string>

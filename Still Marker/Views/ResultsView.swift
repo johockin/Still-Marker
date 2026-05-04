@@ -85,7 +85,7 @@ struct ResultsView: View {
     @State private var showToast: Bool = false
 
 
-    private static let sharedAVProcessor = AVFoundationProcessor()
+    // Use VideoProcessor.shared (AVFoundation primary, FFmpeg fallback) directly at call sites.
 
     private var columns: [GridItem] {
         let count = viewModel.extractedFrames.count
@@ -462,7 +462,7 @@ struct ResultsView: View {
             return
         }
         do {
-            let image = try await ResultsView.sharedAVProcessor.extractSingleFrame(from: videoURL, at: frame.timestamp)
+            let image = try await VideoProcessor.shared.extractSingleFrame(from: videoURL, at: frame.timestamp)
             guard let data = convertImageToData(image, format: format) else {
                 await MainActor.run { showToastNotification(message: "Failed to encode \(format.rawValue)", type: .error) }
                 return
@@ -532,7 +532,7 @@ struct ResultsView: View {
 
                 do {
                     // Re-extract from source at native resolution for true lossless export.
-                    let image = try await ResultsView.sharedAVProcessor.extractSingleFrame(from: videoURL, at: frame.timestamp)
+                    let image = try await VideoProcessor.shared.extractSingleFrame(from: videoURL, at: frame.timestamp)
                     if let imageData = self.convertImageToData(image, format: format) {
                         try imageData.write(to: fileURL)
                         successCount += 1
@@ -823,7 +823,7 @@ extension ResultsView {
     }
 
     private func extractFrameAtTimestamp(_ timestamp: Double, from videoURL: URL) async throws -> NSImage {
-        return try await ResultsView.sharedAVProcessor.extractSingleFrame(from: videoURL, at: timestamp)
+        return try await VideoProcessor.shared.extractSingleFrame(from: videoURL, at: timestamp)
     }
 
     // MARK: - Toast Notification Helpers
@@ -906,10 +906,21 @@ extension ResultsView {
     }
 
     private func processVideoFile(url: URL) {
-        let allowedExtensions = ["mp4", "mov", "avi", "mkv", "m4v", "wmv", "flv", "webm"]
+        // VideoProcessor handles AVFoundation (mov/mp4/m4v native) + FFmpeg fallback for the rest.
+        // Camera RAW formats need vendor SDKs and aren't supported.
+        let supportedExtensions: Set<String> = [
+            "mp4", "mov", "m4v",
+            "mkv", "webm",
+            "avi", "wmv", "flv", "asf",
+            "mts", "m2ts",
+            "mxf",
+            "ts", "mpg", "mpeg", "vob",
+            "ogv", "ogg",
+            "3gp", "3g2"
+        ]
         let fileExtension = url.pathExtension.lowercased()
 
-        guard allowedExtensions.contains(fileExtension) else {
+        guard supportedExtensions.contains(fileExtension) else {
             showToastNotification(message: "Unsupported file type: .\(fileExtension)", type: .error)
             return
         }

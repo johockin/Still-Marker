@@ -4,9 +4,15 @@
 
 ## Current Status
 
-**Phase**: M7 - UI Redesign ("Earned Presence")
-**Next**: QA batch 1 (Theme + Controls), then implement remaining 6 files
-**Blockers**: Awaiting user QA of batch 1
+**Phase**: M8 — Stability & Pro Polish (in flight)
+**Next**: Theatrical extraction view (see Roadmap), then resume M7 redesign on remaining 6 files
+**Blockers**: None
+
+### Roadmap (next up)
+- **Theatrical extraction experience** — While frames are being extracted, show them at full size as they come through (instead of just the eye + progress bar). Make extraction itself feel like part of the craft, a slow reveal of the film's images. User idea, 2026-05-03.
+- **Resume M7 redesign batch 2** — UploadProcessingView, ResultsView header, FilmstripView, FrameCardView, SettingsView, StillMarkerApp (M7 brief lower in this file).
+- **Window size/position persistence** (Issue #10).
+- **Error/failure UX** (Issue #5 partial — codec coverage is solved, but extraction-time per-frame failures still print silently).
 
 ### Active Priorities
 1. **UI Redesign** — Batch 1 (Theme.swift, FrameControlsView, FramePreviewComponents) implemented, awaiting QA
@@ -250,8 +256,9 @@ Severity-ranked. #1 and #2 fixed in this session; the rest are open.
 ### Resolved
 - ✅ **#1 Output capped at 1080p** — Fixed by removing `maximumSize` cap on the cached `AVAssetImageGenerator`. Exports now use source resolution (4K, 6K, 8K — whatever the video has). `AVFoundationProcessor.swift:120`. Batch-extraction generator (thumbnail path) still caps at 1920x1080 for performance — this only affects the on-disk preview cache, not exports.
 - ✅ **#2 PNG/TIFF exports were re-encoded JPEGs** — Fixed by re-extracting from the source video at export time and encoding directly to the chosen format. The lossy 1080p JPEG cache is now used only for in-app preview, never for export. Slight cost: each exported frame triggers one extra decode (a few hundred ms via the cached generator). `ResultsView.swift` `exportSingleFrameAtSourceResolution` + `performBatchExport`.
-- ✅ **#3 Session persistence** — Added `PersistedSession` + `SessionStore` (in `ContentView.swift`). On launch, if `~/Library/Application Support/Still Marker/session.json` exists and the referenced video file is still on disk, the app auto-reloads the video and restores picks (matched by saved index → fallback to closest-by-timestamp within 1.5s). Persists on every change to picks / view mode / frame index / export format via SwiftUI `.onChange` hooks in `ResultsView`. "new video" button explicitly clears the session. Picks are matched by timestamp on restore so a changed extraction interval doesn't lose them.
-- ✅ **#9 (partial) Finder Open With** — Confirmed `Info.plist` already declares `CFBundleDocumentTypes` for the video extensions. Works for the formats AVFoundation actually supports; the broader codec gap is a separate issue.
+- ✅ **#3 Session persistence** — Added `PersistedSession` + `SessionStore` (in `ContentView.swift`). On launch, if `~/Library/Application Support/Still Marker/session.json` exists and the referenced video file is still on disk, the app auto-reloads the video and restores picks (matched by saved index → fallback to closest-by-timestamp within 1.5s). Persists the video URL the moment `startProcessing` is called, so a crash mid-extraction still recovers. Persists picks / view mode / frame index / export format via SwiftUI `.onChange` hooks in `ResultsView`. "new video" button explicitly clears the session.
+- ✅ **#5 Codec coverage (was: silent error states)** — Bundled FFmpeg restored as automatic fallback. New `VideoProcessor` singleton (in `ContentView.swift`) tries AVFoundation first; on failure (MKV, MXF, older AVI codecs, WebM, etc.) routes through the bundled `ffmpeg` binary. Backend choice is cached per video URL. `FFmpegProcessor.getDurationViaFFmpeg` removes the AVFoundation dependency from the FFmpeg path. File allowlist broadened to match what's actually supported. Camera RAW (R3D, ARRI, BRAW, CRM) still unsupported — needs vendor SDKs, no FOSS option.
+- ✅ **#9 (partial) Finder Open With** — `Info.plist` `CFBundleDocumentTypes` updated to advertise the broader format set now that FFmpeg fallback is in place.
 
 ### Open — Significant
 - **#4 Half-finished M7 redesign.** Only `Theme.swift`, `FrameControlsView`, and `FramePreviewComponents` got the "bigger + glassy" treatment. Upload screen, grid header, filmstrip, frame card, settings still old. Visual inconsistency is more jarring than the original was.
@@ -307,6 +314,16 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 ---
 
 ## Action Log
+
+### 2026-05-03 - FFmpeg fallback + file picker fix + early session save (Issue #5 + bug)
+- **Agent**: Claude Opus 4.7
+- **Action**: Restored bundled `ffmpeg` (78MB binary already present at `Still Marker/Resources/ffmpeg`, version 6.1.1 from evermeet.cx) as automatic fallback for formats AVFoundation can't read. Added `VideoProcessor` singleton (in `ContentView.swift`) that probes AVFoundation first and routes to FFmpeg on failure, caching the choice per video URL. Refactored `FFmpegProcessor`: added `getDurationViaFFmpeg` (parses `ffmpeg -i` stderr — no AVFoundation dependency), made `extractSingleFrame` PNG-by-default for lossless export. Wired `AppViewModel` and `ResultsView` to use `VideoProcessor.shared`. Broadened file extension allowlist + `Info.plist` `CFBundleDocumentTypes` to match what FFmpeg actually supports.
+- **File picker fix**: The file-importer's `allowedContentTypes: [.movie, .video]` was filtering out MKV/MXF/WebM (no registered UTI). Replaced with a curated list including dynamic UTTypes from filename extensions, so the picker no longer greys these out.
+- **Early session save**: `AppViewModel.startProcessing` now writes the session.json the moment a video is loaded (before extraction completes), so a crash/kill mid-extraction still recovers the video reference on next launch.
+- **Same-bundle-ID gotcha (lesson learned)**: Killing the Debug build (PID 63813) also terminated the user's `/Applications` app (PID 61139) because both share `com.johnnyhockin.stillmarker`. macOS LaunchServices treats them as the same app instance. New rule in SOP: don't run dev build alongside installed app. Saved as feedback memory.
+- **Files Modified**: `Still Marker/FFmpegProcessor.swift`, `Still Marker/ContentView.swift`, `Still Marker/Views/ResultsView.swift`, `Still Marker/Views/UploadProcessingView.swift`, `Still Marker/Info.plist`, `CLAUDE.md`
+- **Trade-off**: App size goes from ~1.3MB to ~80MB (the FFmpeg binary). Acceptable for "won't ever fail." FFmpeg binary is GPL-build (–enable-gpl/libx264/libx265); fine for personal install, would need swap to LGPL-only build for redistribution.
+- **Status**: Installed (PID 65001). User confirmed MKV now works via drag-drop AND via file picker.
 
 ### 2026-05-03 - Session persistence (Issue #3)
 - **Agent**: Claude Opus 4.7
