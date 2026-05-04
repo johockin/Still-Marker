@@ -427,6 +427,14 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-03 - Spring-smoothed teleprompter scroll
+- **Agent**: Claude Opus 4.7
+- **Symptom**: User said auto-scroll wasn't completely smoothed out — still felt jerky.
+- **Cause**: each new frame triggered a fresh `withAnimation(.linear(0.2))`. SwiftUI cancels the in-flight animation and starts a new one — visible jerk between discrete linear animations even though each is short.
+- **Fix**: switched to `withAnimation(.interactiveSpring(response: 0.9, dampingFraction: 1.0, blendDuration: 0.5))`. interactiveSpring is purpose-built for fluid retargeting — preserves velocity across interruption and smoothly blends animations. New frames arriving mid-flight just redirect the spring to the new target instead of restarting from zero.
+- **Files Modified**: `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 85591). If still jerky, next lever is rate-limiting scroll calls; heavier option is custom continuous-offset scroll via NSViewRepresentable.
+
 ### 2026-05-03 - Smooth teleprompter + manual override + Esc-disengage
 - **Agent**: Claude Opus 4.7
 - **User feedback after auto-scroll started working**: it's jerky, can't be overridden by scrolling up, and clicking-then-Esc gets re-grabbed to the bottom.

@@ -396,12 +396,12 @@ struct ResultsView: View {
                         // .onChange(of: count) for nested-conditional views.
                         .onReceive(viewModel.$extractedFrames) { newFrames in
                             guard isAutoScrolling, !newFrames.isEmpty, viewMode == .grid else { return }
-                            // Defer one tick so visibleFrameCount has caught up via the outer
-                            // .onChange before we try to scroll to the new last cell.
                             DispatchQueue.main.async {
-                                // Short linear animation — keeps frames flowing smoothly even
-                                // when many arrive in quick succession (no overlapping easing).
-                                withAnimation(.linear(duration: 0.2)) {
+                                // interactiveSpring preserves velocity across animation
+                                // interruption. As new frames arrive, the in-flight scroll
+                                // smoothly retargets to the new last cell instead of restarting,
+                                // producing continuous motion rather than discrete jerks.
+                                withAnimation(.interactiveSpring(response: 0.9, dampingFraction: 1.0, blendDuration: 0.5)) {
                                     proxy.scrollTo(newFrames.count - 1, anchor: .bottom)
                                 }
                             }
