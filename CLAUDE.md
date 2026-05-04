@@ -10,6 +10,7 @@
 
 ### Roadmap (next up)
 - **NSScrollView-based grid (M9 deferred)** — Replace SwiftUI ScrollView wrapping the LazyVGrid with an NSViewRepresentable around NSScrollView. Required for: (a) truly continuous teleprompter auto-scroll during extraction, (b) bigger fixes for snappiness/responsiveness in the grid. SwiftUI ScrollView's `scrollTo` is anchor-based and produces visible stepping when called repeatedly during streaming updates — multiple SwiftUI-only attempts (linear animation, spring, throttling) all retained the steppy feel. NSScrollView gives pixel-level scroll position control + continuous animation via NSAnimationContext / display-link.
+- **Apple-native hover grow animation for grid hover preview** — Currently the hover preview overlay appears instantly (snappy, no jitter). Multiple SwiftUI-only attempts at a smooth grow-from-cell animation introduced jitter / sliding artifacts. Doing it right likely requires either: a CAAnimation-driven custom view via NSViewRepresentable, or a much more carefully orchestrated SwiftUI implementation (matchedGeometryEffect, anchor-aware transitions, suppression during cell-to-cell). User explicitly asked us to defer rather than ship a janky version.
 - **M9 Theatrical extraction experience** — Full brief below. Turns extraction wait into the opening act: frames appear full-bleed as they come through, user can pick them as they pass. See "M9 — Theatrical Extraction Brief" section.
 - **Resume M7 redesign batch 2** — UploadProcessingView, ResultsView header, FilmstripView, FrameCardView, SettingsView, StillMarkerApp (M7 brief lower in this file).
 - **Window size/position persistence** (Issue #10).
@@ -427,6 +428,14 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 ---
 
 ## Action Log
+
+### 2026-05-04 - Removed hover grow animation (snappy > janky)
+- **Agent**: Claude Opus 4.7
+- **Symptom**: Even after fixing slide-in-from-side, hover grow had "too much movement" / felt jittery.
+- **Decision** (per user): remove hover grow animation entirely; preview pops in instantly. Apple-native quality grow animation is added to the roadmap to do right later. User: "If you can't make it grow and emerge the way an apple native app might, then let's not do it. I want the app to be snappy."
+- **Removed**: `.transition(.scale...).combined(.opacity)` and `.animation(value: hoveredFrameID != nil)`. Overlay appears/disappears instantly.
+- **Files Modified**: `Still Marker/Views/ResultsView.swift`, `CLAUDE.md` (roadmap entry added)
+- **Status**: Installed pending build.
 
 ### 2026-05-04 - Hover grow: only animate appearance, snap between cells
 - **Agent**: Claude Opus 4.7

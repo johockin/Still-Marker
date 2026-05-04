@@ -418,17 +418,12 @@ struct ResultsView: View {
                                         y: cellRect.midY - cellRect.height * 0.9
                                     )
                                     .allowsHitTesting(false)
-                                    // Transition fires only when the overlay appears or disappears
-                                    // (mouse enters/leaves the grid), grows from cell size at the
-                                    // hovered cell's center. Cell-to-cell hover keeps the same
-                                    // view instance — content + offset just swap, no slide animation.
-                                    .transition(.scale(scale: 1.0 / 1.8, anchor: .center).combined(with: .opacity))
+                                    // Snappy = no animation. Apple-native grow animation is
+                                    // a roadmap item; SwiftUI ScrollView + LazyVGrid + position
+                                    // overlay don't compose into smooth grow-in without jitter.
                             }
                             }
                             .coordinateSpace(name: "gridContent")
-                            // Only triggers transition on appearance/disappearance, not on
-                            // cell-to-cell moves (Bool stays true when moving between cells).
-                            .animation(.easeOut(duration: 0.18), value: hoveredFrameID != nil)
                         }
                         .onPreferenceChange(CellFramePreference.self) { newFrames in
                             cellFrames = newFrames
