@@ -9,7 +9,7 @@
 **Blockers**: None
 
 ### Roadmap (next up)
-- **Theatrical extraction experience** — While frames are being extracted, show them at full size as they come through (instead of just the eye + progress bar). Make extraction itself feel like part of the craft, a slow reveal of the film's images. User idea, 2026-05-03.
+- **M9 Theatrical extraction experience** — Full brief below. Turns extraction wait into the opening act: frames appear full-bleed as they come through, user can pick them as they pass. See "M9 — Theatrical Extraction Brief" section.
 - **Resume M7 redesign batch 2** — UploadProcessingView, ResultsView header, FilmstripView, FrameCardView, SettingsView, StillMarkerApp (M7 brief lower in this file).
 - **Window size/position persistence** (Issue #10).
 - **Error/failure UX** (Issue #5 partial — codec coverage is solved, but extraction-time per-frame failures still print silently).
@@ -246,6 +246,118 @@ Three reference documents inform this redesign. The user provided these as examp
 - Preserve all keyboard shortcuts (arrows, space, esc, P)
 - Workflow unchanged: upload → grid → preview → pick → export
 - Keep the warm gold accent and overall ethos
+
+---
+
+## M9 — Theatrical Extraction Brief
+
+> **Status**: Scoped, not yet implemented. Top of roadmap.
+
+### The Idea
+
+During extraction, the experience itself is part of the craft. The user watches the film reveal itself frame by frame, marking shots that catch their eye as they appear — **turning waiting into spotting**.
+
+User vision (2026-05-03): *"Could it show us frames as they're going by? In full size, like a bit of a 'theatrical experience'? You can enjoy and plan ahead on some things you'll be grabbing."*
+
+### Why It Matters
+
+Extraction is the slowest part of the workflow. A 1-hour HEVC MKV via FFmpeg fallback can take many minutes. Currently the user stares at an eye icon. Two costs: (a) the wait feels worse than it is, (b) the user can't be productive during the wait.
+
+The theatrical view turns dead time into the **opening act**. Watching the film slowly emerge IS engaging if framed right — it's what film projectors do. Marking frames as they pass means picks are already half-made by the time extraction completes.
+
+### Target Experience
+
+A nearly-empty screen. Black background. The current frame appears full-bleed in the center of the window, slight letterboxing if the aspect doesn't match. Each new frame as it's extracted gently crossfades in (300–400ms). Subtle filename + extraction progress in a top corner. Pick count if > 0. At the bottom edge, a thin strip of the last ~10 frames sits semi-transparent — visible if you look, invisible if you don't. Press P or Space to pick the current frame; a gold dot blooms briefly on the strip to confirm. Arrow keys scrub through what's been extracted so far. Esc skips to the grid (extraction continues in the background).
+
+When extraction completes, the screen quietly settles into the grid view, picks already in place.
+
+### Phases (pick a stopping point per session)
+
+**Phase 1 — MVP (~1 session)**
+- New `TheaterView` shown during `.processing` state once first frame extracted
+- Eye icon stays for "Analyzing video…" moment, then yields to TheaterView on first frame
+- Full-bleed display of most recently extracted frame, crossfade transitions
+- Top-corner: filename + "23 of 480" progress
+- Bottom: thin progress line
+- Esc: skip to grid (extraction continues in background)
+- No picking yet
+
+**Phase 2 — Active picking (~0.5 session)**
+- P / Space picks the current frame
+- "picks: N" counter top-right
+- Picks survive into grid view via the existing `pickedFrames` array
+- Persistence: route through `AppViewModel.persistSession` (since `ResultsView`'s onChange isn't live during theatrical)
+
+**Phase 3 — Recent strip ("plan ahead", ~1 session)**
+- Bottom strip of last 10–12 frames as thumbnails
+- Click any to pick that one (not just current)
+- Hover shows timestamp
+- Reuses `FilmstripView` styling
+
+**Phase 4 — Scrub control (~0.5 session)**
+- Space pauses auto-advance
+- ←/→ scrubs through extracted frames so far
+
+**Phase 5 — Polish (~0.5 session)**
+- Vignette + faint grain overlay (very subtle, "earned presence")
+- Estimated time remaining after 30s elapsed
+- **Cancel button** (also fixes Issue #7)
+
+**Phase 6 — Audio (stretch, separate milestone)**
+- Audio playback from source synced to extraction position
+- Major add: AVAudioPlayer driven by extraction progress
+- Likely defer
+
+### Decisions Already Made
+
+- **Picks made in theater are real picks** — not "tagged for review." Carry into grid view immediately. (User's "plan ahead on some things you'll be grabbing" is commitment language.)
+- **Skip-to-grid keeps extraction running** — user shouldn't be punished for switching modes.
+- **No artificial slowdown.** Theatrical pacing comes from natural extraction rate. For very short videos that extract in 2s, the experience is over fast — that's fine.
+- **Crossfades, not hard cuts.** ~300-400ms ease.
+- **Black background, no chrome by default.** Same "earned presence" ethos.
+
+### Open Decisions (defer to implementation)
+
+- Estimated time remaining: always / after 30s delay / never
+- Recent strip default visibility: ghost-faint always, or fully invisible until hover
+- Pause behavior: visual-only, or also pause the extraction subprocess
+
+### Technical Sketch
+
+**Extraction streaming**:
+- AVFoundationProcessor.extractFrames + FFmpegProcessor.extractFrames need to invoke an `onFrame` callback for each successful frame, in addition to the existing `progressCallback`
+- VideoProcessor wraps both, exposes unified `onFrame`
+- AppViewModel exposes `@Published var partialFrames: [Frame] = []` that grows during extraction
+- After extraction completes, partialFrames becomes extractedFrames (or already is — same array)
+
+**View layer**:
+- New `TheaterView` shown when `state == .processing && !partialFrames.isEmpty`
+- Renders the latest frame full-bleed
+- Subscribes to partialFrames changes for crossfade triggering
+
+**Picks during theatrical**:
+- TheaterView calls into AppViewModel.pickFrameInTheater(frame:)
+- AppViewModel maintains pickedFrames + persists via SessionStore directly (not through ResultsView's onChange)
+- When state transitions to .results, ResultsView reads pickedFrames as the existing restore path does
+
+**Cancel** (Phase 5):
+- Store the extraction Task reference in AppViewModel
+- Cancel button sends `task?.cancel()`, returns to upload, clears partial state
+
+**Performance / memory**:
+- Don't hold all extracted frames in TheaterView memory; only need current + recent strip thumbnails + picks
+- Existing thumbnail infrastructure handles this
+
+### Estimated Effort
+
+- Phase 1 alone: ~1 session
+- Phases 1+2+3 (the "real" experience): ~2-3 sessions
+- Full Phase 1-5: ~3-4 sessions
+- Phase 6 (audio): separate, ~1-2 sessions
+
+### Dependencies / Blockers
+
+- None hard. VideoProcessor + persistence already in place. Could start next session.
 
 ---
 
