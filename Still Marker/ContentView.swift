@@ -104,14 +104,15 @@ final class VideoProcessor {
     }
 
     func extractFrames(from videoURL: URL,
+                       onFrame: ((Frame) -> Void)? = nil,
                        progressCallback: @escaping (Double, String) -> Void) async throws -> [Frame] {
         let backend = await chooseBackend(for: videoURL)
         lastBackendUsed = backend
         switch backend {
         case .avFoundation:
-            return try await avProcessor.extractFrames(from: videoURL, progressCallback: progressCallback)
+            return try await avProcessor.extractFrames(from: videoURL, onFrame: onFrame, progressCallback: progressCallback)
         case .ffmpeg:
-            return try await ffmpegProcessor.extractFrames(from: videoURL) { p, m in
+            return try await ffmpegProcessor.extractFrames(from: videoURL, onFrame: onFrame) { p, m in
                 progressCallback(p, "[FFmpeg] " + m)
             }
         }
@@ -173,6 +174,10 @@ class AppViewModel: ObservableObject {
     /// accessible. ResultsView reads this once after extraction completes, restores the
     /// picks, then nils it out.
     var pendingRestore: PersistedSession?
+
+    /// Picks made during theatrical extraction (state == .processing). One-shot:
+    /// ResultsView consumes these on appear and merges into its pickedFrames state.
+    @Published var theatricalPicks: [Frame] = []
 
     private let processor = VideoProcessor.shared
 
@@ -257,6 +262,38 @@ class AppViewModel: ObservableObject {
         return restore
     }
 
+    /// Read-and-clear theatrical picks. ResultsView calls this on appear.
+    func consumeTheatricalPicks() -> [Frame] {
+        let picks = theatricalPicks
+        theatricalPicks = []
+        return picks
+    }
+
+    /// Add a pick made during theatrical extraction. Persists immediately so picks
+    /// survive even if the user quits before extraction completes.
+    func addTheatricalPick(_ frame: Frame) {
+        // Avoid duplicates by timestamp proximity (matches ResultsView's pick logic)
+        if theatricalPicks.contains(where: { abs($0.timestamp - frame.timestamp) < 0.01 }) {
+            return
+        }
+        theatricalPicks.append(frame)
+
+        // Best-effort persistence so quit-during-theater doesn't lose picks
+        guard let videoURL = selectedVideoURL else { return }
+        let session = PersistedSession(
+            videoPath: videoURL.path,
+            pickTimestamps: theatricalPicks.map { $0.timestamp },
+            pickSourceIndices: theatricalPicks.compactMap { pick in
+                extractedFrames.firstIndex(where: { abs($0.timestamp - pick.timestamp) < 0.01 })
+            },
+            lastViewMode: "grid",
+            lastFrameIndex: 0,
+            selectedExportFormat: "PNG (default)",
+            savedAt: Date()
+        )
+        sessionStore.save(session)
+    }
+
     @MainActor
     private func processVideo(videoURL: URL) async {
         do {
@@ -266,25 +303,31 @@ class AppViewModel: ObservableObject {
             // Store the extraction interval for display in the header
             self.extractionInterval = processor.calculateAdaptiveInterval(duration: self.videoDuration)
 
+            // Stream frames into extractedFrames as they're extracted, so TheaterView
+            // can show them in real time. Drains the prior extractedFrames first.
+            self.extractedFrames = []
             let frames = try await processor.extractFrames(
-                from: videoURL
-            ) { progress, message in
-                DispatchQueue.main.async {
-                    self.processingProgress = progress
-                    self.processingMessage = message
+                from: videoURL,
+                onFrame: { frame in
+                    DispatchQueue.main.async {
+                        self.extractedFrames.append(frame)
+                    }
+                },
+                progressCallback: { progress, message in
+                    DispatchQueue.main.async {
+                        self.processingProgress = progress
+                        self.processingMessage = message
+                    }
                 }
+            )
+
+            // Defensive: ensure final array matches what onFrame produced (no-op if it does).
+            if self.extractedFrames.count != frames.count {
+                self.extractedFrames = frames
             }
-            
-            // Update UI with extracted frames
-            print("🔄 Setting extractedFrames with \(frames.count) frames")
-            self.extractedFrames = frames
-            
-            // Brief pause to show completion
-            try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-            
-            print("📱 Transitioning to .results state")
+
+            try await Task.sleep(nanoseconds: 300_000_000)
             self.state = .results
-            print("✅ State transition complete")
             
         } catch {
             self.processingMessage = "Error: \(error.localizedDescription)"
@@ -301,11 +344,19 @@ class AppViewModel: ObservableObject {
 
 struct ContentView: View {
     @StateObject private var viewModel = AppViewModel()
-    
+
     var body: some View {
         switch viewModel.state {
-        case .upload, .processing:
+        case .upload:
             UploadProcessingView(viewModel: viewModel)
+        case .processing:
+            // Theatrical view kicks in once the first frame is extracted.
+            // Until then, the eye-icon "Analyzing..." view is shown.
+            if viewModel.extractedFrames.isEmpty {
+                UploadProcessingView(viewModel: viewModel)
+            } else {
+                TheaterView(viewModel: viewModel)
+            }
         case .results:
             ResultsView(viewModel: viewModel)
         }
@@ -315,5 +366,157 @@ struct ContentView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+    }
+}
+
+// MARK: - Theater View (M9 Phase 1+2)
+
+/// Full-bleed cinematic view shown during extraction. Frames appear as they're
+/// extracted, crossfading in. Press P or Space to pick the current frame, Esc
+/// to skip to the grid (extraction continues in background).
+struct TheaterView: View {
+    @ObservedObject var viewModel: AppViewModel
+    @State private var displayedFrame: Frame?
+    @State private var pickedTimestamps: Set<Double> = []
+    @State private var pickFlash: Bool = false
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            // The frame itself, full-bleed-ish with breathing room.
+            if let frame = displayedFrame {
+                Image(nsImage: frame.image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .padding(.horizontal, 64)
+                    .padding(.vertical, 80)
+                    .id(frame.id)
+                    .transition(.opacity)
+            }
+
+            // Pick flash — brief gold tint when a pick lands
+            if pickFlash {
+                Color(red: 0.85, green: 0.7, blue: 0.35)
+                    .opacity(0.10)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                    .allowsHitTesting(false)
+            }
+
+            // Top row: filename + frame counter
+            VStack {
+                HStack {
+                    if let url = viewModel.selectedVideoURL {
+                        Text(url.lastPathComponent)
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.35))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                    Spacer()
+                    Text("\(viewModel.extractedFrames.count) frames extracted")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.35))
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+
+                // Pick count, sits below the filename row when > 0
+                if !pickedTimestamps.isEmpty {
+                    HStack {
+                        Spacer()
+                        Text("\(pickedTimestamps.count) pick\(pickedTimestamps.count == 1 ? "" : "s")")
+                            .font(.system(size: 12, weight: .medium, design: .monospaced))
+                            .foregroundStyle(Color(red: 0.85, green: 0.7, blue: 0.35))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 5)
+                            .background(Capsule().fill(.black.opacity(0.4)))
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 8)
+                }
+                Spacer()
+            }
+
+            // Current frame's timecode, bottom-left
+            if let frame = displayedFrame {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Text(frame.formattedTimestamp)
+                            .font(.system(size: 14, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.45))
+                            .padding(.leading, 24)
+                            .padding(.bottom, 24)
+                        Spacer()
+                    }
+                }
+            }
+
+            // Hint, bottom-right
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Text("P or Space to pick · Esc to skip to grid")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.white.opacity(0.28))
+                        .padding(.trailing, 24)
+                        .padding(.bottom, 24)
+                }
+            }
+
+            // Thin progress at the very bottom
+            VStack {
+                Spacer()
+                Rectangle()
+                    .fill(.white.opacity(0.06))
+                    .frame(height: 2)
+                    .overlay(alignment: .leading) {
+                        GeometryReader { geo in
+                            Rectangle()
+                                .fill(Color(red: 0.85, green: 0.7, blue: 0.35))
+                                .frame(width: geo.size.width * CGFloat(viewModel.processingProgress))
+                                .animation(.easeOut(duration: 0.2), value: viewModel.processingProgress)
+                        }
+                    }
+            }
+            .ignoresSafeArea(edges: .bottom)
+
+            // Keyboard input layer (invisible)
+            KeyEventHandlingView(
+                onLeftArrow: {},
+                onRightArrow: {},
+                onShiftLeftArrow: {},
+                onShiftRightArrow: {},
+                onUpArrow: {},
+                onDownArrow: {},
+                onEscape: { viewModel.state = .results },
+                onPick: pickCurrent
+            )
+            .frame(width: 0, height: 0)
+            .allowsHitTesting(false)
+        }
+        .onAppear {
+            displayedFrame = viewModel.extractedFrames.last
+        }
+        .onChange(of: viewModel.extractedFrames.count) { _ in
+            withAnimation(.easeInOut(duration: 0.4)) {
+                displayedFrame = viewModel.extractedFrames.last
+            }
+        }
+    }
+
+    private func pickCurrent() {
+        guard let frame = displayedFrame else { return }
+        guard !pickedTimestamps.contains(frame.timestamp) else { return }
+        pickedTimestamps.insert(frame.timestamp)
+        viewModel.addTheatricalPick(frame)
+
+        withAnimation(.easeOut(duration: 0.08)) { pickFlash = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+            withAnimation(.easeIn(duration: 0.25)) { pickFlash = false }
+        }
     }
 }

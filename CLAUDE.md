@@ -4,8 +4,8 @@
 
 ## Current Status
 
-**Phase**: M8 — Stability & Pro Polish (in flight)
-**Next**: Theatrical extraction view (see Roadmap), then resume M7 redesign on remaining 6 files
+**Phase**: M9 — Theatrical Extraction (Phase 1+2 implemented, awaiting QA)
+**Next**: M9 Phase 3 (recent strip / retro-pick), then Phase 4-5
 **Blockers**: None
 
 ### Roadmap (next up)
@@ -426,6 +426,17 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 ---
 
 ## Action Log
+
+### 2026-05-03 - M9 Phase 1+2: Theatrical extraction (full-bleed view + active picking)
+- **Agent**: Claude Opus 4.7
+- **Action**: Implemented the first two phases of the M9 Theatrical brief.
+  - **Streaming infrastructure**: `AVFoundationProcessor.extractFrames` and `FFmpegProcessor.extractFrames` gained an `onFrame: ((Frame) -> Void)?` callback that fires per successfully extracted frame. `VideoProcessor.extractFrames` passes it through. `AppViewModel.processVideo` wires the callback to `extractedFrames.append(frame)` on the main thread, so frames materialize live during extraction.
+  - **TheaterView (in `ContentView.swift`)**: full-bleed black-background view. Current frame fills the window with breathing-room padding (64h / 80v), crossfades on change (`id(frame.id) + .transition(.opacity)`, 0.4s). Top row shows filename (left) + "N frames extracted" (right) in faint mono. Pick count appears below filename when > 0. Bottom shows current frame's timecode (left), keyboard hint (right), and a thin gold progress bar at the very bottom edge. Brief gold flash on each pick. P / Space pick the current frame; Esc skips to grid (extraction continues in background).
+  - **Pick handoff**: `AppViewModel.theatricalPicks` accumulates. `addTheatricalPick` persists session.json immediately (so quit-during-theater doesn't lose work). On state transition to `.results`, `ResultsView.onAppear` calls `consumeTheatricalPicks()` and merges them into `pickedFrames` / `pickedSourceIndices` via `applyTheatricalPicks(_:)`.
+  - **Routing**: `ContentView` now shows `UploadProcessingView` (eye icon) only while `.processing` AND `extractedFrames.isEmpty`. Once first frame arrives, switches to `TheaterView`.
+- **Files Modified**: `Still Marker/AVFoundationProcessor.swift`, `Still Marker/FFmpegProcessor.swift`, `Still Marker/ContentView.swift`, `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Not yet implemented (deferred to next sessions)**: recent-frames strip / retro-pick (Phase 3), pause + scrub (Phase 4), polish + cancel button (Phase 5), audio sync (Phase 6).
+- **Status**: Installed (PID 70689), awaiting QA. Drop a video → eye icon → first frame arrives → TheaterView. Press P/Space to pick. Esc skips to grid. Picks carry through.
 
 ### 2026-05-03 - File picker MKV failure: scope claim + better error surfacing
 - **Agent**: Claude Opus 4.7

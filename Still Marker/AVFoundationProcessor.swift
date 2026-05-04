@@ -33,9 +33,12 @@ class AVFoundationProcessor: ObservableObject {
         return CMTimeGetSeconds(duration)
     }
 
-    /// Batch extract frames at calculated timestamps
+    /// Batch extract frames at calculated timestamps. `onFrame` is called once per
+    /// successfully extracted frame, in order — used by the theatrical extraction view
+    /// to render frames as they appear instead of all at once at the end.
     func extractFrames(from videoURL: URL,
                        offset: Double = 0.0,
+                       onFrame: ((Frame) -> Void)? = nil,
                        progressCallback: @escaping (Double, String) -> Void) async throws -> [Frame] {
 
         progressCallback(0.1, "Analyzing video...")
@@ -81,6 +84,7 @@ class AVFoundationProcessor: ObservableObject {
 
                 let frame = Frame(id: frameID, timestamp: timestamp, thumbnail: thumbnail, fullImageURL: permanentURL)
                 frames.append(frame)
+                onFrame?(frame)
             } catch {
                 print("Failed to extract frame at \(timestamp)s: \(error)")
             }

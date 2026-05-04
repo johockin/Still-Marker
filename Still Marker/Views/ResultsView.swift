@@ -133,6 +133,11 @@ struct ResultsView: View {
             if let restore = viewModel.consumePendingRestore() {
                 applyRestore(restore)
             }
+            // Theatrical picks (made during M9 extraction view) flow in here.
+            let theatricalPicks = viewModel.consumeTheatricalPicks()
+            if !theatricalPicks.isEmpty {
+                applyTheatricalPicks(theatricalPicks)
+            }
         }
         .onChange(of: pickedFrames.count) { _ in persistCurrentState() }
         .onChange(of: viewMode) { _ in persistCurrentState() }
@@ -180,6 +185,31 @@ struct ResultsView: View {
 
         if !restoredPicks.isEmpty {
             showToastNotification(message: "Restored \(restoredPicks.count) pick\(restoredPicks.count == 1 ? "" : "s") from last session", type: .success)
+        }
+    }
+
+    /// Carry picks made during theatrical extraction into the grid's pickedFrames state.
+    /// Theatrical picks are real Frame objects but their source-grid index needs to be
+    /// looked up in the just-extracted frames array.
+    private func applyTheatricalPicks(_ picks: [Frame]) {
+        let frames = viewModel.extractedFrames
+        var added = 0
+        for pick in picks {
+            // Skip if already picked (e.g., picked during theater AND restored from prior session)
+            if pickedFrames.contains(where: { abs($0.timestamp - pick.timestamp) < 0.01 }) { continue }
+
+            if let idx = frames.firstIndex(where: { abs($0.timestamp - pick.timestamp) < 0.01 }) {
+                pickedFrames.append(frames[idx])
+                pickedSourceIndices.insert(idx)
+            } else {
+                // Picked frame doesn't match any grid frame exactly (shouldn't happen in
+                // Phase 1+2 since picks ARE grid frames), but handle defensively.
+                pickedFrames.append(pick)
+            }
+            added += 1
+        }
+        if added > 0 {
+            showToastNotification(message: "\(added) pick\(added == 1 ? "" : "s") from extraction", type: .success)
         }
     }
 

@@ -37,9 +37,11 @@ class FFmpegProcessor: ObservableObject {
         _ = ffmpegPath
     }
     
-    /// Extract frames from video using adaptive interval selection
+    /// Extract frames from video using adaptive interval selection. `onFrame` fires
+    /// per successfully extracted frame, used by the theatrical view.
     func extractFrames(from videoURL: URL,
                       offset: Double = 0.0,
+                      onFrame: ((Frame) -> Void)? = nil,
                       progressCallback: @escaping (Double, String) -> Void) async throws -> [Frame] {
 
         progressCallback(0.1, "Analyzing video...")
@@ -94,8 +96,9 @@ class FFmpegProcessor: ObservableObject {
                     try? FileManager.default.moveItem(at: frameURL, to: permanentURL)
                     
                     // Create frame with URL reference (no full image in memory)
-                    let frame = Frame(id: frameID, timestamp: timestamp, thumbnail: thumbnail, fullImageURL: permanentURL) 
+                    let frame = Frame(id: frameID, timestamp: timestamp, thumbnail: thumbnail, fullImageURL: permanentURL)
                     frames.append(frame)
+                    onFrame?(frame)
                 } else {
                     // Clean up failed extraction file
                     try? FileManager.default.removeItem(at: frameURL)
