@@ -428,6 +428,13 @@ Two-part: (a) immediately tighten the allowlist + show a useful error for unsupp
 
 ## Action Log
 
+### 2026-05-04 - Hover grow: only animate appearance, snap between cells
+- **Agent**: Claude Opus 4.7
+- **Symptom**: Previous attempt added `.id(hoveredID)` + `.animation(value: hoveredFrameID)` for smooth cell-to-cell crossfade. But user said previews "come in from the side" — the .id-based view recreation was making the new view animate from its previous offset to its new one (sliding instead of growing in place).
+- **Fix**: removed `.id(hoveredID)` so the same view persists across cell-to-cell hover. Changed `.animation(value: hoveredFrameID)` to `.animation(value: hoveredFrameID != nil)` — Bool only changes when the overlay appears or disappears, NOT when moving between cells. Result: grow-in animation only fires on entering the grid; cell-to-cell is an instant snap to the new cell with no slide; shrink-out fires on leaving.
+- **Files Modified**: `Still Marker/Views/ResultsView.swift`, `CLAUDE.md`
+- **Status**: Installed (PID 98799).
+
 ### 2026-05-04 - Smooth grow animation for hover preview overlay
 - **Agent**: Claude Opus 4.7
 - **Symptom**: hover preview overlay popped into existence at full size — felt jittery, especially when moving between cells.
